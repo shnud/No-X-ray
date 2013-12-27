@@ -12,37 +12,37 @@ public class SynchHashMapArrayList<K, T> extends HashMapArrayList<K, T> {
     }
 
     @Override
-    public void add(K key, T object) {
+    synchronized public void add(K key, T object) {
         super.add(key, object);
     }
 
     @Override
-    public void remove(K key) {
+    synchronized public void remove(K key) {
         super.remove(key);
     }
 
     @Override
-    public T get(K key) {
+    synchronized public T get(K key) {
         return super.get(key);
     }
 
     @Override
-    public int size() {
+    synchronized public int size() {
         return super.size();
     }
 
     @Override
-    public boolean containsKey(K key) {
+    synchronized public boolean containsKey(K key) {
         return super.containsKey(key);
     }
 
     @Override
-    public Iterator<T> iterator() {
+    synchronized public Iterator<T> iterator() {
         return super.iterator();
     }
 
     @Override
-    public void clear() {
+    synchronized public void clear() {
         super.clear();
     }
 
