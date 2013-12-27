@@ -1,0 +1,4 @@
+name: No X-ray
+main: com.shnud.noxray.NoXray
+version: 0.1
+depend: [ProtocolLib]
