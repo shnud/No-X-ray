@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class NoXray extends JavaPlugin {
 
     private static NoXray _instance;
+    private static long _mainThreadId = Thread.currentThread().getId();
 
     public NoXray() {
         if(_instance == null)
@@ -36,5 +37,9 @@ public class NoXray extends JavaPlugin {
 
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
+    }
+
+    public boolean isMainThread(Thread t) {
+        return t.getId() == _mainThreadId;
     }
 }

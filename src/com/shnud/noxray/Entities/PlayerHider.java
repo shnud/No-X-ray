@@ -5,16 +5,13 @@ import com.shnud.noxray.Entities.Grouping.EntityCoupleList;
 import com.shnud.noxray.Events.BasePacketEvent;
 import com.shnud.noxray.Events.PlayerSpawnPacketEvent;
 import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Packets.PacketDispatch;
+import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Settings.NoXraySettings;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import com.shnud.noxray.Packets.PacketEventListener;
 import org.bukkit.scheduler.BukkitTask;
-
-import java.util.ArrayList;
-import java.util.logging.Level;
 
 /**
  * Created by Andrew on 23/12/2013.
@@ -44,7 +41,7 @@ public class PlayerHider implements PacketEventListener {
                 NoXraySettings.PLAYER_TICK_CHECK_FREQUENCY
         );
 
-        PacketDispatch.resendAllSpawnPacketsForWorld(_world);
+        PacketDispatcher.resendAllSpawnPacketsForWorld(_world);
     }
 
     public void deactivate() {
@@ -59,7 +56,7 @@ public class PlayerHider implements PacketEventListener {
             return;
 
         else if (event instanceof PlayerSpawnPacketEvent)
-            this.handlePlayerSpawnPacketEvent((PlayerSpawnPacketEvent) event);
+            handlePlayerSpawnPacketEvent((PlayerSpawnPacketEvent) event);
     }
 
     public void handlePlayerSpawnPacketEvent(PlayerSpawnPacketEvent event) {
@@ -67,66 +64,30 @@ public class PlayerHider implements PacketEventListener {
             return;
 
         EntityCoupleHidable couple = new EntityCoupleHidable(event.getReceiver(), event.getSubject());
-        updateCoupleHiddenStatus(couple, false);
+        updateCoupleHiddenStatus(couple);
+
+        if(couple.areHidden())
+            event.cancel();
+
         _couples.addCouple(couple);
     }
 
-    public void updateCoupleHiddenStatus(EntityCoupleHidable couple, boolean wait) {
+    public void updateCoupleHiddenStatus(EntityCoupleHidable couple) {
         boolean LOS = couple.haveClearLOS();
 
-        if(LOS && couple.areHidden()) {
-            if(wait)
-                _toShow.add(couple);
-            else
-                couple.show();
-        }
-
-        else if(!LOS && !couple.areHidden()) {
-            if(wait)
-                _toHide.add(couple);
-            else
-                couple.hide();
-        }
+        if(LOS && couple.areHidden())
+            couple.show();
+        else if(!LOS && !couple.areHidden())
+            couple.hide();
     }
 
     public class CoupleCheckThread implements Runnable {
 
         @Override
         public void run() {
-            if(_updatingShowAndHide) {
-                Bukkit.getLogger().log(Level.WARNING, "Was not able to check player-to-player LOS, checking thread skipped a go");
-                return;
-            }
-
             for (EntityCoupleHidable couple : _couples) {
-                updateCoupleHiddenStatus(couple, true);
+                updateCoupleHiddenStatus(couple);
             }
-
-            Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new UpdateShowHideStatus());
-        }
-    }
-
-    volatile private ArrayList<EntityCoupleHidable> _toShow = new ArrayList<EntityCoupleHidable>();
-    volatile private ArrayList<EntityCoupleHidable> _toHide = new ArrayList<EntityCoupleHidable>();
-    volatile private boolean _updatingShowAndHide = false;
-
-    public class UpdateShowHideStatus implements Runnable {
-
-        @Override
-        public void run() {
-            _updatingShowAndHide = true;
-
-            for(EntityCoupleHidable couple : _toShow) {
-                couple.show();
-            }
-            for(EntityCoupleHidable couple : _toHide) {
-                couple.hide();
-            }
-
-            _toShow.clear();
-            _toHide.clear();
-
-            _updatingShowAndHide = false;
         }
     }
 }

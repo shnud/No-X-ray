@@ -6,7 +6,7 @@ import com.shnud.noxray.Events.BasePacketEvent;
 import com.shnud.noxray.Events.EntitySpawnPacketEvent;
 import com.shnud.noxray.Events.EntityUpdatePacketEvent;
 import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Packets.PacketDispatch;
+import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Settings.NoXraySettings;
@@ -53,9 +53,9 @@ public class EntityHider implements PacketEventListener {
             return;
 
         else if (event instanceof EntitySpawnPacketEvent)
-            this.handleMobSpawnPacketEvent((EntitySpawnPacketEvent) event);
+            handleMobSpawnPacketEvent((EntitySpawnPacketEvent) event);
         else if (event instanceof EntityUpdatePacketEvent)
-            this.handleEntityUpdatePacketEvent((EntityUpdatePacketEvent) event);
+            handleEntityUpdatePacketEvent((EntityUpdatePacketEvent) event);
     }
 
     public void checkWatchers() {
@@ -74,7 +74,7 @@ public class EntityHider implements PacketEventListener {
             }
 
             if(!playersToSendCurrentEntity.isEmpty())
-                PacketDispatch.spawnEntityForPlayers(e, playersToSendCurrentEntity);
+                PacketDispatcher.spawnEntityForPlayers(e, playersToSendCurrentEntity);
         }
 
 

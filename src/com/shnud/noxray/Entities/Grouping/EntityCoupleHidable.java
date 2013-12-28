@@ -1,6 +1,6 @@
 package com.shnud.noxray.Entities.Grouping;
 
-import com.shnud.noxray.Packets.PacketDispatch;
+import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Settings.NoXraySettings;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -85,18 +85,18 @@ public class EntityCoupleHidable extends EntityCouple {
 
     public void hide() {
         if(getEntity1() instanceof Player)
-            PacketDispatch.destroyEntityForPlayer(getEntity2(), (Player) getEntity1());
+            PacketDispatcher.destroyEntityForPlayer(getEntity2(), (Player) getEntity1());
         if(getEntity2() instanceof Player)
-            PacketDispatch.destroyEntityForPlayer(getEntity1(), (Player) getEntity2());
+            PacketDispatcher.destroyEntityForPlayer(getEntity1(), (Player) getEntity2());
 
         _areHidden = true;
     }
 
     public void show() {
         if(getEntity1() instanceof Player)
-            PacketDispatch.spawnEntityForPlayer(getEntity2(), (Player) getEntity1());
+            PacketDispatcher.spawnEntityForPlayer(getEntity2(), (Player) getEntity1());
         if(getEntity2() instanceof Player)
-            PacketDispatch.spawnEntityForPlayer(getEntity1(), (Player) getEntity2());
+            PacketDispatcher.spawnEntityForPlayer(getEntity1(), (Player) getEntity2());
 
         _areHidden = false;
     }

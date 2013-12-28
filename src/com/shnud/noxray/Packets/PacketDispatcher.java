@@ -1,9 +1,10 @@
 package com.shnud.noxray.Packets;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketContainer;
+import com.google.common.collect.Lists;
+import com.shnud.noxray.Packets.PacketSenders.DestroyEntityPacketSender;
+import com.shnud.noxray.Packets.PacketSenders.EntitySpawnPacketSender;
 import com.shnud.noxray.Utilities.ArraySplitter;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -16,19 +17,16 @@ import java.util.List;
 /**
  * Created by Andrew on 26/12/2013.
  */
-public class PacketDispatch {
+public class PacketDispatcher {
 
-    private static final int DESTORY_ENTITY_PACKET_SPLIT_SIZE = 16;
     private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
 
     public static void spawnEntityForPlayer(Entity subject, Player receiver) {
-        List players = new ArrayList();
-        players.add(receiver);
-        _pm.updateEntity(subject, players);
+        new EntitySpawnPacketSender(Lists.newArrayList(receiver), Lists.newArrayList(subject));
     }
 
-    public static void spawnEntityForPlayers(Entity subject, List<Player> players) {
-        _pm.updateEntity(subject, players);
+    public static void spawnEntityForPlayers(Entity subject, List<Player> receivers) {
+        new EntitySpawnPacketSender(receivers, Lists.newArrayList(subject));
     }
 
     public static void destroyEntityForPlayer(int entityID, Player receiver) {
@@ -40,23 +38,7 @@ public class PacketDispatch {
     }
 
     public static void destoryEntitiesForPlayer(int[] entityIDs, Player receiver) {
-        if(entityIDs.length > DESTORY_ENTITY_PACKET_SPLIT_SIZE) {
-            int[][] split = ArraySplitter.splitIntArray(entityIDs, DESTORY_ENTITY_PACKET_SPLIT_SIZE);
-
-            for (int[] listOfEntities : split) {
-                destoryEntitiesForPlayer(listOfEntities, receiver);
-            }
-        }
-        else {
-            PacketContainer packet = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
-            packet.getIntegerArrays().write(0, entityIDs);
-
-            try {
-                _pm.sendServerPacket(receiver, packet, false);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
+        new DestroyEntityPacketSender(Lists.newArrayList(receiver), entityIDs).send();
     }
 
     public static void resendAllSpawnPacketsForWorld(World world) {
@@ -64,7 +46,7 @@ public class PacketDispatch {
 
         for(Entity entity : entities) {
             List<Player> players = _pm.getEntityTrackers(entity);
-            _pm.updateEntity(entity, players);
+            new EntitySpawnPacketSender(players, Lists.newArrayList(entity)).send();
         }
     }
 }
