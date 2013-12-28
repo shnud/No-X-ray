@@ -13,6 +13,7 @@ import com.shnud.noxray.Settings.NoXraySettings;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -22,6 +23,8 @@ import java.util.ArrayList;
  * Created by Andrew on 27/12/2013.
  */
 public class EntityHider implements PacketEventListener {
+
+    // This class really needs cleaning up.
 
     private World _world;
     private EntityWatcherListList _watcherListList = new EntityWatcherListList();
@@ -53,7 +56,7 @@ public class EntityHider implements PacketEventListener {
             return;
 
         else if (event instanceof EntitySpawnPacketEvent)
-            handleMobSpawnPacketEvent((EntitySpawnPacketEvent) event);
+            handleEntitySpawnPacketEvent((EntitySpawnPacketEvent) event);
         else if (event instanceof EntityUpdatePacketEvent)
             handleEntityUpdatePacketEvent((EntityUpdatePacketEvent) event);
     }
@@ -108,9 +111,10 @@ public class EntityHider implements PacketEventListener {
         return true;
     }
 
-    private void handleMobSpawnPacketEvent(EntitySpawnPacketEvent event) {
+    private void handleEntitySpawnPacketEvent(EntitySpawnPacketEvent event) {
         if(shouldShowEntityToWatcher(event.getSubject(), event.getReceiver()))
             return;
+
         else {
             event.cancel();
             _watcherListList.addWatcher(event.getSubject(), event.getReceiver());
@@ -118,7 +122,11 @@ public class EntityHider implements PacketEventListener {
     }
 
     private void handleEntityUpdatePacketEvent(EntityUpdatePacketEvent event) {
+        if(event.getSubject().getType() == EntityType.PLAYER)
+            return;
 
+        if(_watcherListList.isEntityBeingHiddenFrom(event.getSubject(), event.getReceiver()))
+            event.cancel();
     }
 
     private class WatcherCheckThread implements Runnable {

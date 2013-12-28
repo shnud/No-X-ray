@@ -45,14 +45,14 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
         _couples.remove(couple.uniqueID());
     }
 
-    public EntityCouple getCoupleFromID(long ID) {
+    public T getCoupleFromID(long ID) {
         if(!_couples.containsKey(ID))
             return null;
 
         return _couples.get(ID);
     }
 
-    public EntityCouple getCoupleFromEntities(Entity e1, Entity e2) {
+    public T getCoupleFromEntities(Entity e1, Entity e2) {
         if(e1 == null || e2 == null)
             throw new IllegalArgumentException("Entities cannot be null");
 

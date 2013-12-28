@@ -20,8 +20,15 @@ public class EntityWatcherListList implements Iterable<EntityWatcherList> {
             _entityWatchers.add(subject.getEntityId(), new EntityWatcherList(subject, newWatcher));
     }
 
-    private boolean containsEntityWatcher(Entity entity) {
+    public boolean containsEntityWatcher(Entity entity) {
         return _entityWatchers.containsKey(entity.getEntityId());
+    }
+
+    public boolean isEntityBeingHiddenFrom(Entity entity, Player watcher) {
+        if(!_entityWatchers.containsKey(entity.getEntityId()))
+            return false;
+
+        return _entityWatchers.get(entity.getEntityId()).isWatching(watcher);
     }
 
     /*
