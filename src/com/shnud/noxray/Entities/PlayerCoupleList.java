@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * Created by Andrew on 26/12/2013.
  */
-public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
+public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
 
     /*
      * Thread-safe; uses synchronized HashMap/Array
@@ -38,7 +38,7 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
             _couples.add(couple.uniqueID(), couple);
     }
 
-    public void removeCouple(EntityCouple couple) {
+    public void removeCouple(PlayerCouple couple) {
         if(couple == null)
             throw new IllegalArgumentException("Couple cannot be null");
 
@@ -56,7 +56,7 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
         if(e1 == null || e2 == null)
             throw new IllegalArgumentException("Entities cannot be null");
 
-        long ID = EntityCouple.uniqueIDFromEntityPair(e1, e2);
+        long ID = PlayerCouple.uniqueIDFromEntityPair(e1, e2);
         return getCoupleFromID(ID);
     }
 
@@ -68,11 +68,11 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
         if(e1 == null || e2 == null)
             throw new IllegalArgumentException("Entities cannot be null");
 
-        long ID = EntityCouple.uniqueIDFromEntityPair(e1, e2);
+        long ID = PlayerCouple.uniqueIDFromEntityPair(e1, e2);
         return getCoupleFromID(ID) != null;
     }
 
-    public boolean containsCouple(EntityCouple couple) {
+    public boolean containsCouple(PlayerCouple couple) {
         return _couples.containsKey(couple.uniqueID());
     }
 

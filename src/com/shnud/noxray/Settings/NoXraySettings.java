@@ -15,13 +15,13 @@ public class NoXraySettings {
     public static final int                         MAX_PLAYER_VISIBLE_DISTANCE = 50;
 
     // Settings for hiding players
-    public static final int                         PLAYER_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 2;
+    public static final int                         PLAYER_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 3;
 
     // Settings for hiding non-player entities
     public static final int                         MAXIMUM_Y_FOR_HIDING_NON_PLAYER_ENTITIES = 60;
-    public static final int                         MINIMUM_XZ_DISTANCE_FOR_VISIBLE_ENTITIES = 30;
-    public static final int                         MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES = 15;
-    public static final int                         ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 2;
+    public static final int                         MINIMUM_XZ_DISTANCE_FOR_VISIBLE_ENTITIES = 20;
+    public static final int                         MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES = 8;
+    public static final int                         ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 4;
     public static final int                         ENTITY_VISIBILITY_CHECKS_PER_PURGE = 10;
     private static HashSet<EntityType>              ENTITIES_TO_HIDE = null;
     public static final HashSet<EntityType> getEntitiesToHide() {

@@ -1,7 +1,7 @@
 package com.shnud.noxray.Hiders;
 
-import com.shnud.noxray.Entities.EntityCoupleHidable;
-import com.shnud.noxray.Entities.EntityCoupleList;
+import com.shnud.noxray.Entities.PlayerCoupleHidable;
+import com.shnud.noxray.Entities.PlayerCoupleList;
 import com.shnud.noxray.Events.BasePacketEvent;
 import com.shnud.noxray.Events.EntityUpdatePacketEvent;
 import com.shnud.noxray.Events.PlayerSpawnPacketEvent;
@@ -13,14 +13,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import com.shnud.noxray.Packets.PacketEventListener;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+
+import java.util.Iterator;
 
 /**
  * Created by Andrew on 23/12/2013.
  */
 public class PlayerHider implements PacketEventListener {
     private World _world;
-    private EntityCoupleList<EntityCoupleHidable> _coupleWatchList = new EntityCoupleList<EntityCoupleHidable>();
+    private PlayerCoupleList<PlayerCoupleHidable> _coupleWatchList = new PlayerCoupleList<PlayerCoupleHidable>();
     private BukkitTask _checkingTask;
     private boolean _isActive;
 
@@ -106,7 +109,7 @@ public class PlayerHider implements PacketEventListener {
          */
 
         event.cancel();
-        EntityCoupleHidable couple = new EntityCoupleHidable(event.getReceiver(), event.getSubject(), true);
+        PlayerCoupleHidable couple = new PlayerCoupleHidable(event.getReceiver(), ((Player) event.getSubject()), true);
 
         _coupleWatchList.addCouple(couple);
         /*
@@ -136,10 +139,7 @@ public class PlayerHider implements PacketEventListener {
          */
     }
 
-    public void updateCoupleHiddenStatus(EntityCoupleHidable couple) {
-        if(couple.getEntity1().isDead() || couple.getEntity2().isDead())
-            return;
-
+    public void updateCoupleHiddenStatus(PlayerCoupleHidable couple) {
         boolean LOS = couple.haveClearLOS();
 
         if(LOS && couple.areHidden())
@@ -169,8 +169,15 @@ public class PlayerHider implements PacketEventListener {
 
         @Override
         public void run() {
-            for (EntityCoupleHidable couple : _coupleWatchList) {
-                updateCoupleHiddenStatus(couple);
+            Iterator<PlayerCoupleHidable> it = _coupleWatchList.iterator();
+
+            while(it.hasNext()) {
+                PlayerCoupleHidable current = it.next();
+
+                if(!current.getPlayer1().isDead() && !current.getPlayer2().isDead() && current.areReallyWatching())
+                    updateCoupleHiddenStatus(current);
+                else
+                    it.remove();
             }
         }
     }
