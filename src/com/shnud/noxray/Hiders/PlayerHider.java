@@ -109,7 +109,7 @@ public class PlayerHider implements PacketEventListener {
          */
 
         event.cancel();
-        PlayerCoupleHidable couple = new PlayerCoupleHidable(event.getReceiver(), ((Player) event.getSubject()), true);
+        PlayerCoupleHidable couple = new PlayerCoupleHidable(event.getReceiver(), ((Player) event.getSubject()));
 
         _coupleWatchList.addCouple(couple);
         /*

@@ -15,13 +15,18 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
     private double _lastDistance;
     private boolean _distanceInitialised = false;
-    private long _timeOfLastCheck = 0;
     private boolean _areHidden = false;
 
     public PlayerCoupleHidable(Player player1, Player player2) {
         super(player1, player2);
     }
 
+    /*
+     * initHidden is a flag to tell the constructor whether the players
+     * in the couple are already hidden from each other. If set to true,
+     * the class will not attempt to hide players if they don't have LOS
+     * straight away, as it thinks they are already hidden.
+     */
     public PlayerCoupleHidable(Player player1, Player player2, boolean initHidden) {
         super(player1, player2);
         _areHidden = initHidden;
@@ -40,7 +45,6 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
         _distanceInitialised = true;
         _lastDistance = getPlayer1().getLocation().distance(getPlayer2().getLocation());
-        _timeOfLastCheck = System.currentTimeMillis();
         return _lastDistance;
     }
 
@@ -87,20 +91,26 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
     public void hide() {
         _areHidden = true;
-        if(getPlayer1() instanceof Player && ((Player) getPlayer1()).isOnline())
-            PacketDispatcher.destroyEntityForPlayer(getPlayer2(), (Player) getPlayer1());
-        if(getPlayer2() instanceof Player && ((Player) getPlayer2()).isOnline())
-            PacketDispatcher.destroyEntityForPlayer(getPlayer1(), (Player) getPlayer2());
+        if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
+            PacketDispatcher.destroyEntityForPlayer(getPlayer2(), getPlayer1());
+            PacketDispatcher.destroyEntityForPlayer(getPlayer1(), getPlayer2());
+        }
     }
 
     public void show() {
         _areHidden = false;
-        if(getPlayer1() instanceof Player && ((Player) getPlayer1()).isOnline())
-            PacketDispatcher.spawnEntityForPlayer(getPlayer2(), (Player) getPlayer1());
-        if(getPlayer2() instanceof Player && ((Player) getPlayer2()).isOnline())
-            PacketDispatcher.spawnEntityForPlayer(getPlayer1(), (Player) getPlayer2());
+        if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
+            PacketDispatcher.spawnEntityForPlayer(getPlayer2(), getPlayer1());
+            PacketDispatcher.spawnEntityForPlayer(getPlayer1(), getPlayer2());
+        }
     }
 
+    /*
+     * Used to determine whether the Players are really watching each
+     * other as far as the Minecraft server is concered. If they aren't
+     * then there's no point keeping this PlayerCouple in the
+     * PlayerHider's couple list.
+     */
     public boolean areReallyWatching() {
         if(!areInSameWorld())
             return false;
