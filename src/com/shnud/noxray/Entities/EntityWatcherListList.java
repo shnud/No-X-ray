@@ -1,4 +1,4 @@
-package com.shnud.noxray.Entities.Grouping;
+package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Structures.HashMapArrayList;
 import org.bukkit.entity.Entity;

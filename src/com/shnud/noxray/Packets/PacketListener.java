@@ -20,12 +20,12 @@ import java.util.ArrayList;
 public class PacketListener {
     private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
     private static NoXray _plugin = NoXray.getInstance();
-    private static PacketListener _instance;
     private static ArrayList<PacketEventListener> _listeners = new ArrayList<PacketEventListener>();
     private static boolean hasInitialised = init();
 
     private static boolean init() {
-        registerPacketListeners();
+        if(!hasInitialised)
+            registerPacketListeners();
 
         return true;
     }

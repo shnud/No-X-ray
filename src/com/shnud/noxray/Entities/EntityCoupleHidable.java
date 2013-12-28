@@ -1,4 +1,4 @@
-package com.shnud.noxray.Entities.Grouping;
+package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Settings.NoXraySettings;
@@ -23,6 +23,11 @@ public class EntityCoupleHidable extends EntityCouple {
         super(entity1, entity2);
     }
 
+    public EntityCoupleHidable(Entity entity1, Entity entity2, boolean initHidden) {
+        super(entity1, entity2);
+        _areHidden = initHidden;
+    }
+
     public double getLastDistance() {
         if(!_distanceInitialised)
             throw new IllegalStateException("Distance has not yet been checked");
@@ -42,6 +47,9 @@ public class EntityCoupleHidable extends EntityCouple {
 
     public boolean haveClearLOS() {
         if(!areInSameWorld())
+            return false;
+
+        if(getEntity1().isDead() || getEntity2().isDead())
             return false;
 
         _lastDistance = getCurrentDistance();

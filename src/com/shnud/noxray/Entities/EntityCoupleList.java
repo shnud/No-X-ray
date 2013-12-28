@@ -1,4 +1,4 @@
-package com.shnud.noxray.Entities.Grouping;
+package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Structures.SynchHashMapArrayList;
 import org.bukkit.entity.Entity;
@@ -61,7 +61,7 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
     }
 
     public boolean containsCoupleFromID(long ID) {
-        return getCoupleFromID(ID) == null;
+        return getCoupleFromID(ID) != null;
     }
 
     public boolean containsCoupleFromEntities(Entity e1, Entity e2) {
@@ -69,7 +69,7 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
             throw new IllegalArgumentException("Entities cannot be null");
 
         long ID = EntityCouple.uniqueIDFromEntityPair(e1, e2);
-        return getCoupleFromID(ID) == null;
+        return getCoupleFromID(ID) != null;
     }
 
     public boolean containsCouple(EntityCouple couple) {
@@ -83,5 +83,9 @@ public class EntityCoupleList<T extends EntityCouple> implements Iterable<T> {
     @Override
     public Iterator<T> iterator() {
         return _couples.iterator();
+    }
+
+    public int size() {
+        return _couples.size();
     }
 }

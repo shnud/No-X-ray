@@ -1,8 +1,8 @@
 package com.shnud.noxray;
 
-import com.shnud.noxray.Entities.EntityHider;
-import com.shnud.noxray.Entities.PlayerHider;
-import com.shnud.noxray.Rooms.RoomHider;
+import com.shnud.noxray.Hiders.EntityHider;
+import com.shnud.noxray.Hiders.PlayerHider;
+import com.shnud.noxray.Hiders.RoomHider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -26,20 +26,33 @@ public class NoXray extends JavaPlugin {
         return _instance;
     }
 
-    private ArrayList<PlayerHider> _playerHiders;
-    private RoomHider _roomHider;
+    private ArrayList<PlayerHider> _playerHiders = new ArrayList<PlayerHider>();
+    private ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
+    private ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
+
+    @Override
+    public void onLoad() {}
 
     @Override
     public void onEnable() {
-        PlayerHider ph = new PlayerHider(getServer().getWorld("world"));
-        EntityHider eh = new EntityHider(getServer().getWorld("world"));
+        _playerHiders.add(new PlayerHider(getServer().getWorld("world"), true));
+        _entityHiders.add(new EntityHider(getServer().getWorld("world")));
+        _roomHiders.add(new RoomHider(getServer().getWorld("world")));
     }
 
+    @Override
     public void onDisable() {
+        for(PlayerHider ph : _playerHiders) {
+            ph.deactivate();
+        }
+
+        _playerHiders.clear();
+        _entityHiders.clear();
+        _roomHiders.clear();
         getServer().getScheduler().cancelTasks(this);
     }
 
-    public boolean isMainThread(Thread t) {
+    public static boolean isMainThread(Thread t) {
         return t.getId() == _mainThreadId;
     }
 }

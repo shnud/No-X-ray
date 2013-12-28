@@ -41,12 +41,23 @@ public class PacketDispatcher {
         new DestroyEntityPacketSender(Lists.newArrayList(receiver), entityIDs).send();
     }
 
-    public static void resendAllSpawnPacketsForWorld(World world) {
+    public static void resendAllEntitySpawnPacketsForWorld(World world) {
         List<Entity> entities = world.getEntities();
 
         for(Entity entity : entities) {
-            List<Player> players = _pm.getEntityTrackers(entity);
-            new EntitySpawnPacketSender(players, Lists.newArrayList(entity)).send();
+            List<Player> trackers = _pm.getEntityTrackers(entity);
+            if(!trackers.isEmpty())
+                new EntitySpawnPacketSender(trackers, Lists.newArrayList(entity)).send();
+        }
+    }
+
+    public static void resendAllPlayerSpawnPacketsForWorld(World world) {
+        List<Player> players = world.getPlayers();
+
+        for(Entity entity : players) {
+            List<Player> trackers = _pm.getEntityTrackers(entity);
+            if(!trackers.isEmpty())
+                new EntitySpawnPacketSender(trackers, Lists.newArrayList(entity)).send();
         }
     }
 }

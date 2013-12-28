@@ -17,7 +17,7 @@ public abstract class PacketSender implements Runnable {
     protected List<Player> _receivers;
 
     /*
-     * run() must be invoked to actually sendImplementation the packet.
+     * run() must be invoked to actually send the packet.
      */
     public PacketSender(List<Player> receivers) {
         if(receivers == null || receivers.isEmpty())
@@ -44,7 +44,7 @@ public abstract class PacketSender implements Runnable {
     }
 
     private final boolean isRunningOnMainThread() {
-        return NoXray.getInstance().isMainThread(Thread.currentThread());
+        return NoXray.isMainThread(Thread.currentThread());
     }
 
     /*

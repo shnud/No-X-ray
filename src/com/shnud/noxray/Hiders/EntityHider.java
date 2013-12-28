@@ -1,7 +1,7 @@
-package com.shnud.noxray.Entities;
+package com.shnud.noxray.Hiders;
 
-import com.shnud.noxray.Entities.Grouping.EntityWatcherList;
-import com.shnud.noxray.Entities.Grouping.EntityWatcherListList;
+import com.shnud.noxray.Entities.EntityWatcherList;
+import com.shnud.noxray.Entities.EntityWatcherListList;
 import com.shnud.noxray.Events.BasePacketEvent;
 import com.shnud.noxray.Events.EntitySpawnPacketEvent;
 import com.shnud.noxray.Events.EntityUpdatePacketEvent;
@@ -112,6 +112,9 @@ public class EntityHider implements PacketEventListener {
     }
 
     private void handleEntitySpawnPacketEvent(EntitySpawnPacketEvent event) {
+        if(event.getSubject().getType() == EntityType.PLAYER)
+            return;
+
         if(shouldShowEntityToWatcher(event.getSubject(), event.getReceiver()))
             return;
 

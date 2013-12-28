@@ -15,12 +15,12 @@ public class EntitySpawnPacketSender extends GenericEntityPacketSender {
     }
 
     @Override
-    public boolean isThreadSafe() {
+    protected boolean isThreadSafe() {
         return false;
     }
 
     @Override
-    public void sendImplementation() {
+    protected void sendImplementation() {
         for(Entity subject : _subjects) {
             getProtocolManager().updateEntity(subject, _receivers);
         }

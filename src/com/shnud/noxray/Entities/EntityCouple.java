@@ -1,5 +1,6 @@
-package com.shnud.noxray.Entities.Grouping;
+package com.shnud.noxray.Entities;
 
+import com.shnud.noxray.Utilities.MathHelper;
 import org.bukkit.entity.Entity;
 
 /**
@@ -21,7 +22,7 @@ public class EntityCouple {
         int x = e1.getEntityId();
         int y = e2.getEntityId();
 
-        return ((x + y) * (x + y + 1)) / 2 + y;
+        return MathHelper.cantorPair(x, y);
     }
 
     public long uniqueID() {

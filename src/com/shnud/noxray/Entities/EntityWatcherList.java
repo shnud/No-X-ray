@@ -1,4 +1,4 @@
-package com.shnud.noxray.Entities.Grouping;
+package com.shnud.noxray.Entities;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
