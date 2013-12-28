@@ -22,11 +22,11 @@ public class PacketDispatcher {
     private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
 
     public static void spawnEntityForPlayer(Entity subject, Player receiver) {
-        new EntitySpawnPacketSender(Lists.newArrayList(receiver), Lists.newArrayList(subject));
+        new EntitySpawnPacketSender(Lists.newArrayList(receiver), Lists.newArrayList(subject)).send();
     }
 
     public static void spawnEntityForPlayers(Entity subject, List<Player> receivers) {
-        new EntitySpawnPacketSender(receivers, Lists.newArrayList(subject));
+        new EntitySpawnPacketSender(receivers, Lists.newArrayList(subject)).send();
     }
 
     public static void destroyEntityForPlayer(int entityID, Player receiver) {
