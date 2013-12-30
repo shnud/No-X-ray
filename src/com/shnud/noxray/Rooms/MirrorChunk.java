@@ -1,7 +1,8 @@
 package com.shnud.noxray.Rooms;
 
 import com.shnud.noxray.Structures.BooleanArray;
-import org.bukkit.World;
+import com.shnud.noxray.Utilities.DynamicCoordinates;
+import com.shnud.noxray.Utilities.MagicValues;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -46,6 +47,10 @@ public class MirrorChunk {
         return new MirrorChunk(x, z, data, keys);
     }
 
+    public static MirrorChunk constructBlankMirrorChunk(int x, int z) {
+        return new MirrorChunk(x, z, SplitChunkData.createBlank(), new int[MAX_UNIQUE_KEYS_PER_CHUNK]);
+    }
+
     public void saveToFileAtOffset(RandomAccessFile file, long fileOffset) throws IOException {
         file.seek(fileOffset);
 
@@ -54,10 +59,6 @@ public class MirrorChunk {
         }
 
         _data.writeToFileAtOffset(file, file.getFilePointer());
-    }
-
-    public static MirrorChunk constructBlankMirrorChunk(int x, int z) {
-        return new MirrorChunk(x, z, SplitChunkData.createBlank(), new int[MAX_UNIQUE_KEYS_PER_CHUNK]);
     }
 
     private int addNewRoomIDToKeys(int id) throws MirrorChunkKeysFullException {
@@ -138,6 +139,18 @@ public class MirrorChunk {
             _hasChangedSinceInit = true;
     }
 
+    public void setRoomIdAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
+        if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
+            throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
+
+        setRoomIDAtLocalBlock(
+                coordinates.blockX() % MagicValues.BLOCKS_IN_CHUNK,
+                coordinates.blockY(),
+                coordinates.blockZ() % MagicValues.BLOCKS_IN_CHUNK,
+                roomID
+        );
+    }
+
     public boolean containsKeyForRoomID(int roomId) {
         return keyIndexForID(roomId) >= 0;
     }
@@ -157,7 +170,7 @@ public class MirrorChunk {
      * @param z chunk-relative z coordinate
      * @return the room ID at the given coordinates, returns NOT_A_ROOM_ID if no ID is found
      */
-    public int getRoomIDAtLocalBlock(int x, int y, int z) {
+    private int getRoomIDAtLocalBlock(int x, int y, int z) {
         if(x < 0 || x > 15 || z < 0 || z > 15 || y < 0 || y > 255)
             throw new IllegalArgumentException("Coordinates not within chunk bounds");
 
@@ -177,6 +190,17 @@ public class MirrorChunk {
             return NOT_A_ROOM_ID;
         else
             return _keyToId[key - 1];
+    }
+
+    public int getRoomIDAtCoordinates(DynamicCoordinates coordinates) {
+        if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
+            throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
+
+        return getRoomIDAtLocalBlock(
+                coordinates.blockX() % MagicValues.BLOCKS_IN_CHUNK,
+                coordinates.blockY(),
+                coordinates.blockZ() % MagicValues.BLOCKS_IN_CHUNK
+        );
     }
 
     public int getX() {

@@ -5,17 +5,17 @@ package com.shnud.noxray.Utilities;
  */
 public class DynamicCoordinates {
 
-    private int _globalX, _globalY, _globalZ;
+    private int _blockX, _blockY, _blockZ;
     private PrecisionLevel _level;
 
-    private enum PrecisionLevel {
+    public enum PrecisionLevel {
         BLOCK, CHUNK, REGION;
     }
 
     private DynamicCoordinates(int x, int y, int z, PrecisionLevel level) {
-        _globalX = x;
-        _globalY = y;
-        _globalZ = z;
+        _blockX = x;
+        _blockY = y;
+        _blockZ = z;
         _level = level;
     }
 
@@ -41,13 +41,16 @@ public class DynamicCoordinates {
         return new DynamicCoordinates(blockX, blockY, blockZ, PrecisionLevel.BLOCK);
     }
 
-    public int globalX() {return _globalX;}
-    public int globalY() {return _globalY;}
-    public int globalZ() {return _globalZ;}
-    public int chunkX() {return _globalX >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK;}
-    public int chunkY() {return _globalY >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK;}
-    public int chunkZ() {return _globalZ >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK;}
-    public int regionX() {return _globalX >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
-    public int regionY() {return _globalY >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
-    public int regionZ() {return _globalZ >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
+    public int blockX() {return _blockX;}
+    public int blockY() {return _blockY;}
+    public int blockZ() {return _blockZ;}
+    public int chunkX() {return _blockX >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK;}
+    public int chunkY() {return _blockY >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK;}
+    public int chunkZ() {return _blockZ >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK;}
+    public int regionX() {return _blockX >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
+    public int regionY() {return _blockY >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
+    public int regionZ() {return _blockZ >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
+    public PrecisionLevel getPrecisionLevel() {
+        return _level;
+    }
 }
