@@ -20,27 +20,22 @@ public class MirrorChunk {
     private SplitChunkData _data;
     private int _x, _z;
     private int[] _keyToId;
-    private World _world;
     private boolean _hasChangedSinceInit = false;
 
-    private MirrorChunk(World world, int x, int z, SplitChunkData data, int[] keys) {
+    private MirrorChunk(int x, int z, SplitChunkData data, int[] keys) {
         if(keys.length != MAX_UNIQUE_KEYS_PER_CHUNK)
             throw new IllegalArgumentException("Keys array must be " + MAX_UNIQUE_KEYS_PER_CHUNK + " long max");
 
         if(data == null)
             throw new IllegalArgumentException("Chunk data cannot be null");
 
-        if(world == null)
-            throw new IllegalArgumentException("World cannot be null");
-
-        _world = world;
         _x = x;
         _z = z;
         _data = data;
         _keyToId = keys;
     }
 
-    public static MirrorChunk constructFromFileAtOffset(World world, int x, int z, RandomAccessFile file, long fileOffset) throws IOException, DataFormatException {
+    public static MirrorChunk constructFromFileAtOffset(int x, int z, RandomAccessFile file, long fileOffset) throws IOException, DataFormatException {
         file.seek(fileOffset);
 
         int keys[] = new int[MAX_UNIQUE_KEYS_PER_CHUNK];
@@ -48,7 +43,7 @@ public class MirrorChunk {
 
         SplitChunkData data = SplitChunkData.createFromFileAtOffset(file, file.getFilePointer());
 
-        return new MirrorChunk(world, x, z, data, keys);
+        return new MirrorChunk(x, z, data, keys);
     }
 
     public void saveToFileAtOffset(RandomAccessFile file, long fileOffset) throws IOException {
@@ -61,8 +56,8 @@ public class MirrorChunk {
         _data.writeToFileAtOffset(file, file.getFilePointer());
     }
 
-    public static MirrorChunk constructBlankMirrorChunk(World world, int x, int z) {
-        return new MirrorChunk(world, x, z, SplitChunkData.createBlank(), new int[MAX_UNIQUE_KEYS_PER_CHUNK]);
+    public static MirrorChunk constructBlankMirrorChunk(int x, int z) {
+        return new MirrorChunk(x, z, SplitChunkData.createBlank(), new int[MAX_UNIQUE_KEYS_PER_CHUNK]);
     }
 
     private int addNewRoomIDToKeys(int id) throws MirrorChunkKeysFullException {
