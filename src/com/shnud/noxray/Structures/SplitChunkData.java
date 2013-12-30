@@ -1,6 +1,5 @@
-package com.shnud.noxray.Rooms;
+package com.shnud.noxray.Structures;
 
-import com.shnud.noxray.Structures.DynamicNibbleArray;
 import com.shnud.noxray.Utilities.MagicValues;
 
 import java.io.IOException;

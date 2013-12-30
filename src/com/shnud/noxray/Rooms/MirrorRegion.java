@@ -33,6 +33,8 @@ public class MirrorRegion {
      * Attemps to read in chunks from a MirrorRegion file
      *
      * @throws java.io.IOException If the file specified couldn't be found
+     * @param regionX the x coordinate of the region (in region coordinates)
+     * @param regionZ the z coordinate of the region (in region coordinates)
      * @param regionFile The file where the MirrorRegion is located
      * @return The newly created MirrorRegion object
      */
@@ -41,24 +43,6 @@ public class MirrorRegion {
             throw new FileNotFoundException("Region file does not exist");
 
         MirrorRegion region = new MirrorRegion(regionX, regionZ);
-
-        /*
-         * File format for MirrorRegion:
-         *
-         * - Two integers specifying x and z coordinates of region
-         * - For each chunk: (1024x)
-         *
-         *    - Boolean value specifying whether the next chunk is included in the file
-         *    - 15 integers specifying the roomIDs which are contained in this chunk
-         *    - For each section of chunk: (8x)
-         *
-         *       - Boolean value specifying whether the section is empty
-         *       - If not empty, int value specifying length of compressed section
-         *       - Compressed byte array of the keys in that section
-         *
-         * Chunks are ordered with the x changing fastest, e.g. [0, 0], [1, 0], [2, 0], [3, 0]
-         */
-
         RandomAccessFile ram = new RandomAccessFile(regionFile, "r");
         int x = ram.readInt();
         int z = ram.readInt();
@@ -94,17 +78,44 @@ public class MirrorRegion {
         return new MirrorRegion(regionX, regionZ);
     }
 
+    /**
+     * Returns the index in this region's chunk array in which the given
+     * chunk should be stored at. Note that this function does not check whether
+     * the given coordinates are within the bounds for this region, as the only
+     * function that calls it - getChunk() - checks that itself
+     *
+     * @param chunkX the x coordinate of the chunk (in chunk coordinates)
+     * @param chunkZ the z coordinate of the chunk (in chunk coordinates)
+     * @return the array index where the chunk should be stored
+     */
     private static int getChunkIndex(int chunkX, int chunkZ) {
         return chunkX % MagicValues.HORIZONTAL_CHUNKS_IN_REGION + ((chunkZ % MagicValues.HORIZONTAL_CHUNKS_IN_REGION) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
     }
 
+    /**
+     * Returns the filename that should be given to a region when
+     * saved on disk. The same filename will be used to revive the region
+     * from disk when it is loaded again.
+     *
+     * @param regionX the x coordinate of the region (in region coordinates)
+     * @param regionZ the z coordinate of the region (in region coordinates)
+     * @return the filename
+     */
     public static String regionFileName(int regionX, int regionZ) {
         return regionX + "." + regionZ + ".mrr";
     }
 
+    /**
+     * Returns the filename that should be given to this region when
+     * saved on disk. The same filename will be used to revive the region
+     * from disk when it is loaded again.
+     *
+     * @return the filename
+     */
     public String regionFileName() {
         return regionFileName(_regionX, _regionZ);
     }
+
 
     public void retain() { _chunksInUse++; }
 
@@ -117,7 +128,8 @@ public class MirrorRegion {
     public int getRetainCount() { return _chunksInUse; }
 
     /**
-     * Get the chunk located at the given global chunk coordinates
+     * Get the chunk located at the given global chunk coordinates. If the chunk is
+     * null (i.e. wasn't initiated from a file), it will return a new blank chunk.
      *
      * @param chunkX the global chunk x coordinate to get
      * @param chunkZ the global chunk z coordinate to get
@@ -136,12 +148,28 @@ public class MirrorRegion {
         return _chunks[index];
     }
 
-    private boolean isChunkLoaded(int chunkX, int chunkZ) {
-        int index = getChunkIndex(chunkX, chunkZ);
-        return _chunks[index] != null;
-    }
-
+    /**
+     * Saves the region coordinates, and its containing chunks to the specified file. The file format
+     * is as follows:
+     *
+     * - Two integers specifying x and z coordinates of region
+     * - For each chunk: (1024x)
+     *
+     *    - Boolean value specifying whether the next chunk is included in the file
+     *    - 15 integers specifying the roomIDs which are contained in this chunk
+     *    - For each section of chunk: (8x)
+     *
+     *       - Boolean value specifying whether the section is empty
+     *       - If not empty, int value specifying length of compressed section
+     *       - Compressed byte array of the keys in that section
+     *
+     * Chunks are ordered with the x changing fastest, e.g. [0, 0], [1, 0], [2, 0], [3, 0]
+     *
+     * @param regionFile
+     * @throws IOException
+     */
     public void saveToFile(File regionFile) throws IOException {
+
         if(!regionFile.exists())
             regionFile.createNewFile();
 

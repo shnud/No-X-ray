@@ -1,6 +1,7 @@
 package com.shnud.noxray.Rooms;
 
 import com.shnud.noxray.Structures.BooleanArray;
+import com.shnud.noxray.Structures.SplitChunkData;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 
@@ -14,13 +15,11 @@ import java.util.zip.DataFormatException;
  */
 public class MirrorChunk {
 
-    private static final int NOT_A_ROOM_KEY = 0;
-    private static final int NOT_A_ROOM_ID = Room.NOT_A_ROOM_ID;
     private static final int MAX_UNIQUE_KEYS_PER_CHUNK = 15;
     private static final boolean SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL = true;
     private SplitChunkData _data;
     private int _x, _z;
-    private int[] _keyToId;
+    private int[] _IDSlots;
     private MirrorChunkEventListener _listener;
     private boolean _isDataEmpty = false;
 
@@ -34,7 +33,7 @@ public class MirrorChunk {
         _x = x;
         _z = z;
         _data = data;
-        _keyToId = keys;
+        _IDSlots = keys;
     }
 
     public static MirrorChunk constructFromFileAtOffset(int x, int z, RandomAccessFile file, long fileOffset) throws IOException, DataFormatException {
@@ -57,40 +56,53 @@ public class MirrorChunk {
     public void saveToFileAtOffset(RandomAccessFile file, long fileOffset) throws IOException {
         file.seek(fileOffset);
 
-        for(int key : _keyToId) {
-            file.writeInt(key);
+        for(int ID : _IDSlots) {
+            file.writeInt(ID);
         }
 
         _data.writeToFileAtOffset(file, file.getFilePointer());
     }
 
-    private int addNewRoomIDToKeys(int id) throws MirrorChunkKeysFullException {
-        int existing = keyIndexForID(id);
+    /**
+     * Adds a new room ID to this chunk's keys at the first available slot. If all of slots are full, a cleanup
+     * of the chunk data will be triggered (if this feature is turned on) to check if any slots not in use can
+     * be freed up.
+     *
+     * @param ID the ID of the room to be added to this chunk
+     * @return the ID slot where the ID has been stored
+     * @throws MirrorChunkKeysFullException if there was no space to add the room ID
+     */
+    private int addNewRoomIDToSlots(int ID) throws MirrorChunkKeysFullException {
+        int existing = slotIndexForID(ID);
         if(existing >= 0)
             return existing;
 
-        int unused = firstUnusedKeySlot();
+        int unused = firstUnusedIDSlot();
         if(unused < 0) {
             if(!SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL || cleanUp().getCleanedKeysAmount() < 1)
                 throw new MirrorChunkKeysFullException();
             else {
-                unused = firstUnusedKeySlot();
+                unused = firstUnusedIDSlot();
                 /*
-                 * Possibly notify the Rooms of the removed ids from the key->id array
+                 * Possibly notify the Rooms of the removed ids from the key->ID array
                  * as they still think that there is part of that room stored in this chunk
                  */
             }
         }
 
-        _keyToId[unused] = id;
-        notifyListenerRoomIdAdded(id);
+        _IDSlots[unused] = ID;
+        notifyListenerRoomIDAdded(ID);
         notifyListenerHasChanged();
         return unused;
     }
 
-    private int firstUnusedKeySlot() {
-        for(int i = 0; i < _keyToId.length; i++) {
-            if(_keyToId[i] == NOT_A_ROOM_ID)
+    /**
+     * Returns the index of the first unused key slot in the key->id array, if there is one.
+     * @return the index, or -1 if the key slots are full
+     */
+    private int firstUnusedIDSlot() {
+        for(int i = 0; i < _IDSlots.length; i++) {
+            if(_IDSlots[i] == 0)
                 return i;
         }
 
@@ -101,9 +113,9 @@ public class MirrorChunk {
         return (y * 256) + (z * 16) + x;
     }
 
-    private int keyIndexForID(int id) {
-        for(int i = 0; i < _keyToId.length; i++) {
-            if(_keyToId[i] == id)
+    private int slotIndexForID(int id) {
+        for(int i = 0; i < _IDSlots.length; i++) {
+            if(_IDSlots[i] == id)
                 return i;
         }
 
@@ -114,40 +126,52 @@ public class MirrorChunk {
         if(x < 0 || x > 15 || z < 0 || z > 15 || y < 0 || y > 255)
             throw new IllegalArgumentException("Coordinates not within chunk bounds");
 
-        int key;
+        int index = indexOfLocalBlock(x, y, z);
 
-        if(roomID == NOT_A_ROOM_ID)
-            key = NOT_A_ROOM_KEY;
-        else {
-            key = keyIndexForID(roomID);
+        if(roomID == 0) {
+            int oldSlot = _data.getValueAtIndex(index);
+            _data.setValueAtIndex(index, (byte) 0);
+            if(oldSlot != 0)
+                notifyListenerHasChanged();
 
-            /*
-             * If an existing key did not already exist, check to see if it's possible
-             * to add one. If it's not, throw an exception. Otherwise, continue to add it.
-             */
-            if(isFull() && key < 0)
-                throw new MirrorChunkKeysFullException();
-            else
-                key = addNewRoomIDToKeys(roomID);
+            return;
+        }
+
+        int slot = slotIndexForID(roomID);
+
+       /*
+        * If an existing key did not already exist, check to see if it's possible
+        * to add one. If it's not, throw an exception. Otherwise, continue to add it.
+        */
+
+        if(slot < 0) {
+            slot = firstUnusedIDSlot();
+
+            if(slot < 0) {
+                if(!SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL)
+                    throw new MirrorChunkKeysFullException();
+
+                cleanUp();
+                slot = firstUnusedIDSlot();
+
+                if(slot < 0)
+                    throw new MirrorChunkKeysFullException();
+            }
         }
 
         /*
          * See getID() function for an explanation as to why we are
-         * adding 1 to the key before adding it to the chunk data
+         * adding 1 to the slot index before adding it to the chunk data
          */
-        int index = indexOfLocalBlock(x, y, z);
-        int oldKey = _data.getValueAtIndex(index);
-        _data.setValueAtIndex(index, (byte) (key + 1));
 
-        if(oldKey != key) {
-            notifyListenerHasChanged();
-        }
+        int oldSlot = _data.getValueAtIndex(index) - 1;
+        _data.setValueAtIndex(index, (byte) (slot + 1));
 
-        if(key != NOT_A_ROOM_KEY)
-            _isDataEmpty = false;
+        if(oldSlot != slot) notifyListenerHasChanged();
+        _isDataEmpty = false;
     }
 
-    public void setRoomIdAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
+    public void setRoomIDAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
         if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
 
@@ -160,14 +184,14 @@ public class MirrorChunk {
     }
 
     public boolean containsKeyForRoomID(int roomId) {
-        return keyIndexForID(roomId) >= 0;
+        return slotIndexForID(roomId) >= 0;
     }
 
     public boolean isFull() {
-        if(firstUnusedKeySlot() < 0 && SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL)
+        if(firstUnusedIDSlot() < 0 && SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL)
             cleanUp();
 
-        return firstUnusedKeySlot() < 0;
+        return firstUnusedIDSlot() < 0;
     }
 
     /**
@@ -194,10 +218,10 @@ public class MirrorChunk {
          * writing keys to the chunk data.
          */
 
-        if(key == NOT_A_ROOM_KEY)
-            return NOT_A_ROOM_ID;
+        if(key == 0)
+            return 0;
         else
-            return _keyToId[key - 1];
+            return _IDSlots[key - 1];
     }
 
     public int getRoomIDAtCoordinates(DynamicCoordinates coordinates) {
@@ -228,7 +252,7 @@ public class MirrorChunk {
      * @param roomID The ID of the room to remove from this chunk
      */
     private void removeRoomIDFromKeys(int roomID) {
-        int index = keyIndexForID(roomID);
+        int index = slotIndexForID(roomID);
 
         if(roomID < 0)
             return;
@@ -238,7 +262,7 @@ public class MirrorChunk {
                 _data.setValueAtIndex(i, (byte)15);
         }
 
-        _keyToId[index] = 0;
+        _IDSlots[index] = 0;
         notifyListenerRoomIdRemoved(roomID);
         notifyListenerHasChanged();
     }
@@ -262,9 +286,15 @@ public class MirrorChunk {
         boolean isEmpty = true;
 
         for (int i = 0; i < _data.getLength(); i++) {
-            byte key = (byte) _data.getValueAtIndex(i);
+            byte slot = (byte) _data.getValueAtIndex(i);
 
-            if(key != NOT_A_ROOM_KEY) {
+            if(slot != 0) {
+                slot--;
+
+                /*
+                 * See the get and set roomID methods to see why we are decrementing the slot
+                 */
+
 
                 /*
                  * Here the if statement checks whether a key found in the chunk data
@@ -272,8 +302,8 @@ public class MirrorChunk {
                  * useless and is possibly making compression off the chunk less efficient
                  */
 
-                if(_keyToId[key] == Room.NOT_A_ROOM_ID) {
-                    _data.setValueAtIndex(i, (byte) NOT_A_ROOM_KEY);
+                if(_IDSlots[slot] == 0) {
+                    _data.setValueAtIndex(i, (byte) 0);
                     results.cleanedKeys++;
                 }
                 else
@@ -293,8 +323,8 @@ public class MirrorChunk {
 
         for (int i = 0; i < foundKeys.getLength(); i++) {
             if(foundKeys.getValueAtIndex(i) == false) {
-                results.addCleanedID(_keyToId[i]);
-                _keyToId[i] = NOT_A_ROOM_KEY;
+                results.addCleanedID(_IDSlots[i]);
+                _IDSlots[i] = 0;
             }
         }
 
@@ -327,8 +357,8 @@ public class MirrorChunk {
         if(_isDataEmpty)
             return true;
         else {
-            for(int id : _keyToId) {
-                if(id != NOT_A_ROOM_ID) return false;
+            for(int id : _IDSlots) {
+                if(id != 0) return false;
             }
         }
 
@@ -345,12 +375,12 @@ public class MirrorChunk {
             _listener.roomRemovedFromChunkEvent(roomID, _x, _z);
     }
 
-    private void notifyListenerRoomIdAdded(int roomID) {
+    private void notifyListenerRoomIDAdded(int roomID) {
         if(_listener != null)
             _listener.roomAddedToChunkEvent(roomID, _x, _z);
     }
 
-    public class MirrorChunkKeysFullException extends Exception {}
+    public static class MirrorChunkKeysFullException extends Exception {}
 
     private class MirrorChunkCleanUpResults {
         private int cleanedKeys = 0;
