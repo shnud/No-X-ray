@@ -3,10 +3,10 @@ package com.shnud.noxray.Utilities;
 /**
  * Created by Andrew on 22/12/2013.
  */
-public class XY {
+public class XZ {
     public int x, z;
 
-    public XY(int x, int z) {
+    public XZ(int x, int z) {
         this.x = x;
         this.z = z;
     }
@@ -16,10 +16,10 @@ public class XY {
     }
 
     public boolean equals(Object o) {
-        if(!(o instanceof XY))
+        if(!(o instanceof XZ))
             return false;
 
-        XY comp = (XY) o;
+        XZ comp = (XZ) o;
         return comp.hashCode() == this.hashCode();
     }
 }

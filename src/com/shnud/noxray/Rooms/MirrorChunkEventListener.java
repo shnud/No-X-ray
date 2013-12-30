@@ -6,4 +6,8 @@ package com.shnud.noxray.Rooms;
 public interface MirrorChunkEventListener {
 
     void chunkChangeEvent(int x, int z);
+
+    void roomAddedToChunkEvent(int roomID, int x, int z);
+
+    void roomRemovedFromChunkEvent(int roomID, int x, int z);
 }

@@ -80,7 +80,10 @@ public class MirrorChunk {
         }
 
         _keyToId[unused] = id;
-        notifyListenerHasChanged();
+        if(_listener != null) {
+            _listener.roomAddedToChunkEvent(id, _x, _z);
+            _listener.chunkChangeEvent(_x, _z);
+        }
         return unused;
     }
 
@@ -135,8 +138,8 @@ public class MirrorChunk {
         int oldKey = _data.getValueAtIndex(index);
         _data.setValueAtIndex(index, (byte) (key + 1));
 
-        if(oldKey != key) {
-            notifyListenerHasChanged();
+        if(oldKey != key && _listener != null) {
+            _listener.chunkChangeEvent(_x, _z);
         }
     }
 
@@ -232,7 +235,10 @@ public class MirrorChunk {
         }
 
         _keyToId[index] = 0;
-        notifyListenerHasChanged();
+        if(_listener != null) {
+            _listener.roomRemovedFromChunkEvent(roomID, _x, _z);
+            _listener.chunkChangeEvent(_x, _z);
+        }
     }
 
     /**
@@ -279,13 +285,21 @@ public class MirrorChunk {
             }
         }
 
-        if(results.getCleanedKeysAmount() > 0 || results.getCleanedIDs().length > 0)
-            notifyListenerHasChanged();
+        if(results.getCleanedKeysAmount() > 0 || results.getCleanedIDs().length > 0) {
+            if(_listener != null) {
+
+                for(int key : results._cleanedIDs) {
+                    _listener.roomRemovedFromChunkEvent(key, _x, _z);
+                }
+
+                _listener.chunkChangeEvent(_x, _z);
+            }
+        }
 
         return results;
     }
 
-    public void addListener(MirrorChunkEventListener listener) {
+    public void setListener(MirrorChunkEventListener listener) {
         _listener = listener;
     }
 
@@ -306,10 +320,5 @@ public class MirrorChunk {
         public Integer[] getCleanedIDs() {
             return (Integer[]) _cleanedIDs.toArray();
         }
-    }
-
-    private void notifyListenerHasChanged() {
-        if(_listener != null)
-            _listener.chunkChangeEvent(_x, _z);
     }
 }

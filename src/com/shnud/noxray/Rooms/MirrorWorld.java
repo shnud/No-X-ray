@@ -3,8 +3,9 @@ package com.shnud.noxray.Rooms;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Structures.HashMapArrayList;
 import com.shnud.noxray.Utilities.MagicValues;
-import com.shnud.noxray.Utilities.XY;
+import com.shnud.noxray.Utilities.XZ;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -68,7 +69,7 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
                 int chunkX = ram.readInt();
                 int chunkZ = ram.readInt();
 
-                newRoom.addChunk(new XY(chunkX, chunkZ));
+                newRoom.addChunk(new XZ(chunkX, chunkZ));
             } while(ram.readChar() == ',');
 
             _rooms.add(newRoom.getID(), newRoom);
@@ -87,7 +88,7 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         for(Room room : _rooms) {
             ram.writeInt(room.getID());
 
-            ArrayList<XY> chunks = room.getListOfKnownChunks();
+            ArrayList<XZ> chunks = room.getListOfKnownChunks();
 
             for(int i = 0; i < chunks.size(); i++) {
                 ram.writeInt(chunks.get(i).x);
@@ -194,10 +195,13 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         if(!event.getWorld().equals(_world))
             return;
 
+        Chunk chunk = event.getChunk();
+
         int regionX = event.getChunk().getX() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
         int regionZ = event.getChunk().getZ() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
 
         getRegion(regionX, regionZ).retain();
+        getRegion(regionX, regionZ).setChunkListener(chunk.getX(), chunk.getZ(), this);
     }
 
     @EventHandler (priority = EventPriority.MONITOR)
@@ -230,5 +234,21 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
                 }
             }
         }
+    }
+
+    @Override
+    public void roomAddedToChunkEvent(int roomID, int x, int z) {
+        if(!_rooms.containsKey(roomID))
+            _rooms.add(roomID, new Room(roomID));
+
+        _rooms.get(roomID).addChunk(new XZ(x, z));
+    }
+
+    @Override
+    public void roomRemovedFromChunkEvent(int roomID, int x, int z) {
+        if(!_rooms.containsKey(roomID))
+            return;
+
+        _rooms.get(roomID).removeChunk(new XZ(x, z));
     }
 }

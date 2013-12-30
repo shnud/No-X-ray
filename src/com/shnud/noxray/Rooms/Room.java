@@ -1,6 +1,6 @@
 package com.shnud.noxray.Rooms;
 
-import com.shnud.noxray.Utilities.XY;
+import com.shnud.noxray.Utilities.XZ;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -14,7 +14,7 @@ public class Room {
     public static final int NOT_A_ROOM_ID = 0;
 
     private int _id;
-    private ArrayList<XY> _knownChunks = new ArrayList<XY>();
+    private ArrayList<XZ> _knownChunks = new ArrayList<XZ>();
 
     public Room(int id) {
         if(id < 0)
@@ -27,19 +27,19 @@ public class Room {
         return _id;
     }
 
-    public ArrayList<XY> getListOfKnownChunks() {
+    public ArrayList<XZ> getListOfKnownChunks() {
         return _knownChunks;
     }
 
-    public void addChunk(XY coords) {
+    public void addChunk(XZ coords) {
         _knownChunks.add(coords);
     }
 
-    public void removeChunk(XY coords) {
+    public void removeChunk(XZ coords) {
         Iterator it = _knownChunks.iterator();
 
         while(it.hasNext()) {
-            XY chunk = (XY) it.next();
+            XZ chunk = (XZ) it.next();
 
             if(chunk.x == coords.x && chunk.z == coords.z) {
                 it.remove();

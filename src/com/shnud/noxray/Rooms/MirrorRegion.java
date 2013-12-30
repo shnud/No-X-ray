@@ -170,4 +170,8 @@ public class MirrorRegion {
     public long getMillisecondsSinceLastSuccessfulSave() {
         return System.currentTimeMillis() - _timeOfLastSuccessfulSave;
     }
+
+    public void setChunkListener(int x, int z, MirrorChunkEventListener listener) {
+        getChunk(x, z).setListener(listener);
+    }
 }
