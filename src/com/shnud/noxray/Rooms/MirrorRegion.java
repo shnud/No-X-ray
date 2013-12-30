@@ -23,10 +23,10 @@ public class MirrorRegion {
         _regionX = regionX;
         _regionZ = regionZ;
 
-        _minChunkX = regionX * MagicValues.CHUNKS_IN_REGION;
-        _maxChunkX = _minChunkX + 32;
-        _minChunkZ = regionZ * MagicValues.CHUNKS_IN_REGION;
-        _maxChunkZ = _minChunkZ + 32;
+        _minChunkX = regionX * MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
+        _maxChunkX = _minChunkX + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
+        _minChunkZ = regionZ * MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
+        _maxChunkZ = _minChunkZ + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
     }
 
     /**
@@ -95,7 +95,7 @@ public class MirrorRegion {
     }
 
     private static int getChunkIndex(int chunkX, int chunkZ) {
-        return chunkX % MagicValues.CHUNKS_IN_REGION + ((chunkZ % MagicValues.CHUNKS_IN_REGION) * MagicValues.CHUNKS_IN_REGION);
+        return chunkX % MagicValues.HORIZONTAL_CHUNKS_IN_REGION + ((chunkZ % MagicValues.HORIZONTAL_CHUNKS_IN_REGION) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
     }
 
     public static String regionFileName(int regionX, int regionZ) {
@@ -151,7 +151,7 @@ public class MirrorRegion {
         ram.writeInt(_regionZ);
 
         for(MirrorChunk chunk : _chunks) {
-            if(chunk != null) {
+            if(chunk != null && !chunk.isEmpty()) {
                 ram.writeBoolean(true);
                 chunk.saveToFileAtOffset(ram, ram.getFilePointer());
             }

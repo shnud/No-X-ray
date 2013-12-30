@@ -22,6 +22,7 @@ public class MirrorChunk {
     private int _x, _z;
     private int[] _keyToId;
     private MirrorChunkEventListener _listener;
+    private boolean _isDataEmpty = false;
 
     private MirrorChunk(int x, int z, SplitChunkData data, int[] keys) {
         if(keys.length != MAX_UNIQUE_KEYS_PER_CHUNK)
@@ -48,7 +49,9 @@ public class MirrorChunk {
     }
 
     public static MirrorChunk constructBlankMirrorChunk(int x, int z) {
-        return new MirrorChunk(x, z, SplitChunkData.createBlank(), new int[MAX_UNIQUE_KEYS_PER_CHUNK]);
+        MirrorChunk newMirrorChunk = new MirrorChunk(x, z, SplitChunkData.createBlank(), new int[MAX_UNIQUE_KEYS_PER_CHUNK]);
+        newMirrorChunk._isDataEmpty = true;
+        return newMirrorChunk;
     }
 
     public void saveToFileAtOffset(RandomAccessFile file, long fileOffset) throws IOException {
@@ -80,10 +83,8 @@ public class MirrorChunk {
         }
 
         _keyToId[unused] = id;
-        if(_listener != null) {
-            _listener.roomAddedToChunkEvent(id, _x, _z);
-            _listener.chunkChangeEvent(_x, _z);
-        }
+        notifyListenerRoomIdAdded(id);
+        notifyListenerHasChanged();
         return unused;
     }
 
@@ -138,9 +139,12 @@ public class MirrorChunk {
         int oldKey = _data.getValueAtIndex(index);
         _data.setValueAtIndex(index, (byte) (key + 1));
 
-        if(oldKey != key && _listener != null) {
-            _listener.chunkChangeEvent(_x, _z);
+        if(oldKey != key) {
+            notifyListenerHasChanged();
         }
+
+        if(key != NOT_A_ROOM_KEY)
+            _isDataEmpty = false;
     }
 
     public void setRoomIdAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
@@ -148,9 +152,9 @@ public class MirrorChunk {
             throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
 
         setRoomIDAtLocalBlock(
-                coordinates.blockX() % MagicValues.BLOCKS_IN_CHUNK,
+                coordinates.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
                 coordinates.blockY(),
-                coordinates.blockZ() % MagicValues.BLOCKS_IN_CHUNK,
+                coordinates.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
                 roomID
         );
     }
@@ -201,9 +205,9 @@ public class MirrorChunk {
             throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
 
         return getRoomIDAtLocalBlock(
-                coordinates.blockX() % MagicValues.BLOCKS_IN_CHUNK,
+                coordinates.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
                 coordinates.blockY(),
-                coordinates.blockZ() % MagicValues.BLOCKS_IN_CHUNK
+                coordinates.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK
         );
     }
 
@@ -235,10 +239,8 @@ public class MirrorChunk {
         }
 
         _keyToId[index] = 0;
-        if(_listener != null) {
-            _listener.roomRemovedFromChunkEvent(roomID, _x, _z);
-            _listener.chunkChangeEvent(_x, _z);
-        }
+        notifyListenerRoomIdRemoved(roomID);
+        notifyListenerHasChanged();
     }
 
     /**
@@ -257,6 +259,7 @@ public class MirrorChunk {
          * can be used for a new room if necessary.
          */
         BooleanArray foundKeys = new BooleanArray(MAX_UNIQUE_KEYS_PER_CHUNK);
+        boolean isEmpty = true;
 
         for (int i = 0; i < _data.getLength(); i++) {
             byte key = (byte) _data.getValueAtIndex(i);
@@ -273,10 +276,20 @@ public class MirrorChunk {
                     _data.setValueAtIndex(i, (byte) NOT_A_ROOM_KEY);
                     results.cleanedKeys++;
                 }
+                else
+                    isEmpty = false;
+
+                /*
+                 * If the found key was unused, then it's cleaned, then we can still assume
+                 * that the chunk data is empty. If not, we have to change isEmpty to false.
+                 */
 
                 foundKeys.setValueAtIndex(_data.getValueAtIndex(i), true);
             }
         }
+
+        if(isEmpty)
+            _isDataEmpty = true;
 
         for (int i = 0; i < foundKeys.getLength(); i++) {
             if(foundKeys.getValueAtIndex(i) == false) {
@@ -288,11 +301,11 @@ public class MirrorChunk {
         if(results.getCleanedKeysAmount() > 0 || results.getCleanedIDs().length > 0) {
             if(_listener != null) {
 
-                for(int key : results._cleanedIDs) {
-                    _listener.roomRemovedFromChunkEvent(key, _x, _z);
+                for(int id : results._cleanedIDs) {
+                    notifyListenerRoomIdRemoved(id);
                 }
 
-                _listener.chunkChangeEvent(_x, _z);
+                notifyListenerHasChanged();
             }
         }
 
@@ -301,6 +314,40 @@ public class MirrorChunk {
 
     public void setListener(MirrorChunkEventListener listener) {
         _listener = listener;
+    }
+
+    public boolean isEmpty() {
+        /*
+         * If the data empty flag is set then we know for sure than the data
+         * is empty, so we return true. But if it's saying it's not empty, we
+         * quickly iterate through the key->id to see if it actually contains
+         * any valid room entries. If not, then we can return that this is empty.
+         */
+
+        if(_isDataEmpty)
+            return true;
+        else {
+            for(int id : _keyToId) {
+                if(id != NOT_A_ROOM_ID) return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void notifyListenerHasChanged() {
+        if(_listener != null)
+            _listener.chunkChangeEvent(_x, _z);
+    }
+
+    private void notifyListenerRoomIdRemoved(int roomID) {
+        if(_listener != null)
+            _listener.roomRemovedFromChunkEvent(roomID, _x, _z);
+    }
+
+    private void notifyListenerRoomIdAdded(int roomID) {
+        if(_listener != null)
+            _listener.roomAddedToChunkEvent(roomID, _x, _z);
     }
 
     public class MirrorChunkKeysFullException extends Exception {}

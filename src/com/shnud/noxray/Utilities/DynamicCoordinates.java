@@ -21,18 +21,18 @@ public class DynamicCoordinates {
 
     public static DynamicCoordinates initWithChunkCoordinates(int chunkX, int chunkY, int chunkZ) {
         return new DynamicCoordinates(
-                chunkX * MagicValues.BLOCKS_IN_CHUNK,
-                chunkY * MagicValues.BLOCKS_IN_CHUNK,
-                chunkZ * MagicValues.BLOCKS_IN_CHUNK,
+                chunkX * MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                chunkY * MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                chunkZ * MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
                 PrecisionLevel.CHUNK
         );
     }
 
     public static DynamicCoordinates initWithRegionCoordinates(int regionX, int regionY, int regionZ) {
         return new DynamicCoordinates(
-                regionX * MagicValues.CHUNKS_IN_REGION * MagicValues.BLOCKS_IN_CHUNK,
-                regionY * MagicValues.CHUNKS_IN_REGION * MagicValues.BLOCKS_IN_CHUNK,
-                regionZ * MagicValues.CHUNKS_IN_REGION * MagicValues.BLOCKS_IN_CHUNK,
+                regionX * MagicValues.HORIZONTAL_CHUNKS_IN_REGION * MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                regionY * MagicValues.HORIZONTAL_CHUNKS_IN_REGION * MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                regionZ * MagicValues.HORIZONTAL_CHUNKS_IN_REGION * MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
                 PrecisionLevel.REGION
         );
     }
