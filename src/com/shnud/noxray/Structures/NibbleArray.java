@@ -5,7 +5,7 @@ package com.shnud.noxray.Structures;
  */
 public class NibbleArray {
 
-    private byte[] _byteArray;
+    protected byte[] _byteArray;
     private int _nibbleLength;
 
     public NibbleArray(int length) {
@@ -14,8 +14,11 @@ public class NibbleArray {
         _byteArray = new byte[dividedLength];
     }
 
-    public NibbleArray(byte[] existingArray) {
-        _nibbleLength = existingArray.length * 2;
+    public NibbleArray(byte[] existingArray, int nibbleLength) {
+        if(nibbleLength > existingArray.length * 2)
+            throw new IllegalArgumentException("There can only be twice as many nibbles in a byte array as there are bytes");
+
+        _nibbleLength = nibbleLength;
         _byteArray = existingArray;
     }
 
@@ -23,7 +26,7 @@ public class NibbleArray {
         if(index >= _nibbleLength)
             throw new ArrayIndexOutOfBoundsException();
 
-        boolean even = (index & 1) == 1;
+        boolean even = (index & 1) == 0;
 
         if(even)
             return (_byteArray[index / 2] & 0xF0) >> 4;
@@ -38,7 +41,7 @@ public class NibbleArray {
         if(index >= _nibbleLength)
             throw new ArrayIndexOutOfBoundsException();
 
-        boolean even = (index & 1) == 1;
+        boolean even = (index & 1) == 0;
 
         if(even)
         {
@@ -58,11 +61,7 @@ public class NibbleArray {
         }
     }
 
-    public int getLength() {
+    public final int getLength() {
         return _nibbleLength;
-    }
-
-    public byte[] getByteArray() {
-        return _byteArray;
     }
 }
