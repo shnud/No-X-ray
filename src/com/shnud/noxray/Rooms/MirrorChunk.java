@@ -21,7 +21,7 @@ public class MirrorChunk {
     private SplitChunkData _data;
     private int _x, _z;
     private int[] _keyToId;
-    private boolean _hasChangedSinceInit = false;
+    private MirrorChunkEventListener _listener;
 
     private MirrorChunk(int x, int z, SplitChunkData data, int[] keys) {
         if(keys.length != MAX_UNIQUE_KEYS_PER_CHUNK)
@@ -80,7 +80,7 @@ public class MirrorChunk {
         }
 
         _keyToId[unused] = id;
-        _hasChangedSinceInit = true;
+        notifyListenerHasChanged();
         return unused;
     }
 
@@ -135,8 +135,9 @@ public class MirrorChunk {
         int oldKey = _data.getValueAtIndex(index);
         _data.setValueAtIndex(index, (byte) (key + 1));
 
-        if(oldKey != key)
-            _hasChangedSinceInit = true;
+        if(oldKey != key) {
+            notifyListenerHasChanged();
+        }
     }
 
     public void setRoomIdAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
@@ -231,7 +232,7 @@ public class MirrorChunk {
         }
 
         _keyToId[index] = 0;
-        _hasChangedSinceInit = true;
+        notifyListenerHasChanged();
     }
 
     /**
@@ -279,9 +280,13 @@ public class MirrorChunk {
         }
 
         if(results.getCleanedKeysAmount() > 0 || results.getCleanedIDs().length > 0)
-            _hasChangedSinceInit = true;
+            notifyListenerHasChanged();
 
         return results;
+    }
+
+    public void addListener(MirrorChunkEventListener listener) {
+        _listener = listener;
     }
 
     public class MirrorChunkKeysFullException extends Exception {}
@@ -301,5 +306,10 @@ public class MirrorChunk {
         public Integer[] getCleanedIDs() {
             return (Integer[]) _cleanedIDs.toArray();
         }
+    }
+
+    private void notifyListenerHasChanged() {
+        if(_listener != null)
+            _listener.chunkChangeEvent(_x, _z);
     }
 }

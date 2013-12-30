@@ -17,6 +17,7 @@ public class MirrorRegion {
     private int _regionX, _regionZ;
     private int _minChunkX, _maxChunkX, _minChunkZ, _maxChunkZ;
     private int _chunksInUse = 0;
+    private long _timeOfLastSuccessfulSave = 0;
 
     private MirrorRegion(int regionX, int regionZ) {
         _regionX = regionX;
@@ -159,9 +160,14 @@ public class MirrorRegion {
         }
 
         ram.close();
+        _timeOfLastSuccessfulSave = System.currentTimeMillis();
     }
 
     public static class ChunkNotLoadedException extends Exception {}
 
     public static class WrongRegionException extends Exception {}
+
+    public long getMillisecondsSinceLastSuccessfulSave() {
+        return System.currentTimeMillis() - _timeOfLastSuccessfulSave;
+    }
 }

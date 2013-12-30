@@ -54,6 +54,10 @@ public class HashMapArrayList<K, T> implements Iterable<T> {
         _list.clear();
     }
 
+    public boolean isEmpty() {
+        return _list.isEmpty();
+    }
+
     private Set<K> getSet() {
         return _hashMap.keySet();
     }

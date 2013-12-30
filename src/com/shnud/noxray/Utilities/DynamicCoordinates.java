@@ -19,7 +19,7 @@ public class DynamicCoordinates {
         _level = level;
     }
 
-    private static DynamicCoordinates initWithChunkCoordinates(int chunkX, int chunkY, int chunkZ) {
+    public static DynamicCoordinates initWithChunkCoordinates(int chunkX, int chunkY, int chunkZ) {
         return new DynamicCoordinates(
                 chunkX * MagicValues.BLOCKS_IN_CHUNK,
                 chunkY * MagicValues.BLOCKS_IN_CHUNK,
@@ -28,7 +28,7 @@ public class DynamicCoordinates {
         );
     }
 
-    private static DynamicCoordinates initWithRegionCoordinates(int regionX, int regionY, int regionZ) {
+    public static DynamicCoordinates initWithRegionCoordinates(int regionX, int regionY, int regionZ) {
         return new DynamicCoordinates(
                 regionX * MagicValues.CHUNKS_IN_REGION * MagicValues.BLOCKS_IN_CHUNK,
                 regionY * MagicValues.CHUNKS_IN_REGION * MagicValues.BLOCKS_IN_CHUNK,
@@ -37,7 +37,7 @@ public class DynamicCoordinates {
         );
     }
 
-    private static DynamicCoordinates initWithBlockCoordinates(int blockX, int blockY, int blockZ) {
+    public static DynamicCoordinates initWithBlockCoordinates(int blockX, int blockY, int blockZ) {
         return new DynamicCoordinates(blockX, blockY, blockZ, PrecisionLevel.BLOCK);
     }
 
