@@ -43,10 +43,6 @@ public abstract class PacketSender implements Runnable {
         run();
     }
 
-    private final boolean isRunningOnMainThread() {
-        return NoXray.isMainThread(Thread.currentThread());
-    }
-
     /*
      * Sends the packet using the implemented sendImplementation function.
      * This cannot be overwritten, and ensures that if the packet
@@ -54,7 +50,7 @@ public abstract class PacketSender implements Runnable {
      * to be sent synchronously ASAP through the scheduler.
      */
     public final void run() {
-        if(!isThreadSafe() && !isRunningOnMainThread())
+        if(!isThreadSafe() && !Bukkit.isPrimaryThread())
             Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), this);
         else
             sendImplementation();
