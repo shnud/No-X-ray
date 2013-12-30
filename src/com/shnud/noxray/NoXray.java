@@ -32,7 +32,10 @@ public class NoXray extends JavaPlugin {
     private ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
 
     @Override
-    public void onLoad() {}
+    public void onLoad() {
+        if(!getDataFolder().exists())
+            getDataFolder().mkdir();
+    }
 
     @Override
     public void onEnable() {

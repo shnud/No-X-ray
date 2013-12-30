@@ -99,13 +99,18 @@ public class PlayerHider implements PacketEventListener {
             if(_coupleWatchList.getCoupleFromEntities(event.getReceiver(), event.getSubject()).areHidden())
                 event.cancel();
 
+            /*
+             * If the event has gotten this far that means it's already in the couple list and
+             * the couple are not hidden, so the spawn packet was probably sent from this function,
+             * so we just return and let the event continue.
+             */
+
             return;
         }
 
         /*
          * Always cancel the event so that we can handle the hidden/show status of
-         * the player completely through the couple object. We will set the intial
-         * value to hidden and then if they can see each other resend the spawn packet
+         * the player completely through the couple object.
          */
 
         event.cancel();
