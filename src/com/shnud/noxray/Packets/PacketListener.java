@@ -119,4 +119,24 @@ public class PacketListener {
             dispatchEventToListeners(entityEvent);
         }
     }
+
+    private static class ChunkDataAdapter extends PacketAdapter {
+        public ChunkDataAdapter() {
+            super(_plugin, ListenerPriority.HIGHEST, PacketUtils.getAllEntityUpdatePackets());
+        }
+
+        @Override
+        public void onPacketSending(PacketEvent event) {
+            if(event.isCancelled())
+                return;
+
+            PacketContainer packet = event.getPacket();
+            World world = event.getPlayer().getWorld();
+
+            int subjectID = PacketUtils.getEntityIDFromEntityPacket(packet);
+            Entity subject = _pm.getEntityFromID(world, subjectID);
+            EntityUpdatePacketEvent entityEvent = new EntityUpdatePacketEvent(event.getPlayer(), subject, event);
+            dispatchEventToListeners(entityEvent);
+        }
+    }
 }
