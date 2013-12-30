@@ -8,7 +8,7 @@ public class DynamicCoordinates {
     private int _blockX, _blockY, _blockZ;
     private PrecisionLevel _level;
 
-    public enum PrecisionLevel {
+    public static enum PrecisionLevel {
         BLOCK, CHUNK, REGION;
     }
 
