@@ -73,6 +73,8 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
 
             _rooms.add(newRoom.getID(), newRoom);
         }
+
+        ram.close();
     }
 
     private void saveRooms() throws IOException {
@@ -97,6 +99,14 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
                     ram.writeChar(',');
             }
         }
+
+        ram.close();
+
+        File oldFile = new File(_worldFolder.getPath() + "/" + "roomData");
+        if(oldFile.exists())
+            oldFile.delete();
+
+        roomData.renameTo(oldFile);
     }
 
     private static String keyFromCoordinates(int x, int z) {
