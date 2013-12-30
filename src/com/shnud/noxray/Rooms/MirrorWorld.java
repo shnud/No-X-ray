@@ -11,6 +11,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -41,12 +42,12 @@ public class MirrorWorld implements Listener {
             _worldFolder.mkdir();
     }
 
-    private boolean isRegionLoaded(int x, int z) {
+    public boolean containsRegion(int x, int z) {
         return _regionMap.containsKey(keyFromCoordinates(x, z));
     }
 
-    private void loadRegion(int regionX, int regionZ) {
-        if(isRegionLoaded(regionX, regionZ)) {
+    public void loadRegion(int regionX, int regionZ) {
+        if(containsRegion(regionX, regionZ)) {
             Bukkit.getLogger().log(Level.WARNING, "Tried to load a region which was already loaded: [" + regionX + ", " + regionZ + "]");
             return;
         }
@@ -57,7 +58,7 @@ public class MirrorWorld implements Listener {
         if(regionFile.exists()) {
 
             try {
-                MirrorRegion region = MirrorRegion.initFromFile(regionX, regionZ, regionFile);
+                MirrorRegion region = MirrorRegion.initFromFile(_world, regionX, regionZ, regionFile);
                 _regionMap.put(key, region);
 
             } catch (IOException e) {
@@ -68,23 +69,22 @@ public class MirrorWorld implements Listener {
                 e.printStackTrace();
             }
         } else {
-            _regionMap.put(key, MirrorRegion.createBlank(regionX, regionZ));
+            _regionMap.put(key, MirrorRegion.createBlank(_world, regionX, regionZ));
         }
     }
 
-    private void unloadRegion(int regionX, int regionZ) {
-        if(!isRegionLoaded(regionX, regionZ)) {
+    public void unloadRegion(int regionX, int regionZ) {
+        if(!containsRegion(regionX, regionZ)) {
             Bukkit.getLogger().log(Level.WARNING, "Tried to unload a region which wasn't already loaded: [" + regionX + ", " + regionZ + "]");
             return;
         }
 
-        String key = keyFromCoordinates(regionX, regionZ);
-        MirrorRegion region = _regionMap.get(key);
-        String path = _worldFolder.getPath() + "/" + region.regionFileName();
+        String path = _worldFolder.getPath() + "/" + MirrorRegion.regionFileName(regionX, regionZ);
         File newFile = new File(path + "temp");
+        String key = keyFromCoordinates(regionX, regionZ);
 
         try {
-            region.saveToFile(newFile);
+            _regionMap.get(key).saveToFile(newFile);
 
             File oldFile = new File(path);
 
