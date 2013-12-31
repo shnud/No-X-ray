@@ -36,7 +36,7 @@ public class BooleanArray {
             _byteArray[index / 8] |= (0x80 >> (index % 8));
     }
 
-    public int getLength() {
+    public int size() {
         return _amountOfBools;
     }
 

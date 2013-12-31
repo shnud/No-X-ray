@@ -115,14 +115,9 @@ public final class DynamicByteArray {
         if(_isCompressed)
             return;
 
-        System.out.println("Size before compression" + _byteArray.length);
-
         _originalByteArrayLength = _byteArray.length;
         _byteArray = compressAndReturnResult(_byteArray);
         _isCompressed = true;
-
-
-        System.out.println("Size after compression" + _byteArray.length);
     }
 
     private void uncompress() {
