@@ -24,7 +24,7 @@ public class NoXraySettings {
     public static final int                         ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 4;
     public static final int                         ENTITY_VISIBILITY_CHECKS_PER_PURGE = 10;
     private static HashSet<EntityType>              ENTITIES_TO_HIDE = null;
-    public static final HashSet<EntityType> getEntitiesToHide() {
+    public static final HashSet<EntityType>         getEntitiesToHide() {
         if(ENTITIES_TO_HIDE == null) {
 
             ENTITIES_TO_HIDE = new HashSet<EntityType>();
@@ -71,7 +71,4 @@ public class NoXraySettings {
 
         return ENTITIES_TO_HIDE;
     }
-
-    // Settings for room hiding
-    public static final boolean                     LOAD_WHOLE_MIRROR_REGIONS_INTO_RAM = false;
 }

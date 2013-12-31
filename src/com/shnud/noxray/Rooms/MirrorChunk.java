@@ -122,6 +122,58 @@ public class MirrorChunk {
         return -1;
     }
 
+    public int getRoomIDAtCoordinates(DynamicCoordinates coordinates) {
+        if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
+            throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
+
+        return getRoomIDAtLocalBlock(
+                coordinates.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                coordinates.blockY(),
+                coordinates.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK
+        );
+    }
+    /**
+     * Get the roomID at any given coordinates, coordinates must be specified relative to chunk
+     *
+     * @param x chunk-relative x coordinate
+     * @param y chunk-relative y coordinate
+     * @param z chunk-relative z coordinate
+     * @return the room ID at the given coordinates, returns NOT_A_ROOM_ID if no ID is found
+     */
+    private int getRoomIDAtLocalBlock(int x, int y, int z) {
+        if(x < 0 || x > 15 || z < 0 || z > 15 || y < 0 || y > 255)
+            throw new IllegalArgumentException("Coordinates not within chunk bounds");
+
+        int index = indexOfLocalBlock(x, y, z);
+        int key = _data.getValueAtIndex(index);
+
+        /*
+         * When retreiving keys from the chunk data, we have to negate
+         * 1 from the result, as 0 is used to mean unobfuscated/not a room.
+         * Because of this, values 1 - 15 inclusive are valid, however the
+         * key->id array is only 15 long, and arrays are zero indexed,
+         * so 1 must be become 0 etc. The opposite is applied when
+         * writing keys to the chunk data.
+         */
+
+        if(key == 0)
+            return 0;
+        else
+            return _IDSlots[key - 1];
+    }
+
+    public void setRoomIDAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
+        if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
+            throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
+
+        setRoomIDAtLocalBlock(
+                coordinates.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                coordinates.blockY(),
+                coordinates.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
+                roomID
+        );
+    }
+
     private void setRoomIDAtLocalBlock(int x, int y, int z, int roomID) throws MirrorChunkKeysFullException {
         if(x < 0 || x > 15 || z < 0 || z > 15 || y < 0 || y > 255)
             throw new IllegalArgumentException("Coordinates not within chunk bounds");
@@ -171,20 +223,23 @@ public class MirrorChunk {
         _isDataEmpty = false;
     }
 
-    public void setRoomIDAtCoordinates(DynamicCoordinates coordinates, int roomID) throws MirrorChunkKeysFullException {
-        if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
-            throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
+    public boolean isEmpty() {
+        /*
+         * If the data empty flag is set then we know for sure than the data
+         * is empty, so we return true. But if it's saying it's not empty, we
+         * quickly iterate through the key->id to see if it actually contains
+         * any valid room entries. If not, then we can return that this is empty.
+         */
 
-        setRoomIDAtLocalBlock(
-                coordinates.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
-                coordinates.blockY(),
-                coordinates.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
-                roomID
-        );
-    }
+        if(_isDataEmpty)
+            return true;
+        else {
+            for(int id : _IDSlots) {
+                if(id != 0) return false;
+            }
+        }
 
-    public boolean containsKeyForRoomID(int roomId) {
-        return slotIndexForID(roomId) >= 0;
+        return true;
     }
 
     public boolean isFull() {
@@ -194,46 +249,8 @@ public class MirrorChunk {
         return firstUnusedIDSlot() < 0;
     }
 
-    /**
-     * Get the roomID at any given coordinates, coordinates must be specified relative to chunk
-     *
-     * @param x chunk-relative x coordinate
-     * @param y chunk-relative y coordinate
-     * @param z chunk-relative z coordinate
-     * @return the room ID at the given coordinates, returns NOT_A_ROOM_ID if no ID is found
-     */
-    private int getRoomIDAtLocalBlock(int x, int y, int z) {
-        if(x < 0 || x > 15 || z < 0 || z > 15 || y < 0 || y > 255)
-            throw new IllegalArgumentException("Coordinates not within chunk bounds");
 
-        int index = indexOfLocalBlock(x, y, z);
-        int key = _data.getValueAtIndex(index);
 
-        /*
-         * When retreiving keys from the chunk data, we have to negate
-         * 1 from the result, as 0 is used to mean unobfuscated/not a room.
-         * Because of this, values 1 - 15 inclusive are valid, however the
-         * key->id array is only 15 long, and arrays are zero indexed,
-         * so 1 must be become 0 etc. The opposite is applied when
-         * writing keys to the chunk data.
-         */
-
-        if(key == 0)
-            return 0;
-        else
-            return _IDSlots[key - 1];
-    }
-
-    public int getRoomIDAtCoordinates(DynamicCoordinates coordinates) {
-        if(coordinates.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
-            throw new IllegalArgumentException("Coordinates must have block precision or the request is useless");
-
-        return getRoomIDAtLocalBlock(
-                coordinates.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK,
-                coordinates.blockY(),
-                coordinates.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK
-        );
-    }
 
     public int getX() {
         return _x;
@@ -346,24 +363,7 @@ public class MirrorChunk {
         _listener = listener;
     }
 
-    public boolean isEmpty() {
-        /*
-         * If the data empty flag is set then we know for sure than the data
-         * is empty, so we return true. But if it's saying it's not empty, we
-         * quickly iterate through the key->id to see if it actually contains
-         * any valid room entries. If not, then we can return that this is empty.
-         */
 
-        if(_isDataEmpty)
-            return true;
-        else {
-            for(int id : _IDSlots) {
-                if(id != 0) return false;
-            }
-        }
-
-        return true;
-    }
 
     private void notifyListenerHasChanged() {
         if(_listener != null)
