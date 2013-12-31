@@ -23,7 +23,7 @@ public final class DynamicByteArray {
      * be slower. If all the instances share the same buffer then we reduce the
      * amount of time spent allocating memory by a huge amount.
      */
-    private static final byte[] _buffer = new byte[MagicValues.BLOCKS_IN_CHUNK / 2];
+    private static final byte[] _buffer = new byte[MagicValues.BLOCKS_IN_CHUNK];
     private static final int MAX_SECONDS_UNTIL_RECOMPRESSION = 20;
     private static final int MINIMUM_MILLISECONDS_BETWEEN_SCHEDULING_TASKS = (MAX_SECONDS_UNTIL_RECOMPRESSION / 2) * 1000;
     private long _timeTimerLastReset;
@@ -33,12 +33,12 @@ public final class DynamicByteArray {
     private Runnable _compressionTaskRunner = new CompressionTaskRunner();
     private byte[] _byteArray;
 
-    public static DynamicByteArray constructFromUncompressedByteArray(byte[] uncompressed) {
-        return new DynamicByteArray(uncompressed, false);
+    public static DynamicByteArray constructFromUncompressedByteArray(byte[] array) {
+        return new DynamicByteArray(array, false);
     }
 
-    public static DynamicByteArray constructFromCompressedByteArray(byte[] compressed) throws DataFormatException {
-        return new DynamicByteArray(compressed, true);
+    public static DynamicByteArray constructFromCompressedByteArray(byte[] array) throws DataFormatException {
+        return new DynamicByteArray(array, true);
     }
 
     private DynamicByteArray(byte[] array, boolean compressed) {
@@ -56,9 +56,9 @@ public final class DynamicByteArray {
      *
      * @return the actual byte array; be careful
      */
-    private byte[] getUncompressedByteArray() {
+    public byte[] getUncompressedByteArray() throws DataFormatException {
         if(_isCompressed)
-            uncompress();
+            return uncompressAndReturnResult(_byteArray);
 
         return _byteArray;
     }
@@ -115,9 +115,14 @@ public final class DynamicByteArray {
         if(_isCompressed)
             return;
 
+        System.out.println("Size before compression" + _byteArray.length);
+
         _originalByteArrayLength = _byteArray.length;
         _byteArray = compressAndReturnResult(_byteArray);
         _isCompressed = true;
+
+
+        System.out.println("Size after compression" + _byteArray.length);
     }
 
     private void uncompress() {
@@ -155,6 +160,7 @@ public final class DynamicByteArray {
     public static byte[] compressAndReturnResult(byte[] input) {
         Deflater _def = new Deflater();
         _def.setInput(input);
+        _def.finish();
         int amountBytesCompressed = _def.deflate(_buffer);
         byte[] output = new byte[amountBytesCompressed];
         System.arraycopy(_buffer, 0, output, 0, amountBytesCompressed);
@@ -164,11 +170,12 @@ public final class DynamicByteArray {
 
     public static byte[] uncompressAndReturnResult(byte[] input) throws DataFormatException {
         Inflater _inf = new Inflater();
-        _inf.setInput(input);
+        _inf.setInput(input, 0, input.length);
         int sizeOfUncompressed = _inf.inflate(_buffer);
         byte[] output = new byte[sizeOfUncompressed];
         System.arraycopy(_buffer, 0, output, 0, sizeOfUncompressed);
         _inf.end();
+
         return output;
     }
 
