@@ -1,5 +1,7 @@
 package com.shnud.noxray.Structures;
 
+import com.shnud.noxray.Utilities.Misc;
+
 import java.util.zip.DataFormatException;
 
 /**
@@ -13,8 +15,23 @@ public class DynamicSixBitArray {
     public DynamicSixBitArray(int length) {
         _amountOfSixBits = length;
         int byteArrayLength = (length * 3 / 4) + ((length * 3) % 4 == 0 ? 0 : 1);
-        System.out.println(byteArrayLength);
         _backendArray = DynamicByteArray.constructFromUncompressedByteArray(new byte[byteArrayLength]);
+    }
+
+    public DynamicSixBitArray(DynamicByteArray array, int sixBitLength) {
+        _backendArray = array;
+        _amountOfSixBits = sixBitLength;
+    }
+
+    public static DynamicSixBitArray constructFromExistingCompressedArray(byte[] array, int sixBitLength) throws DataFormatException {
+        return new DynamicSixBitArray(DynamicByteArray.constructFromCompressedByteArray(array), sixBitLength);
+    }
+
+    public static DynamicSixBitArray constructFromExistingArray(byte[] array, int sixBitLength) {
+        if(sixBitLength * 3 / 4 > array.length)
+            throw new IllegalArgumentException("Array is not long enough to hold that many six-bits");
+
+        return new DynamicSixBitArray(DynamicByteArray.constructFromUncompressedByteArray(array), sixBitLength);
     }
 
     public void setValueAtIndexTo(final int index, final byte value) {
@@ -85,34 +102,33 @@ public class DynamicSixBitArray {
         switch(remainder) {
             case 0: {
                 byte b = _backendArray.getValueAtIndex(byteArrayIndex);
-                return (b >> 2) & (0xFF >>> 2);
+                return (b >> 2) & 0x3F;
             }
             case 1: {
                 byte b = _backendArray.getValueAtIndex(byteArrayIndex);
-                return b &= (0xFF >>> 2);
+                return b &= 0x3F;
             }
             case 2: {
-
                 byte a = _backendArray.getValueAtIndex(byteArrayIndex);
-                a &= 0x0F;
                 a <<= 2;
+                a &= 0x3C;
 
                 byte b = _backendArray.getValueAtIndex(byteArrayIndex + 1);
-                b &= 0xFF >> 2;
-                b >>>= 6;
+                b >>= 6;
+                b &= 3;
 
-                return (byte) (a + b);
+                return (a | b) & (0xFF);
             }
             case 3: {
                 byte a = _backendArray.getValueAtIndex(byteArrayIndex);
-                a &= (0x0F >> 2);
                 a <<= 4;
+                a &= 0x30;
 
                 byte b = _backendArray.getValueAtIndex(byteArrayIndex + 1);
-                b &= 0xF0;
-                b >>>= 4;
+                b >>= 4;
+                b &= 0x0F;
 
-                return (a | b) & (0xFF >>> 2);
+                return (a | b) & (0xFF);
             }
         }
 
@@ -126,5 +142,9 @@ public class DynamicSixBitArray {
 
     public byte[] getBackingArray() throws DataFormatException {
         return _backendArray.getUncompressedByteArray();
+    }
+
+    public byte[] getCompressedByteArray() {
+        return _backendArray.getCompressedByteArray();
     }
 }
