@@ -3,6 +3,7 @@ package com.shnud.noxray;
 import com.shnud.noxray.Hiders.EntityHider;
 import com.shnud.noxray.Hiders.PlayerHider;
 import com.shnud.noxray.Hiders.RoomHider;
+import com.shnud.noxray.Structures.DynamicByteBitWrapper;
 import com.shnud.noxray.Structures.NibbleArray;
 import org.bukkit.plugin.java.JavaPlugin;
 

@@ -25,6 +25,17 @@ public class MirrorChunkIDMap {
         return true;
     }
 
+    public boolean isFull() {
+        if(_slots.size() < MAXIMUM_SLOTS + 1)
+            return false;
+
+        for(int i = 1; i < _slots.size(); i++) {
+            if(i == 0) return false;
+        }
+
+        return true;
+    }
+
     public int getRoomIDForKey(int key) {
         return _slots.get(key);
     }
@@ -79,6 +90,11 @@ public class MirrorChunkIDMap {
             else
                 throw new ChunkIDSlotsFullException();
         }
+    }
+
+    public void removeRoomID(int roomID) {
+        if(roomID != 0)
+            _slots.remove(roomID);
     }
 
     public class ChunkIDSlotsFullException extends Exception {}

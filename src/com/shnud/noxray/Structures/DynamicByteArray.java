@@ -26,7 +26,6 @@ public final class DynamicByteArray extends ByteArray {
     private int _originalByteArrayLength = -1;
     private BukkitTask _compressionTask;
     private Runnable _compressionTaskRunner = new CompressionTaskRunner();
-    private byte[] _byteArray;
 
     /**
      * Creates a new dynamically compressed byte array from an already existing byte array

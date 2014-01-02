@@ -5,11 +5,11 @@ package com.shnud.noxray.Structures;
  */
 public class DynamicByteBitWrapper extends ByteBitWrapper {
 
-    DynamicByteBitWrapper(int bitsPerVal, DynamicByteArray array) {
+    public DynamicByteBitWrapper(int bitsPerVal, DynamicByteArray array) {
         super(bitsPerVal, array);
     }
 
-    DynamicByteBitWrapper(int bitsPerVal, int size) {
+    public DynamicByteBitWrapper(int bitsPerVal, int size) {
         this(bitsPerVal, new DynamicByteArray(sizeRequiredFor(size, bitsPerVal)));
     }
 

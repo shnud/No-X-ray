@@ -2,6 +2,7 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Structures.DynamicByteArray;
 import com.shnud.noxray.Structures.DynamicByteBitWrapper;
+import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.zip.DataFormatException;
 /**
  * Created by Andrew on 29/12/2013.
  */
-public class MirrorChunkData {
+public class MirrorChunkKeyData {
 
     private static final int DATA_SECTIONS = 8;
     private static final int BLOCKS_PER_SECTION = MagicValues.BLOCKS_IN_CHUNK / DATA_SECTIONS;
@@ -20,19 +21,40 @@ public class MirrorChunkData {
     private DynamicByteBitWrapper[] _sections = new DynamicByteBitWrapper[DATA_SECTIONS];
     private boolean _isEmpty = true;
 
-    private MirrorChunkData() {}
+    private MirrorChunkKeyData() {}
 
-    public static MirrorChunkData createBlank() {
-        return new MirrorChunkData();
+    public static MirrorChunkKeyData createBlank() {
+        return new MirrorChunkKeyData();
     }
 
-    public static MirrorChunkData createFromFileAtOffset(RandomAccessFile ram, long fileOffset) throws IOException, DataFormatException {
-        MirrorChunkData data = new MirrorChunkData();
+    public static MirrorChunkKeyData createFromFileAtOffset(RandomAccessFile ram, long fileOffset) throws IOException, DataFormatException {
+        MirrorChunkKeyData data = new MirrorChunkKeyData();
         data.readFromFileAtOffset(ram, fileOffset);
         return data;
     }
 
-    public int getValueAtIndex(int index) {
+    private int blockIndexFromLocalCoords(int x, int y, int z) {
+        return x + (z * 16) + (y * 256);
+    }
+
+    public int getBlockKey(DynamicCoordinates coords) {
+        if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
+            throw new IllegalArgumentException("Coordinates are useless if not at block precision");
+
+        int localX = coords.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+        int localY = coords.blockY();
+        int localZ = coords.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+
+        return getLocalBlockKey(localX, localY, localZ);
+    }
+
+    public int getLocalBlockKey(int x, int y, int z) {
+        int index = blockIndexFromLocalCoords(x, y, z);
+
+        return getValueAtIndex(index);
+    }
+
+    private int getValueAtIndex(int index) {
         int sectionIndex = index / DATA_SECTIONS;
 
         if(_sections[sectionIndex] == null)
@@ -41,7 +63,24 @@ public class MirrorChunkData {
         return _sections[sectionIndex].getValueAtIndex(index % BLOCKS_PER_SECTION);
     }
 
-    public void setValueAtIndex(int index, int value) throws ValueTooLargeForEncodingException {
+    public void setBlockKey(DynamicCoordinates coords, int roomID) {
+        if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
+            throw new IllegalArgumentException("Coordinates are useless if not at block precision");
+
+        int localX = coords.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+        int localY = coords.blockY();
+        int localZ = coords.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+
+        setLocalBlockKey(localX, localY, localZ, roomID);
+    }
+
+    public void setLocalBlockKey(int x, int y, int z, int roomID) {
+        int index = blockIndexFromLocalCoords(x, y, z);
+
+        setValueAtIndex(index, roomID);
+    }
+
+    private void setValueAtIndex(int index, int value) {
         int sectionIndex = index / DATA_SECTIONS;
 
         if(_sections[sectionIndex] == null)
@@ -51,13 +90,25 @@ public class MirrorChunkData {
         DynamicByteBitWrapper section = _sections[sectionIndex];
         while(value > section.maxValue()) {
             if(section.maxValue() >= MAX_BIT_PER_VALUE_ENCODING)
-                throw new ValueTooLargeForEncodingException();
+                throw new IllegalArgumentException("Value too large for encoding");
 
             section.convertTo(section.getBitsPerVal() + 1);
         }
 
         _sections[sectionIndex].setValueAtIndex(index % BLOCKS_PER_SECTION, value);
         _isEmpty = false;
+    }
+
+    public void removeAllKeys(int roomID) {
+        for(DynamicByteBitWrapper section : _sections) {
+            if(section == null)
+                continue;
+
+            for(int i = 0; i < section.size(); i++) {
+                if(section.getValueAtIndex(i) == roomID)
+                    section.setValueAtIndex(i, 0);
+            }
+        }
     }
 
     public void writeToFileAtOffset(RandomAccessFile ram, long fileOffset) throws IOException {
@@ -119,6 +170,4 @@ public class MirrorChunkData {
 
         return true;
     }
-
-    public class ValueTooLargeForEncodingException extends Exception {}
 }

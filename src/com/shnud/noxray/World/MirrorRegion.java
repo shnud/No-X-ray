@@ -1,11 +1,14 @@
 package com.shnud.noxray.World;
 
+import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
+import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Level;
 
 /**
  * Created by Andrew on 29/12/2013.
@@ -13,14 +16,16 @@ import java.io.RandomAccessFile;
 public class MirrorRegion {
 
     private MirrorChunk[] _chunks = new MirrorChunk[MagicValues.CHUNKS_IN_REGION];
-    private int _regionX, _regionZ;
+    private int _x, _z;
     private int _minChunkX, _maxChunkX, _minChunkZ, _maxChunkZ;
     private int _chunksInUse = 0;
     private long _timeOfLastSuccessfulSave = 0;
+    private MirrorWorld _world;
 
-    private MirrorRegion(int regionX, int regionZ) {
-        _regionX = regionX;
-        _regionZ = regionZ;
+    public MirrorRegion(int regionX, int regionZ, MirrorWorld world) {
+        _x = regionX;
+        _z = regionZ;
+        _world = world;
 
         _minChunkX = regionX * MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
         _maxChunkX = _minChunkX + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
@@ -28,114 +33,14 @@ public class MirrorRegion {
         _maxChunkZ = _minChunkZ + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
     }
 
-    /**
-     * Attemps to read in chunks from a MirrorRegion file
-     *
-     * @throws java.io.IOException If the file specified couldn't be found
-     * @param regionX the x coordinate of the region (in region coordinates)
-     * @param regionZ the z coordinate of the region (in region coordinates)
-     * @param regionFile The file where the MirrorRegion is located
-     * @return The newly created MirrorRegion object
-     */
-    public static MirrorRegion initFromFile(int regionX, int regionZ, File regionFile) throws IOException, WrongRegionException {
-        if(!regionFile.exists())
-            throw new FileNotFoundException("Region file does not exist");
-
-        MirrorRegion region = new MirrorRegion(regionX, regionZ);
-        RandomAccessFile ram = new RandomAccessFile(regionFile, "r");
-        int x = ram.readInt();
-        int z = ram.readInt();
-
-        // Don't know why this would ever happen, stupid really
-        if(x != region._regionX || z != region._regionZ)
-            throw new WrongRegionException();
-
-        // For all possible 1024 chunks in this region
-        for(int i = 0; i < 1024; i++) {
-            // Is the chunk contained in the data? If not, it's empty
-            if(ram.readBoolean()) {
-                int chunkX = region._regionX * 32 + (i % 32);
-                int chunkZ = region._regionZ * 32 + (i / 32);
-                region._chunks[i] = new MirrorChunk(chunkX, chunkZ);
-                region._chunks[i].loadFromFileAtOffset(ram, ram.getFilePointer());
-            }
-        }
-
-        ram.close();
-        return region;
-    }
-
-    /**
-     * Returns a new Blank MirrorRegion object
-     *
-     * @param regionX The x coordinate of the region
-     * @param regionZ The z coordinate of the region
-     *
-     * @return The newly created MirrorRegion object
-     *
-     */
-    public static MirrorRegion createBlank(int regionX, int regionZ) {
-        return new MirrorRegion(regionX, regionZ);
-    }
-
-    /**
-     * Returns the index in this region's chunk array in which the given
-     * chunk should be stored at. Note that this function does not check whether
-     * the given coordinates are within the bounds for this region, as the only
-     * function that calls it - getChunk() - checks that itself
-     *
-     * @param chunkX the x coordinate of the chunk (in chunk coordinates)
-     * @param chunkZ the z coordinate of the chunk (in chunk coordinates)
-     * @return the array index where the chunk should be stored
-     */
     private static int getChunkIndex(int chunkX, int chunkZ) {
         return chunkX % MagicValues.HORIZONTAL_CHUNKS_IN_REGION + ((chunkZ % MagicValues.HORIZONTAL_CHUNKS_IN_REGION) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
     }
 
-    /**
-     * Returns the filename that should be given to a region when
-     * saved on disk. The same filename will be used to revive the region
-     * from disk when it is loaded again.
-     *
-     * @param regionX the x coordinate of the region (in region coordinates)
-     * @param regionZ the z coordinate of the region (in region coordinates)
-     * @return the filename
-     */
-    public static String regionFileName(int regionX, int regionZ) {
-        return regionX + "." + regionZ + ".mrr";
-    }
+    public MirrorChunk getChunk(DynamicCoordinates coordinates) {
+        int chunkX = coordinates.chunkX();
+        int chunkZ = coordinates.chunkZ();
 
-    /**
-     * Returns the filename that should be given to this region when
-     * saved on disk. The same filename will be used to revive the region
-     * from disk when it is loaded again.
-     *
-     * @return the filename
-     */
-    public String regionFileName() {
-        return regionFileName(_regionX, _regionZ);
-    }
-
-    public void retain() { _chunksInUse++; }
-
-    public void release() { _chunksInUse--; }
-
-    /**
-     * The retain count is used for containing world object to keep
-     * track of how many chunks are relying on this region to be loaded.
-     */
-    public int getRetainCount() { return _chunksInUse; }
-
-    /**
-     * Get the chunk located at the given global chunk coordinates. If the chunk is
-     * null, it will return null
-     *
-     * @param chunkX the global chunk x coordinate to get
-     * @param chunkZ the global chunk z coordinate to get
-     * @return either the already existing loaded chunk, or a new chunk if it hasn't been initiated yet
-     * @throws java.lang.ArrayIndexOutOfBoundsException if the chunk doesn't exist within this region
-     */
-    public MirrorChunk getChunk(int chunkX, int chunkZ) {
         if(chunkX < _minChunkX || chunkX > _maxChunkX || chunkZ < _minChunkZ || chunkZ > _maxChunkZ)
             throw new ArrayIndexOutOfBoundsException("Chunk does not exist within this region");
 
@@ -143,7 +48,36 @@ public class MirrorRegion {
         if(_chunks[index] == null)
             _chunks[index] = new MirrorChunk(chunkX, chunkZ);
 
+        _chunks[index].setListener(_world);
         return _chunks[index];
+    }
+
+    public void loadFromFile(File regionFile) throws IOException, WrongRegionException {
+
+        if(!regionFile.exists())
+            throw new FileNotFoundException("Region file does not exist");
+
+        RandomAccessFile ram = new RandomAccessFile(regionFile, "r");
+        int x = ram.readInt();
+        int z = ram.readInt();
+
+        // Don't know why this would ever happen, stupid really
+        if(x != _x || z != _z)
+            throw new WrongRegionException();
+
+        // For all possible 1024 chunks in this region
+        for(int i = 0; i < 1024; i++) {
+            // Is the chunk contained in the data? If not, it's empty
+            if(ram.readBoolean()) {
+                int chunkX = _x * 32 + (i % 32);
+                int chunkZ = _z * 32 + (i / 32);
+                _chunks[i] = new MirrorChunk(chunkX, chunkZ);
+                _chunks[i].loadFromFileAtOffset(ram, ram.getFilePointer());
+            }
+        }
+
+        ram.close();
+
     }
 
     /**
@@ -169,14 +103,14 @@ public class MirrorRegion {
      * @throws IOException
      */
     public void saveToFile(File regionFile) throws IOException {
-
         if(!regionFile.exists())
             regionFile.createNewFile();
 
         RandomAccessFile ram = new RandomAccessFile(regionFile, "rw");
+
         ram.setLength(0);
-        ram.writeInt(_regionX);
-        ram.writeInt(_regionZ);
+        ram.writeInt(_x);
+        ram.writeInt(_z);
 
         for(MirrorChunk chunk : _chunks) {
             if(chunk != null && !chunk.isEmpty()) {
@@ -191,23 +125,29 @@ public class MirrorRegion {
         _timeOfLastSuccessfulSave = System.currentTimeMillis();
     }
 
-    public static class ChunkNotLoadedException extends Exception {}
-
-    public static class WrongRegionException extends Exception {}
-
     public long getMillisecondsSinceLastSuccessfulSave() {
         return System.currentTimeMillis() - _timeOfLastSuccessfulSave;
     }
 
-    public void setChunkListener(int x, int z, MirrorChunkEventListener listener) {
-        getChunk(x, z).setListener(listener);
-    }
-
     public int getX() {
-        return _regionX;
+        return _x;
     }
 
     public int getZ() {
-        return _regionZ;
+        return _z;
+    }
+
+    public void chunkInUse() { _chunksInUse++; }
+
+    public void chunkNotInUse() { _chunksInUse--; }
+
+    public int getChunksInUse() { return _chunksInUse; }
+
+    public static class ChunkNotLoadedException extends Exception {}
+
+    public static class WrongRegionException extends Exception {}
+
+    public String toString() {
+        return "MirrorRegion[" + _x + ", " + _z + "]";
     }
 }

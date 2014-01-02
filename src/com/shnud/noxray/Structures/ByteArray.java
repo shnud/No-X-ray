@@ -15,7 +15,7 @@ import java.util.zip.Inflater;
  */
 public class ByteArray {
 
-    private byte[] _byteArray;
+    protected byte[] _byteArray;
 
     public ByteArray(byte[] array) {
         _byteArray = array;

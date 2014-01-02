@@ -16,7 +16,7 @@ public class ByteBitWrapper {
             throw new IllegalArgumentException("Cannot have a zero bit value");
 
         _bitsPerVal = bits;
-        _maxVal = (int) MathHelper.pow(2, _bitsPerVal) - 1;
+        _maxVal = getMaxValueOfBitLengthValue(_bitsPerVal);
     }
 
     protected void setByteArray(ByteArray array) {
@@ -72,13 +72,15 @@ public class ByteBitWrapper {
         for(int i = 0; i < _bitsPerVal; i++) {
             int offset = bitIndex % 8;
 
-            boolean bitIsSet = value >> (_bitsPerVal - 1 - i) == 1;
+            boolean bitIsSet = ((value >> (_bitsPerVal - 1 - i)) & 1) == 1;
 
             byte get = _byteArray.getValueAtIndex(byteIndex);
             if(bitIsSet)
                 _byteArray.setValueAtIndex(byteIndex, (byte) (get | (1 << 7 - offset)));
             else
-                _byteArray.setValueAtIndex(byteIndex, (byte) (get & (0 << 7 - offset)));
+                _byteArray.setValueAtIndex(byteIndex, (byte) (get & ~(1 << 7 - offset)));
+
+            bitIndex++;
 
             if(offset == 7)
                 byteIndex++;
@@ -93,7 +95,10 @@ public class ByteBitWrapper {
         for(int i = 0; i < _bitsPerVal; i++) {
             int offset = bitIndex % 8;
 
-            result |= (_byteArray.getValueAtIndex(index) >> (7 - offset) & 1) << _bitsPerVal - 1 - i;
+            int bit = ((_byteArray.getValueAtIndex(byteIndex) >> (7 - offset)) & 1);
+            result |= bit << (_bitsPerVal - 1 - i);
+
+            bitIndex++;
 
             if(offset == 7)
                 byteIndex++;
@@ -121,13 +126,13 @@ public class ByteBitWrapper {
             int inputByte = inputBitIndex / 8;
             int outputByte = outputBitIndex / 8;
 
-            for(int bit = 0; i < inputBitsPerVal && i < outputBitsPerVal; i++) {
+            for(int bit = 0; bit < inputBitsPerVal && bit < outputBitsPerVal; bit++) {
                 int inputOffset = inputBitIndex % 8;
                 int outputOffset = outputBitIndex % 8;
 
-                boolean one = (input[inputBitIndex] & (1 << 7 - inputOffset)) == 1;
+                boolean one = (input[inputByte] & (1 << (7 - inputOffset))) != 0;
                 if(one)
-                    output[outputBitIndex] |= (1 << 7 - outputOffset);
+                    output[outputByte] |= (1 << (7 - outputOffset));
 
                 inputBitIndex--;
                 outputBitIndex--;
@@ -145,6 +150,6 @@ public class ByteBitWrapper {
     }
 
     public static int getMaxValueOfBitLengthValue(int bits) {
-        return (int) MathHelper.pow(2, bits);
+        return (int) MathHelper.pow(2, bits - 1) - 1;
     }
 }
