@@ -27,12 +27,6 @@ public class MirrorChunkKeyData {
         return new MirrorChunkKeyData();
     }
 
-    public static MirrorChunkKeyData createFromFileAtOffset(RandomAccessFile ram, long fileOffset) throws IOException, DataFormatException {
-        MirrorChunkKeyData data = new MirrorChunkKeyData();
-        data.readFromFileAtOffset(ram, fileOffset);
-        return data;
-    }
-
     private int blockIndexFromLocalCoords(int x, int y, int z) {
         return x + (z * 16) + (y * 256);
     }
@@ -111,9 +105,7 @@ public class MirrorChunkKeyData {
         }
     }
 
-    public void writeToFileAtOffset(RandomAccessFile ram, long fileOffset) throws IOException {
-        ram.seek(fileOffset);
-
+    public void writeToFile(RandomAccessFile ram) throws IOException {
         for(DynamicByteBitWrapper section : _sections) {
 
             // If this section of the chunk is NOT contained within the data
@@ -135,9 +127,7 @@ public class MirrorChunkKeyData {
         }
     }
 
-    public void readFromFileAtOffset(RandomAccessFile ram, long fileOffset) throws IOException {
-        ram.seek(fileOffset);
-
+    public void readFromFile(RandomAccessFile ram) throws IOException {
         for(int i = 0; i < DATA_SECTIONS; i++) {
             if(ram.readBoolean()) {
                 // If we're reading a section of data then we can assume that the data isn't empty

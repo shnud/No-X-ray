@@ -2,6 +2,7 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 
+import java.io.IOException;
 import java.io.RandomAccessFile;
 
 /**
@@ -23,12 +24,26 @@ public class MirrorChunk {
         _keyToIDMap = new MirrorChunkIDMap();
     }
 
-    public void saveToFileAtOffset(RandomAccessFile ram, long filePointer) {
+    public void saveToFile(RandomAccessFile ram) throws IOException {
+        ram.writeLong(_timeOfLastCleanUp);
+        ram.writeByte(_keyToIDMap.getAmountOfSlots());
 
+        for(int key = 1; key < _keyToIDMap.getAmountOfSlots(); key++) {
+            ram.writeInt(_keyToIDMap.getRoomIDForKey(key));
+        }
+
+        _data.writeToFile(ram);
     }
 
-    public void loadFromFileAtOffset(RandomAccessFile ram, long filePointer) {
+    public void loadFromFile(RandomAccessFile ram) throws IOException {
+        _timeOfLastCleanUp = ram.readLong();
+        int keySlotAmount = ram.readByte();
 
+        for(int i = 0; i < keySlotAmount; i++) {
+            _keyToIDMap.setSlotToID(i + 1, ram.readInt());
+        }
+
+        _data.readFromFile(ram);
     }
 
     public void setBlockToRoomID(DynamicCoordinates coordinates, int roomID) throws MirrorChunkIDMap.ChunkIDSlotsFullException {

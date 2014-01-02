@@ -2,13 +2,11 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
-import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.logging.Level;
 
 /**
  * Created by Andrew on 29/12/2013.
@@ -72,7 +70,7 @@ public class MirrorRegion {
                 int chunkX = _x * 32 + (i % 32);
                 int chunkZ = _z * 32 + (i / 32);
                 _chunks[i] = new MirrorChunk(chunkX, chunkZ);
-                _chunks[i].loadFromFileAtOffset(ram, ram.getFilePointer());
+                _chunks[i].loadFromFile(ram);
             }
         }
 
@@ -115,7 +113,7 @@ public class MirrorRegion {
         for(MirrorChunk chunk : _chunks) {
             if(chunk != null && !chunk.isEmpty()) {
                 ram.writeBoolean(true);
-                chunk.saveToFileAtOffset(ram, ram.getFilePointer());
+                chunk.saveToFile(ram);
             }
             else
                 ram.writeBoolean(false);
