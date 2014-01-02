@@ -1,4 +1,4 @@
-package com.shnud.noxray.Rooms;
+package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.MagicValues;
 
@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.zip.DataFormatException;
 
 /**
  * Created by Andrew on 29/12/2013.
@@ -38,7 +37,7 @@ public class MirrorRegion {
      * @param regionFile The file where the MirrorRegion is located
      * @return The newly created MirrorRegion object
      */
-    public static MirrorRegion initFromFile(int regionX, int regionZ, File regionFile) throws IOException, WrongRegionException, DataFormatException {
+    public static MirrorRegion initFromFile(int regionX, int regionZ, File regionFile) throws IOException, WrongRegionException {
         if(!regionFile.exists())
             throw new FileNotFoundException("Region file does not exist");
 
@@ -47,18 +46,19 @@ public class MirrorRegion {
         int x = ram.readInt();
         int z = ram.readInt();
 
+        // Don't know why this would ever happen, stupid really
         if(x != region._regionX || z != region._regionZ)
             throw new WrongRegionException();
 
-        int i = 0;
-        while(i < 1024) {
+        // For all possible 1024 chunks in this region
+        for(int i = 0; i < 1024; i++) {
+            // Is the chunk contained in the data? If not, it's empty
             if(ram.readBoolean()) {
                 int chunkX = region._regionX * 32 + (i % 32);
                 int chunkZ = region._regionZ * 32 + (i / 32);
-
-                region._chunks[i] = MirrorChunk.constructFromFileAtOffset(chunkX, chunkZ, ram, ram.getFilePointer());
+                region._chunks[i] = new MirrorChunk(chunkX, chunkZ);
+                region._chunks[i].loadFromFileAtOffset(ram, ram.getFilePointer());
             }
-            i++;
         }
 
         ram.close();
@@ -128,7 +128,7 @@ public class MirrorRegion {
 
     /**
      * Get the chunk located at the given global chunk coordinates. If the chunk is
-     * null (i.e. wasn't initiated from a file), it will return a new blank chunk.
+     * null, it will return null
      *
      * @param chunkX the global chunk x coordinate to get
      * @param chunkZ the global chunk z coordinate to get
@@ -140,9 +140,8 @@ public class MirrorRegion {
             throw new ArrayIndexOutOfBoundsException("Chunk does not exist within this region");
 
         int index = getChunkIndex(chunkX, chunkZ);
-
         if(_chunks[index] == null)
-            _chunks[index] = MirrorChunk.constructBlankMirrorChunk(chunkX, chunkZ);
+            _chunks[index] = new MirrorChunk(chunkX, chunkZ);
 
         return _chunks[index];
     }
@@ -155,11 +154,13 @@ public class MirrorRegion {
      * - For each chunk: (1024x)
      *
      *    - Boolean value specifying whether the next chunk is included in the file
-     *    - 15 integers specifying the roomIDs which are contained in this chunk
+     *    - Time last cleaned up as a long (if greater than a certain amount will be cleaned before loading)
+     *    - Unsigned byte specifying how many roomIDs to expect in the chunk
+     *    - Integers for each roomIDs contained in the chunk
      *    - For each section of chunk: (8x)
      *
      *       - Boolean value specifying whether the section is empty
-     *       - If not empty, int value specifying length of compressed section
+     *       - If not empty, int value specifying length in bytes of compressed section
      *       - Compressed byte array of the keys in that section
      *
      * Chunks are ordered with the x changing fastest, e.g. [0, 0], [1, 0], [2, 0], [3, 0]
@@ -200,5 +201,13 @@ public class MirrorRegion {
 
     public void setChunkListener(int x, int z, MirrorChunkEventListener listener) {
         getChunk(x, z).setListener(listener);
+    }
+
+    public int getX() {
+        return _regionX;
+    }
+
+    public int getZ() {
+        return _regionZ;
     }
 }

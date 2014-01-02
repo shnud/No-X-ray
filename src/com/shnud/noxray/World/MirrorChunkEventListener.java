@@ -1,4 +1,4 @@
-package com.shnud.noxray.Rooms;
+package com.shnud.noxray.World;
 
 /**
  * Created by Andrew on 30/12/2013.

@@ -1,6 +1,6 @@
 package com.shnud.noxray.Hiders;
 
-import com.shnud.noxray.Rooms.MirrorWorld;
+import com.shnud.noxray.World.MirrorWorld;
 import org.bukkit.World;
 
 /**

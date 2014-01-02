@@ -11,17 +11,12 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 
-public final class DynamicByteArray {
+public final class DynamicByteArray extends ByteArray {
 
     /*
-     * At the moment we only have enough room in the static buffer to use this
-     * class for nibbled chunk data (65536 / 2 at the maximum). We could allocate
-     * more but it would be a waste, and I can't figure out a way of only ever
-     * allocating as much as necessary but at the same time using a static buffer.
-     *
-     * We could allocate the buffer dynamically for each instance but it would
-     * be slower. If all the instances share the same buffer then we reduce the
-     * amount of time spent allocating memory by a huge amount.
+     * At the moment the size of the buffer is just the maximum amount of blocks in a chunk, as this is the only thing we using this class for.
+     * If however we use this class for another, totally different purpose it will be necessary to rethink how to dynamicaaly change the size of
+     * the buffer depending on the byte array that this wraps around.
      */
     private static final byte[] _buffer = new byte[MagicValues.BLOCKS_IN_CHUNK];
     private static final int MAX_SECONDS_UNTIL_RECOMPRESSION = 20;
@@ -33,16 +28,21 @@ public final class DynamicByteArray {
     private Runnable _compressionTaskRunner = new CompressionTaskRunner();
     private byte[] _byteArray;
 
-    public static DynamicByteArray constructFromUncompressedByteArray(byte[] array) {
-        return new DynamicByteArray(array, false);
+    /**
+     * Creates a new dynamically compressed byte array from an already existing byte array
+     * @param array the byte array to wrap (assumes uncompressed)
+     */
+    public DynamicByteArray(byte[] array) {
+        this(array, false);
     }
 
-    public static DynamicByteArray constructFromCompressedByteArray(byte[] array) throws DataFormatException {
-        return new DynamicByteArray(array, true);
-    }
-
-    private DynamicByteArray(byte[] array, boolean compressed) {
-        _byteArray = array;
+    /**
+     * Creates a new dynamically compressed byte array from an already existing byte array
+     * @param array  the byte array to wrap
+     * @param compressed whether the byte array is already deflated
+     */
+    public DynamicByteArray(byte[] array, boolean compressed) {
+        super(array);
         _isCompressed = compressed;
 
         if(!_isCompressed) {
@@ -52,23 +52,34 @@ public final class DynamicByteArray {
     }
 
     /**
-     * Get the byte array used to back this chunk data array
-     *
-     * @return the actual byte array; be careful
+     * Creates a new dynamically compressed byte array of the given size
      */
-    public byte[] getUncompressedByteArray() throws DataFormatException {
-        if(_isCompressed)
-            return uncompressAndReturnResult(_byteArray);
+    public DynamicByteArray(int size) {
+        this(new byte[size]);
+    }
+
+    /**
+     * Get the uncompressed byte array used to back this chunk data array
+     * @return the actual byte array; be careful - make a copy if you're going to change anything
+     */
+    public byte[] getPrimitiveByteArray() {
+        if(_isCompressed) {
+            try {
+                return uncompressAndReturnResult(_byteArray);
+            } catch (DataFormatException e) {
+                Bukkit.getLogger().log(Level.SEVERE, "Unable to decompress byte array, returning compressed byte array instead");
+                e.printStackTrace();
+            }
+        }
 
         return _byteArray;
     }
 
     /**
-     * Get the compressed version of the byte array used to back this chunk data array.
-     *
-     * @return the actual byte array; be careful
+     * Get the compressed version of the byte array used to back this chunk data array
+     * @return the actual byte array; be careful - make a copy if you're going to change anything
      */
-    public byte[] getCompressedByteArray() {
+    public byte[] getCompressedPrimitiveByteArray() {
         if(!_isCompressed)
             compress();
 
@@ -79,14 +90,14 @@ public final class DynamicByteArray {
         if(_isCompressed)
             uncompress();
 
-        return _byteArray[index];
+        return super.getValueAtIndex(index);
     }
 
     public void setValueAtIndex(int index, byte value) {
         if(_isCompressed)
             uncompress();
 
-        _byteArray[index] = value;
+        super.setValueAtIndex(index, value);
     }
 
     private void resetCompressionTimer() {
@@ -152,7 +163,7 @@ public final class DynamicByteArray {
         }
     }
 
-    public static byte[] compressAndReturnResult(byte[] input) {
+    private static byte[] compressAndReturnResult(byte[] input) {
         Deflater _def = new Deflater();
         _def.setInput(input);
         _def.finish();
@@ -163,7 +174,7 @@ public final class DynamicByteArray {
         return output;
     }
 
-    public static byte[] uncompressAndReturnResult(byte[] input) throws DataFormatException {
+    private static byte[] uncompressAndReturnResult(byte[] input) throws DataFormatException {
         Inflater _inf = new Inflater();
         _inf.setInput(input, 0, input.length);
         int sizeOfUncompressed = _inf.inflate(_buffer);
@@ -180,5 +191,16 @@ public final class DynamicByteArray {
             if(Bukkit.isPrimaryThread())
                 compress();
         }
+    }
+
+    public int size() {
+        return _originalByteArrayLength;
+    }
+
+    public void clear() {
+        if(_isCompressed)
+            uncompress();
+
+        super.clear();
     }
 }

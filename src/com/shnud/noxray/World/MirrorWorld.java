@@ -1,4 +1,4 @@
-package com.shnud.noxray.Rooms;
+package com.shnud.noxray.World;
 
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Structures.HashMapArrayList;
@@ -17,16 +17,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
-import java.util.zip.DataFormatException;
 
 /**
  * Created by Andrew on 28/12/2013.
  */
 public class MirrorWorld implements Listener, MirrorChunkEventListener {
 
-    private HashMap<String, MirrorRegion> _regionMap = new HashMap<String, MirrorRegion>();
+    private MirrorRegionMap _regionMap;
     private HashMapArrayList<Integer, Room> _rooms = new HashMapArrayList<Integer, Room>();
     private World _world;
     private File _worldFolder;
@@ -54,8 +52,8 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         File roomData = new File(_worldFolder.getPath() + "/" + "roomData");
 
         if(!roomData.exists()) {
-            Bukkit.getLogger().log(Level.INFO, "Room data was not found for world \"" + _world.getName() + "\".");
-            Bukkit.getLogger().log(Level.INFO, "New room data will be saved.");
+            Bukkit.getLogger().log(Level.INFO, "Room data was not found for world \"" + _world.getName() + "\"");
+            Bukkit.getLogger().log(Level.INFO, "New room data will be saved");
             return;
         }
 
@@ -110,17 +108,13 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         roomData.renameTo(oldFile);
     }
 
-    private static String keyFromCoordinates(int x, int z) {
-        return x + ":" + z;
-    }
-
     private void createDirectoryIfNotExist() {
         if(!_worldFolder.isDirectory())
             _worldFolder.mkdir();
     }
 
     private boolean isRegionLoaded(int x, int z) {
-        return _regionMap.containsKey(keyFromCoordinates(x, z));
+        return _regionMap.containsRegion(x, z);
     }
 
     private void loadRegion(int regionX, int regionZ) {
@@ -130,23 +124,20 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         }
 
         File regionFile = new File(_worldFolder.getPath() + "/" + MirrorRegion.regionFileName(regionX, regionZ));
-        String key = keyFromCoordinates(regionX, regionZ);
 
         if(regionFile.exists()) {
 
             try {
                 MirrorRegion region = MirrorRegion.initFromFile(regionX, regionZ, regionFile);
-                _regionMap.put(key, region);
+                _regionMap.putRegion(region);
 
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (MirrorRegion.WrongRegionException e) {
                 e.printStackTrace();
-            } catch (DataFormatException e) {
-                e.printStackTrace();
             }
         } else {
-            _regionMap.put(key, MirrorRegion.createBlank(regionX, regionZ));
+            _regionMap.putRegion(MirrorRegion.createBlank(regionX, regionZ));
         }
     }
 
@@ -156,9 +147,8 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
             return;
         }
         try {
-            String key = keyFromCoordinates(regionX, regionZ);
-            saveRegion(_regionMap.get(key));
-            _regionMap.remove(key);
+            saveRegion(_regionMap.getRegion(regionX, regionZ));
+            _regionMap.removeRegion(regionX, regionZ);
 
         } catch (IOException e) {
             Bukkit.getLogger().log(Level.SEVERE, "Error while writing region [" + regionX + ", " + regionZ + "] to disk. Data may have been lost");
@@ -168,12 +158,7 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
     }
 
     private MirrorRegion getRegion(int regionX, int regionZ) {
-        String key = keyFromCoordinates(regionX, regionZ);
-
-        if(!_regionMap.containsKey(key))
-            loadRegion(regionX, regionZ);
-
-        return _regionMap.get(key);
+        return _regionMap.getRegion(regionX, regionZ);
     }
 
     private void saveRegion(MirrorRegion region) throws IOException {

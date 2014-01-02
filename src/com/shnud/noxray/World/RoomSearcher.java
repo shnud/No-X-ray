@@ -1,4 +1,4 @@
-package com.shnud.noxray.Rooms;
+package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.XYZ;
 import org.bukkit.Material;

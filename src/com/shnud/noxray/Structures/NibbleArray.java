@@ -3,65 +3,89 @@ package com.shnud.noxray.Structures;
 /**
  * Created by Andrew on 22/12/2013.
  */
-public class NibbleArray {
+public class NibbleArray implements ByteArrayWrapper {
 
-    protected byte[] _byteArray;
-    private int _nibbleLength;
+    private ByteArray _byteArray;
 
     public NibbleArray(int length) {
-        _nibbleLength = length;
         int dividedLength = (length / 2) + (length % 2 == 0 ? 0 : 1);
-        _byteArray = new byte[dividedLength];
+        _byteArray = new ByteArray(dividedLength);
     }
 
-    public NibbleArray(byte[] existingArray, int nibbleLength) {
-        if(nibbleLength > existingArray.length * 2)
-            throw new IllegalArgumentException("There can only be twice as many nibbles in a byte array as there are bytes");
-
-        _nibbleLength = nibbleLength;
-        _byteArray = existingArray;
+    public NibbleArray(ByteArray array) {
+        _byteArray = array;
     }
 
+    @Override
     public int getValueAtIndex(int index) {
-        if(index >= _nibbleLength)
-            throw new ArrayIndexOutOfBoundsException();
+        if(index >= size())
+            throw new ArrayIndexOutOfBoundsException(index);
 
         boolean even = (index & 1) == 0;
 
         if(even)
-            return (_byteArray[index / 2] & 0xF0) >> 4;
+            return (_byteArray.getValueAtIndex(index / 2) & 0xF0) >> 4;
         else
-            return (_byteArray[index / 2] & 0x0F);
+            return (_byteArray.getValueAtIndex(index / 2) & 0x0F);
     }
 
-    public void setValueAtIndex(int index, byte value) {
-        if(value > 15)
+    @Override
+    public void setValueAtIndex(int index, int value) {
+        if(value > maxValue())
             throw new IllegalArgumentException("Nibble cannot store numbers larger than 15");
 
-        if(index >= _nibbleLength)
-            throw new ArrayIndexOutOfBoundsException();
+        if(index >= size())
+            throw new ArrayIndexOutOfBoundsException(index);
 
         boolean even = (index & 1) == 0;
+        index /= 2;
 
         if(even)
         {
             value <<= 4; // Even indexed first, so move them to the left
 
             // Erase values to the left of original value
-            _byteArray[index / 2] &= 15;
+            _byteArray.setValueAtIndex(index, (byte) (_byteArray.getValueAtIndex(index) & 15));
             // Replace with new values by ORing
-            _byteArray[index / 2] |= value;
+            _byteArray.setValueAtIndex(index, (byte) (_byteArray.getValueAtIndex(index) | value));
         }
         else
         {
             // Odd indexed last, and no values on the left since
             // we checked if it was greater than 15
-            _byteArray[index / 2] &= 240; // Erase values to the left of original value
-            _byteArray[index / 2] |= value; // Replace with new values by ORing
+            _byteArray.setValueAtIndex(index, (byte) (_byteArray.getValueAtIndex(index) & 240));
+            // Replace with new values by ORing
+            _byteArray.setValueAtIndex(index, (byte) (_byteArray.getValueAtIndex(index) | value));
         }
     }
 
-    public final int getLength() {
-        return _nibbleLength;
+    @Override
+    public int size() {
+        return _byteArray.size() * 2;
+    }
+
+    @Override
+    public void clear() {
+        for(int i = 0; i < size(); i++) setValueAtIndex(i, 0);
+    }
+
+    @Override
+    public ByteArray getByteArray() {
+        return _byteArray;
+    }
+
+    @Override
+    public void setByteArray(ByteArray array) {
+        _byteArray = _byteArray;
+    }
+
+    @Override
+    public int maxValue() {
+        return 15;
+    }
+
+    @Override
+    public byte bitsPerValue() {
+        return 4;
     }
 }

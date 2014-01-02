@@ -3,7 +3,6 @@ package com.shnud.noxray.Settings;
 import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.entity.EntityType;
 
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
