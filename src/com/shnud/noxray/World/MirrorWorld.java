@@ -3,7 +3,9 @@ package com.shnud.noxray.World;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
+import com.sun.tools.javac.resources.compiler;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,7 +23,7 @@ import java.util.logging.Level;
 public class MirrorWorld implements Listener {
 
     private MirrorRegionMap _regionMap;
-    private RoomList _rooms;
+
     private World _world;
     private File _worldFolder;
     private static final long MILLISECONDS_TO_WAIT_BETWEEN_POSSIBLE_REGION_SAVES_AFTER_CHUNK_CHANGE = 120 * 1000;
@@ -35,7 +37,9 @@ public class MirrorWorld implements Listener {
         createWorldDirectoryIfNotExist();
 
         _regionMap = new MirrorRegionMap();
-        _rooms = new RoomList(this);
+
+        Chunk[] loadedChunks = world.getLoadedChunks();
+        for(Chunk chunk : loadedChunks) loadChunk(chunk.getX(), chunk.getZ());
 
         Bukkit.getPluginManager().registerEvents(this, NoXray.getInstance());
     }
@@ -70,13 +74,7 @@ public class MirrorWorld implements Listener {
         if(!event.getWorld().equals(_world))
             return;
 
-        int regionX = event.getChunk().getX() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
-        int regionZ = event.getChunk().getZ() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
-
-        if(!_regionMap.containsRegion(regionX, regionZ))
-            loadRegion(regionX, regionZ);
-
-        _regionMap.getRegion(regionX, regionZ).chunkInUse();
+        loadChunk(event.getChunk().getX(), event.getChunk().getZ());
     }
 
     @EventHandler (priority = EventPriority.MONITOR)
@@ -92,20 +90,38 @@ public class MirrorWorld implements Listener {
         MirrorRegion region = _regionMap.getRegion(regionX, regionZ);
         region.chunkNotInUse();
 
-        if(region.getChunksInUse() == 0) {
-            unloadRegion(region.getX(), regionZ);
+        if(region.getChunksInUse() <= 0) {
+            unloadRegion(regionX, regionZ);
         }
+    }
+
+    private void loadChunk(int x, int z) {
+        int regionX = x >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
+        int regionZ = z >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
+
+        if(!_regionMap.containsRegion(regionX, regionZ))
+            loadRegion(regionX, regionZ);
+
+        _regionMap.getRegion(regionX, regionZ).chunkInUse();
     }
 
     public String getWorldName() {
         return _world.getName();
     }
 
-    public void saveAllData() {
-        _rooms.saveRooms();
-
+    public void saveAllRegions() {
         for(MirrorRegion region : _regionMap) {
             region.saveToFile();
         }
+    }
+
+    /**
+     * Will return null if chunk isn't loaded
+     */
+    public MirrorChunk getChunk(DynamicCoordinates coordinates) {
+        if(!_regionMap.containsRegion(coordinates.regionX(), coordinates.regionZ()))
+            return null;
+
+        return _regionMap.getRegion(coordinates.regionX(), coordinates.regionZ()).getChunk(coordinates);
     }
 }

@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -16,7 +18,7 @@ import java.util.logging.Level;
  */
 public class RoomList {
 
-    private HashMapArrayList<Integer, Room> _rooms = new HashMapArrayList<Integer, Room>();
+    private HashMap<Integer, Room> _rooms = new HashMap<Integer, Room>();
     private MirrorWorld _world;
 
     public RoomList(MirrorWorld world) {
@@ -38,6 +40,7 @@ public class RoomList {
 
             while(ram.getFilePointer() < ram.length()) {
                 int roomID = ram.readInt();
+
                 Room newRoom = new Room(roomID);
 
                 do {
@@ -67,8 +70,11 @@ public class RoomList {
 
         try {
             RandomAccessFile ram = new RandomAccessFile(roomData, "rw");
+            Set<Integer> keys = _rooms.keySet();
 
-            for(Room room : _rooms) {
+            for(Integer key : keys) {
+                Room room = _rooms.get(key);
+
                 ram.writeInt(room.getID());
 
                 ArrayList<XZ> chunks = room.getListOfKnownChunks();
@@ -121,5 +127,23 @@ public class RoomList {
             return new ArrayList<XZ>();
 
         return _rooms.get(roomID).getListOfKnownChunks();
+    }
+
+    public int getUnusedRoomID() {
+        Set<Integer> keySet = _rooms.keySet();
+
+        int previous = 0;
+        for(Integer key : keySet) {
+            if(key - previous > 1)
+                return key + 1;
+
+            previous = key;
+        }
+
+        return previous + 1;
+    }
+
+    public void addRoom(Room room) {
+        _rooms.put(room.getID(), room);
     }
 }
