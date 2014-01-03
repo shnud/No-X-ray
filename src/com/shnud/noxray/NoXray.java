@@ -46,17 +46,7 @@ public class NoXray extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        for(PlayerHider ph : _playerHiders) {
-            ph.deactivate();
-        }
-
-        for(RoomHider rh : _roomHiders) {
-            rh.saveAllData();
-        }
-
-        _playerHiders.clear();
-        _entityHiders.clear();
-        _roomHiders.clear();
+        for(RoomHider rh : _roomHiders) rh.saveAllData();
         _playerMetadata.save();
         getServer().getScheduler().cancelTasks(this);
     }
