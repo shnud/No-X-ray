@@ -149,12 +149,12 @@ public final class DynamicByteArray extends ByteArray {
                 byte[] uncompressedArray = new byte[_originalByteArrayLength];
                 _inf.inflate(uncompressedArray);
                 _byteArray = uncompressedArray;
-                _isCompressed = false;
                 _inf.end();
             }
             else
                 _byteArray = uncompressAndReturnResult(_byteArray);
 
+            _isCompressed = false;
             resetCompressionTimer();
 
         } catch (DataFormatException e) {
