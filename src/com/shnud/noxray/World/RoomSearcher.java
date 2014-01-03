@@ -1,5 +1,6 @@
 package com.shnud.noxray.World;
 
+import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -92,7 +93,7 @@ public class RoomSearcher {
     }
 
     private boolean isChunkLoadedForBlock(XYZ block) {
-        return _world.isChunkLoaded(block.x / 16, block.y / 16);
+        return _world.isChunkLoaded(block.x >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, block.z >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK);
     }
 
     public class ChunkNotLoadedException extends Exception {}
