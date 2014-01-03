@@ -2,11 +2,13 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
+import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Level;
 
 /**
  * Created by Andrew on 29/12/2013.
@@ -18,12 +20,12 @@ public class MirrorRegion {
     private int _minChunkX, _maxChunkX, _minChunkZ, _maxChunkZ;
     private int _chunksInUse = 0;
     private long _timeOfLastSuccessfulSave = 0;
-    private MirrorWorld _world;
+    private File _worldFolder;
 
-    public MirrorRegion(int regionX, int regionZ, MirrorWorld world) {
+    public MirrorRegion(int regionX, int regionZ, File worldFolder) {
         _x = regionX;
         _z = regionZ;
-        _world = world;
+        _worldFolder = worldFolder;
 
         _minChunkX = regionX * MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
         _maxChunkX = _minChunkX + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
@@ -46,43 +48,52 @@ public class MirrorRegion {
         if(_chunks[index] == null)
             _chunks[index] = new MirrorChunk(chunkX, chunkZ);
 
-        _chunks[index].setListener(_world);
         return _chunks[index];
     }
 
-    public void loadFromFile(File regionFile) throws IOException, WrongRegionException {
+    /**
+     * Load the chunks for this region from the MirrorWorld folder
+     * @return the amount of chunks that were loaded
+     * @throws IOException
+     */
+    public int loadFromFile() {
+        File regionFile = new File(_worldFolder.getPath() + "/" + regionFileName());
 
         if(!regionFile.exists())
-            throw new FileNotFoundException("Region file does not exist");
+            return 0;
 
-        RandomAccessFile ram = new RandomAccessFile(regionFile, "r");
-        int x = ram.readInt();
-        int z = ram.readInt();
+        int chunksLoaded = 0;
 
-        // Don't know why this would ever happen, stupid really
-        if(x != _x || z != _z)
-            throw new WrongRegionException();
+        try {
+            RandomAccessFile ram = new RandomAccessFile(regionFile, "r");
 
-        // For all possible 1024 chunks in this region
-        for(int i = 0; i < 1024; i++) {
-            // Is the chunk contained in the data? If not, it's empty
-            if(ram.readBoolean()) {
-                int chunkX = _x * 32 + (i % 32);
-                int chunkZ = _z * 32 + (i / 32);
-                _chunks[i] = new MirrorChunk(chunkX, chunkZ);
-                _chunks[i].loadFromFile(ram);
+            // For all possible 1024 chunks in this region
+            for(int i = 0; i < 1024; i++) {
+                // Is the chunk contained in the data? If not, it's empty
+                if(ram.readBoolean()) {
+                    int chunkX = _x * 32 + (i % 32);
+                    int chunkZ = _z * 32 + (i / 32);
+                    _chunks[i] = new MirrorChunk(chunkX, chunkZ);
+                    _chunks[i].loadFromFile(ram);
+                    chunksLoaded++;
+                }
             }
+
+            ram.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        ram.close();
-
+        return chunksLoaded;
     }
 
     /**
      * Saves the region coordinates, and its containing chunks to the specified file. The file format
      * is as follows:
      *
-     * - Two integers specifying x and z coordinates of region
      * - For each chunk: (1024x)
      *
      *    - Boolean value specifying whether the next chunk is included in the file
@@ -97,30 +108,50 @@ public class MirrorRegion {
      *
      * Chunks are ordered with the x changing fastest, e.g. [0, 0], [1, 0], [2, 0], [3, 0]
      *
-     * @param regionFile
      * @throws IOException
      */
-    public void saveToFile(File regionFile) throws IOException {
-        if(!regionFile.exists())
-            regionFile.createNewFile();
+    public void saveToFile() {
+        String path = _worldFolder.getPath() + "/" + regionFileName();
 
-        RandomAccessFile ram = new RandomAccessFile(regionFile, "rw");
+        // We will use a temporary name so as not to
+        // overide the old file straight away incase
+        // something goes wrong while saving
+        File newFile = new File(path + "temp");
 
-        ram.setLength(0);
-        ram.writeInt(_x);
-        ram.writeInt(_z);
+        try {
+            if(!newFile.exists())
+                newFile.createNewFile();
 
-        for(MirrorChunk chunk : _chunks) {
-            if(chunk != null && !chunk.isEmpty()) {
-                ram.writeBoolean(true);
-                chunk.saveToFile(ram);
+            RandomAccessFile ram = new RandomAccessFile(newFile, "rw");
+            // If the temp file somehow already exists, erase the file
+            // and start at the beginning
+            ram.setLength(0);
+
+            for(MirrorChunk chunk : _chunks) {
+                if(chunk != null && !chunk.isEmpty()) {
+                    ram.writeBoolean(true);
+                    chunk.saveToFile(ram);
+                }
+                else
+                    ram.writeBoolean(false);
             }
-            else
-                ram.writeBoolean(false);
-        }
 
-        ram.close();
-        _timeOfLastSuccessfulSave = System.currentTimeMillis();
+            ram.close();
+
+            // Now there is no way that we can't have finished
+            // saving the region, so we can safely delete the old
+            // file and rename this one to take its place
+            File oldFile = new File(path);
+            if(oldFile.exists())
+                oldFile.delete();
+
+            newFile.renameTo(oldFile);
+
+            _timeOfLastSuccessfulSave = System.currentTimeMillis();
+
+        } catch (IOException e) {
+            Bukkit.getLogger().log(Level.SEVERE, "Unable to save region: " + this + " to disk. Data may have been lost");
+        }
     }
 
     public long getMillisecondsSinceLastSuccessfulSave() {
@@ -147,5 +178,9 @@ public class MirrorRegion {
 
     public String toString() {
         return "MirrorRegion[" + _x + ", " + _z + "]";
+    }
+
+    private String regionFileName() {
+        return _x + "." + _z + ".mrr";
     }
 }

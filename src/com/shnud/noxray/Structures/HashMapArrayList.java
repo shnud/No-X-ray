@@ -15,7 +15,7 @@ public class HashMapArrayList<K, T> implements Iterable<T> {
         _hashMap = new HashMap<K, T>();
     }
 
-    public void add(K key, T object) {
+    public void put(K key, T object) {
         if(_hashMap.containsKey(object))
             return;
 

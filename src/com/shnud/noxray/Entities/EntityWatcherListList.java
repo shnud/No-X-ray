@@ -17,7 +17,7 @@ public class EntityWatcherListList implements Iterable<EntityWatcherList> {
         if(containsEntityWatcher(subject))
             _entityWatchers.get(subject.getEntityId()).addWatcher(newWatcher);
         else
-            _entityWatchers.add(subject.getEntityId(), new EntityWatcherList(subject, newWatcher));
+            _entityWatchers.put(subject.getEntityId(), new EntityWatcherList(subject, newWatcher));
     }
 
     public boolean containsEntityWatcher(Entity entity) {

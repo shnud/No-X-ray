@@ -10,6 +10,7 @@ public class RoomHider {
 
     private World _world;
     private MirrorWorld _mirror;
+    private boolean _activated;
 
     public RoomHider(World world) {
         if(world == null)
@@ -17,5 +18,10 @@ public class RoomHider {
 
         _world = world;
         _mirror = new MirrorWorld(_world);
+    }
+
+    public void deactivate() {
+        _mirror.saveAllData();
+        _activated = false;
     }
 }

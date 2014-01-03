@@ -28,14 +28,14 @@ public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
     }
 
     /*
-     * Will not add a couple that already exists, every entry must be unique
+     * Will not put a couple that already exists, every entry must be unique
      */
     public void addCouple(T couple) {
         if(couple == null)
             throw new IllegalArgumentException("Couple cannot be null");
 
         if(!containsCouple(couple))
-            _couples.add(couple.uniqueID(), couple);
+            _couples.put(couple.uniqueID(), couple);
     }
 
     public void removeCouple(PlayerCouple couple) {

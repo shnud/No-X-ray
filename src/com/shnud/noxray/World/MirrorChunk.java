@@ -15,7 +15,6 @@ public class MirrorChunk {
     private MirrorChunkIDMap _keyToIDMap;
     private int _x, _z;
     private long _timeOfLastCleanUp = 0;
-    private MirrorChunkEventListener _listener;
 
     public MirrorChunk(int x, int z) {
         _x = x;
@@ -54,12 +53,8 @@ public class MirrorChunk {
 
         int key;
 
-        if(roomID != 0 && !_keyToIDMap.containsRoomID(roomID)) {
+        if(roomID != 0 && !_keyToIDMap.containsRoomID(roomID))
             key = _keyToIDMap.addRoomID(roomID);
-
-            if(_listener != null)
-                _listener.roomAddedToChunkEvent(roomID, _x, _z);
-        }
         else
             key = _keyToIDMap.getKeyForRoomID(roomID);
 
@@ -67,8 +62,6 @@ public class MirrorChunk {
             return;
 
         _data.setBlockKey(coordinates, key);
-        if(_listener != null)
-            _listener.chunkChangeEvent(_x, _z);
     }
 
     public int getRoomIDAtBlock(DynamicCoordinates coordinates) {
@@ -83,9 +76,6 @@ public class MirrorChunk {
         if(key > 0) {
             _data.removeAllKeys(key);
             _keyToIDMap.removeRoomID(roomID);
-
-            if(_listener != null)
-                _listener.roomRemovedFromChunkEvent(roomID, _x, _z);
         }
     }
 
@@ -105,8 +95,8 @@ public class MirrorChunk {
         return _keyToIDMap.containsRoomID(roomID);
     }
 
-    public void setListener(MirrorChunkEventListener listener) {
-        _listener = listener;
+    public void cleanUp() {
+        _timeOfLastCleanUp = System.currentTimeMillis();
     }
 
     public static class MirrorChunkFullException extends Exception {}

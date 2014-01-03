@@ -27,14 +27,14 @@ public class EntityWatcherList implements Iterable<Player> {
 
     public EntityWatcherList(Entity subject, Player firstwatcher) {
         this(subject);
-        _watchers.add(firstwatcher.getName(), firstwatcher);
+        _watchers.put(firstwatcher.getName(), firstwatcher);
     }
 
     public void addWatcher(Player player) {
         if(isWatching(player))
             return;
 
-        _watchers.add(player.getName(), player);
+        _watchers.put(player.getName(), player);
     }
 
     public void removeWatcher(Player player) {
@@ -56,7 +56,7 @@ public class EntityWatcherList implements Iterable<Player> {
 
             for (Player p : realWatchers) {
                 if(isWatching(p))
-                    _leftoverWatchers.add(p.getName(), p);
+                    _leftoverWatchers.put(p.getName(), p);
             }
         } catch (IllegalArgumentException e) {
             /* Some bug with ProtocolLib throws an exception when there are no watchers,

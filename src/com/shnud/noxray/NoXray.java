@@ -50,6 +50,10 @@ public class NoXray extends JavaPlugin {
             ph.deactivate();
         }
 
+        for(RoomHider rh : _roomHiders) {
+            rh.deactivate();
+        }
+
         _playerHiders.clear();
         _entityHiders.clear();
         _roomHiders.clear();

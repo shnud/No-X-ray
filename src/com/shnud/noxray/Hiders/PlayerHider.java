@@ -93,7 +93,7 @@ public class PlayerHider implements PacketEventListener {
         if(event.getSubject().equals(event.getReceiver()))
             return;
 
-        // If we're already monitoring the couple, no need to re-add it to the watch list
+        // If we're already monitoring the couple, no need to re-put it to the watch list
         if(_coupleWatchList.containsCoupleFromEntities(event.getReceiver(), event.getSubject())) {
 
             if(_coupleWatchList.getCoupleFromEntities(event.getReceiver(), event.getSubject()).areHidden())
@@ -137,7 +137,7 @@ public class PlayerHider implements PacketEventListener {
         if(_coupleWatchList.containsCoupleFromEntities(event.getReceiver(), event.getSubject()) && _coupleWatchList.getCoupleFromEntities(event.getReceiver(), event.getSubject()).areHidden())
             event.cancel();
 
-        /* Maybe here we could add some sort of flag to the couple to store the last time
+        /* Maybe here we could put some sort of flag to the couple to store the last time
          * the server tried to send an entity update packet for the couple. This could then
          * be used instead of ProtocolManager's getEntityTrackers to remove couples from
          * the list which are no longer in need of being tracked

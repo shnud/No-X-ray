@@ -1,12 +1,15 @@
 package com.shnud.noxray.World;
 
+import com.shnud.noxray.Structures.HashMapArrayList;
+
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by Andrew on 02/01/2014.
  */
-public class MirrorRegionMap {
-    private HashMap<String, MirrorRegion> _regionMap = new HashMap<String, MirrorRegion>();
+public class MirrorRegionMap implements Iterable<MirrorRegion> {
+    private HashMapArrayList<String, MirrorRegion> _regionMap = new HashMapArrayList<String, MirrorRegion>();
 
     public MirrorRegion getRegion(int regionX, int regionZ) {
         String key = keyFromCoordinates(regionX, regionZ);
@@ -40,5 +43,10 @@ public class MirrorRegionMap {
 
     private static String keyFromCoordinates(int x, int z) {
         return x + ":" + z;
+    }
+
+    @Override
+    public Iterator<MirrorRegion> iterator() {
+        return _regionMap.iterator();
     }
 }

@@ -18,7 +18,7 @@ import java.util.logging.Level;
 /**
  * Created by Andrew on 28/12/2013.
  */
-public class MirrorWorld implements Listener, MirrorChunkEventListener {
+public class MirrorWorld implements Listener {
 
     private MirrorRegionMap _regionMap;
     private RoomList _rooms;
@@ -33,6 +33,8 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         _world = world;
         _worldFolder = new File(NoXray.getInstance().getDataFolder().getPath() + "/" + _world.getName() + "/");
         createWorldDirectoryIfNotExist();
+
+        _regionMap = new MirrorRegionMap();
         _rooms = new RoomList(this);
 
         Bukkit.getPluginManager().registerEvents(this, NoXray.getInstance());
@@ -49,52 +51,18 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         if(_regionMap.containsRegion(x, z))
             return;
 
-        MirrorRegion region = new MirrorRegion(x, z, this);
+        MirrorRegion region = new MirrorRegion(x, z, this._worldFolder);
+        region.loadFromFile();
         _regionMap.putRegion(region);
-
-        File regionFile = new File(_worldFolder.getPath() + "/" + regionFileName(x, z));
-
-        if(!regionFile.exists())
-            return;
-
-        try {
-            region.loadFromFile(regionFile);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (MirrorRegion.WrongRegionException e) {
-            e.printStackTrace();
-        }
     }
 
     private void unloadRegion(int x, int z) {
         if(!_regionMap.containsRegion(x, z))
             return;
 
-        MirrorRegion toUnload = _regionMap.getRegion(x, z);
-        saveRegion(x, z);
-        _regionMap.removeRegion(x, z);
-    }
-
-    private void saveRegion(int x, int z) {
-        if(!_regionMap.containsRegion(x, z))
-            return;
-
         MirrorRegion region = _regionMap.getRegion(x, z);
-        String path = _worldFolder.getPath() + "/" + regionFileName(x, z);
-
-        File newFile = new File(path + "temp");
-        try {
-            region.saveToFile(newFile);
-            File oldFile = new File(path);
-
-            if(oldFile.exists())
-                oldFile.delete();
-
-            newFile.renameTo(oldFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        region.saveToFile();
+        _regionMap.removeRegion(x, z);
     }
 
     @EventHandler (priority = EventPriority.MONITOR)
@@ -102,12 +70,13 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         if(!event.getWorld().equals(_world))
             return;
 
-        DynamicCoordinates coords = DynamicCoordinates.initWithChunkCoordinates(event.getChunk().getX(), 0, event.getChunk().getZ());
+        int regionX = event.getChunk().getX() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
+        int regionZ = event.getChunk().getZ() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
 
-        if(!_regionMap.containsRegion(coords.regionX(), coords.regionZ()))
-            loadRegion(coords.regionX(), coords.regionZ());
+        if(!_regionMap.containsRegion(regionX, regionZ))
+            loadRegion(regionX, regionZ);
 
-        _regionMap.getRegion(coords.regionX(), coords.regionZ()).chunkInUse();
+        _regionMap.getRegion(regionX, regionZ).chunkInUse();
     }
 
     @EventHandler (priority = EventPriority.MONITOR)
@@ -115,37 +84,28 @@ public class MirrorWorld implements Listener, MirrorChunkEventListener {
         if(!event.getWorld().equals(_world))
             return;
 
-        DynamicCoordinates coords = DynamicCoordinates.initWithChunkCoordinates(event.getChunk().getX(), 0, event.getChunk().getZ());
-        _regionMap.getRegion(coords.regionX(), coords.regionZ()).chunkNotInUse();
+        int regionX = event.getChunk().getX() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
+        int regionZ = event.getChunk().getZ() >> MagicValues.BITSHIFTS_RIGHT_CHUNK_TO_REGION;
+        if(!_regionMap.containsRegion(regionX, regionZ))
+            return;
 
-        if(_regionMap.getRegion(coords.regionX(), coords.regionZ()).getChunksInUse() == 0)
-            unloadRegion(coords.regionX(), coords.regionZ());
+        MirrorRegion region = _regionMap.getRegion(regionX, regionZ);
+        region.chunkNotInUse();
+
+        if(region.getChunksInUse() == 0) {
+            unloadRegion(region.getX(), regionZ);
+        }
     }
 
-    private static String regionFileName(int x, int z) {
-        return x + "." + z + ".mrr";
-    }
-
-    public String getName() {
+    public String getWorldName() {
         return _world.getName();
     }
 
-    public RoomList getRooms() {
-        return _rooms;
-    }
+    public void saveAllData() {
+        _rooms.saveRooms();
 
-    @Override
-    public void chunkChangeEvent(int x, int z) {
-
-    }
-
-    @Override
-    public void roomAddedToChunkEvent(int roomID, int x, int z) {
-
-    }
-
-    @Override
-    public void roomRemovedFromChunkEvent(int roomID, int x, int z) {
-
+        for(MirrorRegion region : _regionMap) {
+            region.saveToFile();
+        }
     }
 }

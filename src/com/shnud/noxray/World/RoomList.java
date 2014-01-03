@@ -20,72 +20,81 @@ public class RoomList {
 
     public RoomList(MirrorWorld world) {
         _world = world;
-
-        try {
-            loadRooms();
-        } catch (IOException e) {
-            Bukkit.getLogger().log(Level.WARNING, "Unable to load list of rooms, we don't know which chunks they're in");
-        }
+        loadRooms();
     }
 
-    private void loadRooms() throws IOException {
+    private void loadRooms() {
         File roomData = new File(_world.getFolder().getPath() + "/" + "roomData");
 
         if(!roomData.exists()) {
-            Bukkit.getLogger().log(Level.INFO, "Room data was not found for world \"" + _world.getName() + "\"");
+            Bukkit.getLogger().log(Level.INFO, "Room data was not found for world \"" + _world.getWorldName() + "\"");
             Bukkit.getLogger().log(Level.INFO, "New room data will be saved");
             return;
         }
 
-        RandomAccessFile ram = new RandomAccessFile(roomData, "r");
+        try {
+            RandomAccessFile ram = new RandomAccessFile(roomData, "r");
 
-        while(ram.getFilePointer() < ram.length()) {
-            int roomID = ram.readInt();
-            Room newRoom = new Room(roomID);
+            while(ram.getFilePointer() < ram.length()) {
+                int roomID = ram.readInt();
+                Room newRoom = new Room(roomID);
 
-            do {
-                int chunkX = ram.readInt();
-                int chunkZ = ram.readInt();
+                do {
+                    int chunkX = ram.readInt();
+                    int chunkZ = ram.readInt();
 
-                newRoom.addChunk(new XZ(chunkX, chunkZ));
-            } while(ram.readChar() == ',');
+                    newRoom.addChunk(new XZ(chunkX, chunkZ));
+                } while(ram.readChar() == ',');
 
-            _rooms.add(newRoom.getID(), newRoom);
+                _rooms.put(newRoom.getID(), newRoom);
+            }
+
+            ram.close();
+
+        } catch (IOException e) {
+            Bukkit.getLogger().log(Level.WARNING, "Unable to load room data for world " + _world.getWorldName() + "\"");
+            Bukkit.getLogger().log(Level.WARNING, "We do not know which chunks rooms are in");
         }
-
-        ram.close();
     }
 
-    private void saveRooms() throws IOException {
-        File roomData = new File(_world.getFolder().getPath() + "/" + "roomDatatemp");
-        RandomAccessFile ram = new RandomAccessFile(roomData, "rw");
-
+    public void saveRooms() {
         if(_rooms.isEmpty())
             return;
 
-        for(Room room : _rooms) {
-            ram.writeInt(room.getID());
+        String path = _world.getFolder().getPath() + "/" + "roomData";
+        File roomData = new File(path + "temp");
 
-            ArrayList<XZ> chunks = room.getListOfKnownChunks();
+        try {
+            RandomAccessFile ram = new RandomAccessFile(roomData, "rw");
 
-            for(int i = 0; i < chunks.size(); i++) {
-                ram.writeInt(chunks.get(i).x);
-                ram.writeInt(chunks.get(i).z);
+            for(Room room : _rooms) {
+                ram.writeInt(room.getID());
 
-                if(i == chunks.size() - 1)
-                    ram.writeChar(';');
-                else
-                    ram.writeChar(',');
+                ArrayList<XZ> chunks = room.getListOfKnownChunks();
+
+                for(int i = 0; i < chunks.size(); i++) {
+                    ram.writeInt(chunks.get(i).x);
+                    ram.writeInt(chunks.get(i).z);
+
+                    if(i == chunks.size() - 1)
+                        ram.writeChar(';');
+                    else
+                        ram.writeChar(',');
+                }
             }
+
+            ram.close();
+
+            File oldFile = new File(path);
+            if(oldFile.exists())
+                oldFile.delete();
+
+            roomData.renameTo(oldFile);
+
+        } catch (IOException e) {
+            Bukkit.getLogger().log(Level.WARNING, "Unable to save room data");
+            Bukkit.getLogger().log(Level.WARNING, "Next run we may not know which chunks rooms are in");
         }
-
-        ram.close();
-
-        File oldFile = new File(_world.getFolder().getPath() + "/" + "roomData");
-        if(oldFile.exists())
-            oldFile.delete();
-
-        roomData.renameTo(oldFile);
     }
 
     public Room getRoomFromID(int roomID) {
@@ -94,7 +103,7 @@ public class RoomList {
 
     public void addKnownChunkToRoom(int chunkX, int chunkZ, int roomID) {
         if(!_rooms.containsKey(roomID))
-            _rooms.add(roomID, new Room(roomID));
+            _rooms.put(roomID, new Room(roomID));
 
         _rooms.get(roomID).addChunk(new XZ(chunkX, chunkZ));
     }
@@ -104,5 +113,12 @@ public class RoomList {
             return;
 
         _rooms.remove(roomID);
+    }
+
+    public ArrayList<XZ> getKnownChunksForRoom(int roomID) {
+        if(!_rooms.containsKey(roomID))
+            return new ArrayList<XZ>();
+
+        return _rooms.get(roomID).getListOfKnownChunks();
     }
 }

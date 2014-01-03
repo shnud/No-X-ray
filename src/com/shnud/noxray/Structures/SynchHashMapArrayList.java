@@ -12,8 +12,8 @@ public class SynchHashMapArrayList<K, T> extends HashMapArrayList<K, T> {
     }
 
     @Override
-    synchronized public void add(K key, T object) {
-        super.add(key, object);
+    synchronized public void put(K key, T object) {
+        super.put(key, object);
     }
 
     @Override
