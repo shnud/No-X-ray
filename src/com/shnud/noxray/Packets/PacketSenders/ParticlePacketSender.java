@@ -72,6 +72,18 @@ public class ParticlePacketSender extends PacketSender {
         _z = z;
     }
 
+    public void setX(float x) {
+        _x = x;
+    }
+
+    public void setY(float y) {
+        _y = y;
+    }
+
+    public void setZ(float z) {
+        _z = z;
+    }
+
     @Override
     protected boolean isThreadSafe() {
         return true;
