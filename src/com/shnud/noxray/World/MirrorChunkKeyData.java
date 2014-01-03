@@ -35,9 +35,9 @@ public class MirrorChunkKeyData {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
-        int localX = coords.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+        int localX = (coords.blockX() < 0 ? -coords.blockX() : coords.blockX()) % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
         int localY = coords.blockY();
-        int localZ = coords.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+        int localZ = (coords.blockZ() < 0 ? -coords.blockZ() : coords.blockZ()) % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
 
         return getLocalBlockKey(localX, localY, localZ);
     }
@@ -49,7 +49,7 @@ public class MirrorChunkKeyData {
     }
 
     private int getValueAtIndex(int index) {
-        int sectionIndex = index / DATA_SECTIONS;
+        int sectionIndex = index / BLOCKS_PER_SECTION;
 
         if(_sections[sectionIndex] == null)
             return 0;
@@ -75,7 +75,7 @@ public class MirrorChunkKeyData {
     }
 
     private void setValueAtIndex(int index, int value) {
-        int sectionIndex = index / DATA_SECTIONS;
+        int sectionIndex = index / BLOCKS_PER_SECTION;
 
         if(_sections[sectionIndex] == null)
             _sections[sectionIndex] = new DynamicByteBitWrapper(DEFAULT_BIT_PER_VALUE_ENCODING, BLOCKS_PER_SECTION);
@@ -113,7 +113,6 @@ public class MirrorChunkKeyData {
                 ram.writeBoolean(false);
                 continue;
             }
-
             // This section of the chunk is contained within the data
             ram.writeBoolean(true);
 
