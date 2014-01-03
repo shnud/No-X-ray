@@ -11,7 +11,6 @@ public class RoomHider {
 
     private World _world;
     private MirrorWorld _mirror;
-    private boolean _activated;
 
     public RoomHider(World world) {
         if(world == null)
@@ -21,21 +20,18 @@ public class RoomHider {
         _mirror = new MirrorWorld(_world);
     }
 
-    public void deactivate() {
+    public void saveAllData() {
         _mirror.saveAllData();
-        _activated = false;
     }
 
     public void hideAtPlayerLocation(Player player) {
         if(player.getWorld() != _world)
             return;
-
     }
 
     public void unHideAtPlayerLocation(Player player) {
         if(player.getWorld() != _world)
             return;
-
     }
 
     public void setBlockToRoom(int x, int y, int z, int roomID) {

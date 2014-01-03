@@ -1,5 +1,6 @@
 package com.shnud.noxray.World;
 
+import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
@@ -147,7 +148,7 @@ public class MirrorRegion {
             _timeOfLastSuccessfulSave = System.currentTimeMillis();
 
         } catch (IOException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Unable to save region: " + this + " to disk. Data may have been lost");
+            NoXray.getInstance().getLogger().log(Level.SEVERE, "Unable to save region: " + this + " to disk. Data may have been lost");
         }
     }
 

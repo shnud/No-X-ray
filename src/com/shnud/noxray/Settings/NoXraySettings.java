@@ -18,11 +18,7 @@ import java.util.Set;
 public class NoXraySettings {
 
     private static final NoXray _plugin = NoXray.getInstance();
-
     private static final HashSet<EntityType> _entitiesToHide    = new HashSet<EntityType>();
-    private static final List<String> _entityHideWorlds         = new ArrayList<String>();
-    private static final List<String> _playerHideWorlds         = new ArrayList<String>();
-    private static final List<String> _roomHideWorlds           = new ArrayList<String>();
 
     public static HashSet<EntityType> getHiddenEntities() {
         return _entitiesToHide;
@@ -41,8 +37,7 @@ public class NoXraySettings {
     }
 
     public static void initSettings() {
-        if(_plugin.getConfig() == null)
-            _plugin.saveDefaultConfig();
+        _plugin.saveDefaultConfig();
 
         loadEntitySettings();
     }

@@ -66,7 +66,7 @@ public final class DynamicByteArray extends ByteArray {
             try {
                 return uncompressAndReturnResult(_byteArray);
             } catch (DataFormatException e) {
-                Bukkit.getLogger().log(Level.SEVERE, "Unable to decompress byte array, returning compressed byte array instead");
+                NoXray.getInstance().getLogger().log(Level.SEVERE, "Unable to decompress byte array, returning compressed byte array instead");
                 e.printStackTrace();
             }
         }
@@ -158,7 +158,7 @@ public final class DynamicByteArray extends ByteArray {
             resetCompressionTimer();
 
         } catch (DataFormatException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Chunk data array was unable to be decompressed, room hiding data may have been lost");
+            NoXray.getInstance().getLogger().log(Level.SEVERE, "Chunk data array was unable to be decompressed, room hiding data may have been lost");
         }
     }
 

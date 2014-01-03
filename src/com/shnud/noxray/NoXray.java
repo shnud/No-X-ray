@@ -10,7 +10,6 @@ import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 
 /**
@@ -21,10 +20,7 @@ public class NoXray extends JavaPlugin {
     private static NoXray _instance;
 
     public NoXray() {
-        if(_instance == null)
-            _instance = this;
-        else
-            throw new IllegalStateException("Cannot have two base objects open");
+        _instance = this;
     }
 
     public static NoXray getInstance() {
@@ -42,6 +38,10 @@ public class NoXray extends JavaPlugin {
             getDataFolder().mkdir();
 
         NoXraySettings.initSettings();
+
+        loadPlayerHiders();
+        loadEntityHiders();
+        loadRoomHiders();
     }
 
     @Override
@@ -51,7 +51,7 @@ public class NoXray extends JavaPlugin {
         }
 
         for(RoomHider rh : _roomHiders) {
-            rh.deactivate();
+            rh.saveAllData();
         }
 
         _playerHiders.clear();
@@ -67,7 +67,7 @@ public class NoXray extends JavaPlugin {
             if(world != null)
                 _playerHiders.add(new PlayerHider(world));
             else
-                Bukkit.getLogger().log(Level.WARNING, "Could not load player hider for world \"" + worldName);
+                NoXray.getInstance().getLogger().log(Level.WARNING, "Could not load player hider for world \"" + worldName + "\"");
         }
     }
 
@@ -77,7 +77,7 @@ public class NoXray extends JavaPlugin {
             if(world != null)
                 _entityHiders.add(new EntityHider(world));
             else
-                Bukkit.getLogger().log(Level.WARNING, "Could not load entity hider for world \"" + worldName);
+                NoXray.getInstance().getLogger().log(Level.WARNING, "Could not load entity hider for world \"" + worldName + "\"");
         }
     }
 
@@ -87,7 +87,7 @@ public class NoXray extends JavaPlugin {
             if(world != null)
                 _roomHiders.add(new RoomHider(world));
             else
-                Bukkit.getLogger().log(Level.WARNING, "Could not load room hider for world \"" + worldName);
+                NoXray.getInstance().getLogger().log(Level.WARNING, "Could not load room hider for world \"" + worldName + "\"");
         }
     }
 }

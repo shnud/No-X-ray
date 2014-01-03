@@ -1,5 +1,6 @@
 package com.shnud.noxray.Packets.PacketSenders;
 
+import com.shnud.noxray.NoXray;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -28,11 +29,11 @@ public abstract class GenericEntityPacketSender extends PacketSender {
 
             if(subject == null) {
                 it.remove();
-                Bukkit.getLogger().log(Level.WARNING, "Entity was not sent with others as it was null");
+                NoXray.getInstance().getLogger().log(Level.WARNING, "Entity was not sent with others as it was null");
             }
             else if(subject.isDead()) {
                 it.remove();
-                Bukkit.getLogger().log(Level.WARNING, "Entity was not sent with others as it was dead");
+                NoXray.getInstance().getLogger().log(Level.WARNING, "Entity was not sent with others as it was dead");
             }
         }
 

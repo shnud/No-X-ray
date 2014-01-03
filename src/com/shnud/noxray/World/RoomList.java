@@ -1,5 +1,6 @@
 package com.shnud.noxray.World;
 
+import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Structures.HashMapArrayList;
 import com.shnud.noxray.Utilities.XZ;
 import org.bukkit.Bukkit;
@@ -27,8 +28,8 @@ public class RoomList {
         File roomData = new File(_world.getFolder().getPath() + "/" + "roomData");
 
         if(!roomData.exists()) {
-            Bukkit.getLogger().log(Level.INFO, "Room data was not found for world \"" + _world.getWorldName() + "\"");
-            Bukkit.getLogger().log(Level.INFO, "New room data will be saved");
+            NoXray.getInstance().getLogger().log(Level.INFO, "Room data was not found for world \"" + _world.getWorldName() + "\"");
+            NoXray.getInstance().getLogger().log(Level.INFO, "New room data will be saved");
             return;
         }
 
@@ -52,8 +53,8 @@ public class RoomList {
             ram.close();
 
         } catch (IOException e) {
-            Bukkit.getLogger().log(Level.WARNING, "Unable to load room data for world " + _world.getWorldName() + "\"");
-            Bukkit.getLogger().log(Level.WARNING, "We do not know which chunks rooms are in");
+            NoXray.getInstance().getLogger().log(Level.WARNING, "Unable to load room data for world " + _world.getWorldName() + "\"");
+            NoXray.getInstance().getLogger().log(Level.WARNING, "We do not know which chunks rooms are in");
         }
     }
 
@@ -92,8 +93,8 @@ public class RoomList {
             roomData.renameTo(oldFile);
 
         } catch (IOException e) {
-            Bukkit.getLogger().log(Level.WARNING, "Unable to save room data");
-            Bukkit.getLogger().log(Level.WARNING, "Next run we may not know which chunks rooms are in");
+            NoXray.getInstance().getLogger().log(Level.WARNING, "Unable to save room data");
+            NoXray.getInstance().getLogger().log(Level.WARNING, "Next run we may not know which chunks rooms are in");
         }
     }
 

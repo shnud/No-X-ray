@@ -7,8 +7,5 @@ hide:
 
 worlds:
   entity-hiding:
-    - world
   player-hiding:
-    - world
   room-hiding:
-    - world
