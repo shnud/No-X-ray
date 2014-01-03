@@ -1,12 +1,15 @@
 package com.shnud.noxray;
 
+import com.shnud.noxray.Commands.CommandListener;
 import com.shnud.noxray.Hiders.EntityHider;
 import com.shnud.noxray.Hiders.PlayerHider;
 import com.shnud.noxray.Hiders.RoomHider;
 import com.shnud.noxray.Settings.NoXraySettings;
 import com.shnud.noxray.Settings.PlayerMetadata;
+import com.shnud.noxray.Settings.PlayerMetadataEntry;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -31,6 +34,7 @@ public class NoXray extends JavaPlugin {
     private ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
     private ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
     private PlayerMetadata _playerMetadata = new PlayerMetadata();
+    private CommandListener _commandListener = new CommandListener();
 
     @Override
     public void onEnable() {
@@ -42,6 +46,11 @@ public class NoXray extends JavaPlugin {
         loadPlayerHiders();
         loadEntityHiders();
         loadRoomHiders();
+
+        getCommand("hide").setExecutor(_commandListener);
+        getCommand("unhide").setExecutor(_commandListener);
+        getCommand("auto").setExecutor(_commandListener);
+        getCommand("status").setExecutor(_commandListener);
     }
 
     @Override
@@ -79,5 +88,22 @@ public class NoXray extends JavaPlugin {
             else
                 NoXray.getInstance().getLogger().log(Level.WARNING, "Could not load room hider for world \"" + worldName + "\"");
         }
+    }
+
+    public RoomHider getRoomHiderForWorld(World world) {
+        for(RoomHider hider : _roomHiders) {
+            if(hider.getWorld().equals(world))
+                return hider;
+        }
+
+        return null;
+    }
+
+    public PlayerMetadataEntry getMetadataForPlayer(String name) {
+        return _playerMetadata.getMetadataForPlayer(name);
+    }
+
+    public PlayerMetadataEntry getMetadataForPlayer(Player player) {
+        return getMetadataForPlayer(player.getName());
     }
 }
