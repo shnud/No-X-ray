@@ -1,6 +1,7 @@
 package com.shnud.noxray.World;
 
 import com.shnud.noxray.NoXray;
+import com.shnud.noxray.Structures.BooleanArray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
@@ -20,7 +21,7 @@ public class MirrorRegion {
     private MirrorChunk[] _chunks = new MirrorChunk[MagicValues.CHUNKS_IN_REGION];
     private int _x, _z;
     private int _minChunkX, _maxChunkX, _minChunkZ, _maxChunkZ;
-    private int _chunksInUse = 0;
+    private int _chunksInUseByMCWorld = 0;
     private File _worldFolder;
     private static final int PERIODIC_SAVE_INTERVAL_TICKS = 300 * MagicValues.MINECRAFT_TICKS_PER_SECOND;
     private BukkitTask _periodicSave;
@@ -39,7 +40,7 @@ public class MirrorRegion {
     }
 
     private static int getChunkIndex(int chunkX, int chunkZ) {
-        return chunkX % MagicValues.HORIZONTAL_CHUNKS_IN_REGION + ((chunkZ % MagicValues.HORIZONTAL_CHUNKS_IN_REGION) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
+        return (chunkX < 0 ? -chunkX : chunkX) % MagicValues.HORIZONTAL_CHUNKS_IN_REGION + (((chunkZ < 0 ? -chunkZ : chunkZ) % MagicValues.HORIZONTAL_CHUNKS_IN_REGION) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
     }
 
     public MirrorChunk getChunk(DynamicCoordinates coordinates) {
@@ -50,6 +51,9 @@ public class MirrorRegion {
             throw new ArrayIndexOutOfBoundsException("Chunk does not exist within this region");
 
         int index = getChunkIndex(chunkX, chunkZ);
+        if(_chunks[index] == null)
+            _chunks[index] = new MirrorChunk(chunkX, chunkZ);
+
         return _chunks[index];
     }
 
@@ -68,11 +72,14 @@ public class MirrorRegion {
 
         try {
             RandomAccessFile ram = new RandomAccessFile(regionFile, "r");
+            byte[] chunkFlagArray = new byte[128];
+            ram.readFully(chunkFlagArray, 0, 128);
+            BooleanArray chunkFlags = new BooleanArray(chunkFlagArray);
 
             // For all possible 1024 chunks in this region
             for(int i = 0; i < 1024; i++) {
                 // Is the chunk contained in the data? If not, it's empty
-                if(ram.readBoolean()) {
+                if(chunkFlags.getValueAtIndex(i)) {
                     int chunkX = _x * 32 + (i % 32);
                     int chunkZ = _z * 32 + (i / 32);
                     _chunks[i] = new MirrorChunk(chunkX, chunkZ);
@@ -127,17 +134,27 @@ public class MirrorRegion {
             RandomAccessFile ram = new RandomAccessFile(newFile, "rw");
             // If the temp file somehow already exists, erase the file
             // and start at the beginning
-            ram.setLength(0);
 
-            for(MirrorChunk chunk : _chunks) {
+
+            BooleanArray chunkFlags = new BooleanArray(1024);
+            ram.setLength(chunkFlags.getByteArray().length);
+            ram.skipBytes(chunkFlags.getByteArray().length); // will come back and put in byte array of chunks
+
+            for(int i = 0; i < 1024; i++) {
+                MirrorChunk chunk = _chunks[i];
+
                 if(chunk != null && !chunk.isEmpty()) {
-                    ram.writeBoolean(true);
+                    chunkFlags.setValueAtIndex(true, i);
                     chunk.saveToFile(ram);
                 }
                 else
-                    ram.writeBoolean(false);
+                    chunkFlags.setValueAtIndex(false, i);
             }
 
+            ram.seek(0);
+            long filePointer = ram.getFilePointer();
+            ram.write(chunkFlags.getByteArray());
+            long filePointer2 = ram.getFilePointer();
             ram.close();
 
             // Now there is no way that we can't have finished
@@ -172,11 +189,11 @@ public class MirrorRegion {
         return _z;
     }
 
-    public void chunkInUse() { _chunksInUse++; }
+    public void chunkInUse() { _chunksInUseByMCWorld++; }
 
-    public void chunkNotInUse() { _chunksInUse--; }
+    public void chunkNotInUse() { _chunksInUseByMCWorld--; }
 
-    public int getChunksInUse() { return _chunksInUse; }
+    public int getChunksInUse() { return _chunksInUseByMCWorld; }
 
     public static class ChunkNotLoadedException extends Exception {}
 
