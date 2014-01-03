@@ -4,6 +4,7 @@ import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,8 +21,9 @@ public class MirrorRegion {
     private int _x, _z;
     private int _minChunkX, _maxChunkX, _minChunkZ, _maxChunkZ;
     private int _chunksInUse = 0;
-    private long _timeOfLastSuccessfulSave = 0;
     private File _worldFolder;
+    private static final int PERIODIC_SAVE_INTERVAL_TICKS = 300 * MagicValues.MINECRAFT_TICKS_PER_SECOND;
+    private BukkitTask _periodicSave;
 
     public MirrorRegion(int regionX, int regionZ, File worldFolder) {
         _x = regionX;
@@ -32,6 +34,8 @@ public class MirrorRegion {
         _maxChunkX = _minChunkX + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
         _minChunkZ = regionZ * MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
         _maxChunkZ = _minChunkZ + MagicValues.HORIZONTAL_CHUNKS_IN_REGION;
+
+        scheduleFutureSave();
     }
 
     private static int getChunkIndex(int chunkX, int chunkZ) {
@@ -145,15 +149,19 @@ public class MirrorRegion {
 
             newFile.renameTo(oldFile);
 
-            _timeOfLastSuccessfulSave = System.currentTimeMillis();
+            _periodicSave.cancel();
+
+            /*
+             * If this is being called from the periodic save, another
+             * task will be scheduled straight away. If not, this prevents
+             * from another save happening in the future after a region has
+             * been saved due to being unloaded (no way for it to change
+             * after being unloaded)
+             */
 
         } catch (IOException e) {
             NoXray.getInstance().getLogger().log(Level.SEVERE, "Unable to save region: " + this + " to disk. Data may have been lost");
         }
-    }
-
-    public long getMillisecondsSinceLastSuccessfulSave() {
-        return System.currentTimeMillis() - _timeOfLastSuccessfulSave;
     }
 
     public int getX() {
@@ -180,5 +188,18 @@ public class MirrorRegion {
 
     private String regionFileName() {
         return _x + "." + _z + ".mrr";
+    }
+
+    private void scheduleFutureSave() {
+        _periodicSave = Bukkit.getScheduler().runTaskLater(NoXray.getInstance(), new PeriodicSave(), PERIODIC_SAVE_INTERVAL_TICKS);
+    }
+
+    private class PeriodicSave implements Runnable {
+        public void run() {
+            if(getChunksInUse() > 0) {
+                saveToFile();
+                scheduleFutureSave();
+            }
+        }
     }
 }
