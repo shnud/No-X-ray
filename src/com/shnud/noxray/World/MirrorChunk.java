@@ -25,10 +25,12 @@ public class MirrorChunk {
 
     public void saveToFile(RandomAccessFile ram) throws IOException {
         ram.writeLong(_timeOfLastCleanUp);
-        ram.writeByte(_keyToIDMap.getAmountOfSlots());
 
-        for(int key = 1; key < _keyToIDMap.getAmountOfSlots(); key++) {
-            ram.writeInt(_keyToIDMap.getRoomIDForKey(key));
+        int[] slots = _keyToIDMap.getSlots();
+        ram.writeByte(slots.length - 1);
+
+        for(int slot = 1; slot < slots.length; slot++) {
+            ram.writeInt(slots[slot]);
         }
 
         _data.writeToFile(ram);
@@ -36,32 +38,33 @@ public class MirrorChunk {
 
     public void loadFromFile(RandomAccessFile ram) throws IOException {
         _timeOfLastCleanUp = ram.readLong();
+
         int keySlotAmount = ram.readByte();
 
-        for(int i = 0; i < keySlotAmount; i++) {
-            _keyToIDMap.setSlotToID(i + 1, ram.readInt());
+        for(int i = 1; i < keySlotAmount + 1; i++) {
+            int id = ram.readInt();
+            _keyToIDMap.setSlotToID(i, id);
         }
 
         _data.readFromFile(ram);
     }
 
-    public void setBlockToRoomID(DynamicCoordinates coordinates, int roomID) throws MirrorChunkIDMap.ChunkIDSlotsFullException {
+    public boolean setBlockToRoomID(DynamicCoordinates coordinates, int roomID) {
         if(roomID < 0)
             throw new IllegalArgumentException("Room ID must be 0 (not a room) or greater");
 
-        int oldKey = _data.getBlockKey(coordinates);
-
         int key;
 
-        if(roomID != 0 && !_keyToIDMap.containsRoomID(roomID))
+        if(roomID != 0 && !_keyToIDMap.containsRoomID(roomID)) {
             key = _keyToIDMap.addRoomID(roomID);
+            if(key < 0)
+                return false;
+        }
         else
             key = _keyToIDMap.getKeyForRoomID(roomID);
 
-        if(key == oldKey)
-            return;
-
         _data.setBlockKey(coordinates, key);
+        return true;
     }
 
     public int getRoomIDAtBlock(DynamicCoordinates coordinates) {
@@ -98,6 +101,4 @@ public class MirrorChunk {
     public void cleanUp() {
         _timeOfLastCleanUp = System.currentTimeMillis();
     }
-
-    public static class MirrorChunkFullException extends Exception {}
 }
