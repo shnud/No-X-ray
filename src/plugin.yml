@@ -2,3 +2,14 @@ name: No X-ray
 main: com.shnud.noxray.NoXray
 version: 0.1
 depend: [ProtocolLib]
+author: shnud
+
+commands:
+  hide:
+    description: Hide a room from possible x-rayers
+  unhide:
+    description: Unhide a room (y u do this?)
+  auto:
+    description: Turn on/off autoprotection of blocks
+  status:
+    description: Returns whether the room at eye level is protected
