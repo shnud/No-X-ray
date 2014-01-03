@@ -1,0 +1,14 @@
+hide:
+  - 'farm'
+  - 'spawner-mobs'
+  - 'villagers'
+  - 'pets'
+  - 'misc'
+
+worlds:
+  entity-hiding:
+    - world
+  player-hiding:
+    - world
+  room-hiding:
+    - world

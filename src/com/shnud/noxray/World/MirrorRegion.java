@@ -45,9 +45,6 @@ public class MirrorRegion {
             throw new ArrayIndexOutOfBoundsException("Chunk does not exist within this region");
 
         int index = getChunkIndex(chunkX, chunkZ);
-        if(_chunks[index] == null)
-            _chunks[index] = new MirrorChunk(chunkX, chunkZ);
-
         return _chunks[index];
     }
 

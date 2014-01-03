@@ -13,6 +13,7 @@ import org.bukkit.util.Vector;
  */
 public class PlayerCoupleHidable extends PlayerCouple {
 
+    private static final int MAX_PLAYER_VISIBLE_DISTANCE = 50;
     private double _lastDistance;
     private boolean _distanceInitialised = false;
     private boolean _areHidden = false;
@@ -64,7 +65,7 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
         if(_lastDistance < 1)
             return true;
-        if(_lastDistance > NoXraySettings.MAX_PLAYER_VISIBLE_DISTANCE)
+        if(_lastDistance > MAX_PLAYER_VISIBLE_DISTANCE)
             return false;
 
         World world = getPlayer1().getWorld();

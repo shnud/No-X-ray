@@ -9,6 +9,7 @@ import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Settings.NoXraySettings;
+import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import com.shnud.noxray.Packets.PacketEventListener;
@@ -22,6 +23,9 @@ import java.util.Iterator;
  * Created by Andrew on 23/12/2013.
  */
 public class PlayerHider implements PacketEventListener {
+
+    private  static final int PLAYER_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 3;
+
     private World _world;
     private PlayerCoupleList<PlayerCoupleHidable> _coupleWatchList = new PlayerCoupleList<PlayerCoupleHidable>();
     private BukkitTask _checkingTask;
@@ -32,12 +36,7 @@ public class PlayerHider implements PacketEventListener {
             throw new IllegalArgumentException("World cannot be null");
 
         _world = world;
-    }
-
-    public PlayerHider(World world, boolean activate) {
-        this(world);
-        if(activate)
-            activate();
+        activate();
     }
 
     /*
@@ -160,8 +159,8 @@ public class PlayerHider implements PacketEventListener {
         _checkingTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
                 NoXray.getInstance(),
                 new CoupleCheckThread(),
-                NoXraySettings.PLAYER_TICK_CHECK_FREQUENCY,
-                NoXraySettings.PLAYER_TICK_CHECK_FREQUENCY
+                PLAYER_TICK_CHECK_FREQUENCY,
+                PLAYER_TICK_CHECK_FREQUENCY
         );
     }
 

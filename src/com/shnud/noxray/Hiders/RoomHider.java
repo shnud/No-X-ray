@@ -2,6 +2,7 @@ package com.shnud.noxray.Hiders;
 
 import com.shnud.noxray.World.MirrorWorld;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 /**
  * Created by Andrew on 26/12/2013.
@@ -23,5 +24,29 @@ public class RoomHider {
     public void deactivate() {
         _mirror.saveAllData();
         _activated = false;
+    }
+
+    public void hideAtPlayerLocation(Player player) {
+        if(player.getWorld() != _world)
+            return;
+
+    }
+
+    public void unHideAtPlayerLocation(Player player) {
+        if(player.getWorld() != _world)
+            return;
+
+    }
+
+    public void setBlockToRoom(int x, int y, int z, int roomID) {
+
+    }
+
+    public void unHideBlock(int x, int y, int z) {
+
+    }
+
+    public void getRoomIDAtBlock(int x, int y, int z) {
+
     }
 }

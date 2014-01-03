@@ -10,6 +10,7 @@ import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Settings.NoXraySettings;
+import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -24,7 +25,11 @@ import java.util.ArrayList;
  */
 public class EntityHider implements PacketEventListener {
 
-    // This class really needs cleaning up.
+    private static final int MAXIMUM_Y_FOR_HIDING_NON_PLAYER_ENTITIES = 60;
+    private static final int MINIMUM_XZ_DISTANCE_FOR_VISIBLE_ENTITIES = 20;
+    private static final int MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES = 8;
+    private static final int ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 4;
+    private static final int ENTITY_VISIBILITY_CHECKS_PER_PURGE = 10;
 
     private World _world;
     private EntityWatcherListList _watcherListList = new EntityWatcherListList();
@@ -44,8 +49,8 @@ public class EntityHider implements PacketEventListener {
         _checkingTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(
                 NoXray.getInstance(),
                 new WatcherCheckThread(),
-                NoXraySettings.ENTITY_TICK_CHECK_FREQUENCY,
-                NoXraySettings.ENTITY_TICK_CHECK_FREQUENCY
+                ENTITY_TICK_CHECK_FREQUENCY,
+                ENTITY_TICK_CHECK_FREQUENCY
         );
     }
 
@@ -81,7 +86,7 @@ public class EntityHider implements PacketEventListener {
         }
 
 
-        if(checkCount < NoXraySettings.ENTITY_VISIBILITY_CHECKS_PER_PURGE)
+        if(checkCount < ENTITY_VISIBILITY_CHECKS_PER_PURGE)
             return;
 
         _watcherListList.purgeList();
@@ -89,10 +94,10 @@ public class EntityHider implements PacketEventListener {
     }
 
     public boolean shouldShowEntityToWatcher(Entity subject, Player watcher) {
-        if(subject.getLocation().getBlockY() > NoXraySettings.MAXIMUM_Y_FOR_HIDING_NON_PLAYER_ENTITIES)
+        if(subject.getLocation().getBlockY() > MAXIMUM_Y_FOR_HIDING_NON_PLAYER_ENTITIES)
             return true;
 
-        if(!NoXraySettings.getEntitiesToHide().contains(subject.getType()))
+        if(!NoXraySettings.getHiddenEntities().contains(subject.getType()))
             return true;
 
         Vector receiverLoc = watcher.getLocation().toVector();
@@ -102,8 +107,8 @@ public class EntityHider implements PacketEventListener {
         receiverLoc.setY(spawningLoc.getY());
         double xzDifference = receiverLoc.distance(spawningLoc);
 
-        if(xzDifference > NoXraySettings.MINIMUM_XZ_DISTANCE_FOR_VISIBLE_ENTITIES
-                || yDifference > NoXraySettings.MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES) {
+        if(xzDifference > MINIMUM_XZ_DISTANCE_FOR_VISIBLE_ENTITIES
+                || yDifference > MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES) {
 
             return false;
         }
