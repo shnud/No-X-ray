@@ -101,8 +101,6 @@ public class PlayerHider implements PacketEventListener {
     }
 
     private void onPlayerSpawnPacketEvent(PlayerSpawnPacketEvent event) {
-        System.out.println("Spawned");
-
         // No point adding a couple with the same player, cannot hide from yourself
         if(event.getSubject().equals(event.getReceiver()))
             return;
@@ -160,11 +158,16 @@ public class PlayerHider implements PacketEventListener {
 
     private void updateCoupleHiddenStatus(PlayerCoupleHidable couple) {
         boolean LOS = couple.haveClearLOS();
+        //System.out.println("LOS: " + LOS);
 
-        if(LOS && couple.areHidden())
+        if(LOS && couple.areHidden()) {
             couple.show();
-        else if(!LOS && !couple.areHidden())
+            //System.out.println("Showing");
+        }
+        else if(!LOS && !couple.areHidden()) {
             couple.hide();
+            //System.out.println("Hiding");
+        }
     }
 
     private void scheduleCheckingTask() {

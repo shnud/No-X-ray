@@ -19,15 +19,16 @@ import java.util.ArrayList;
  * Created by Andrew on 24/12/2013.
  */
 public class PacketListener {
-    private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
+    private static ProtocolManager _pm;
     private static NoXray _plugin = NoXray.getInstance();
     private static ArrayList<PacketEventListener> _listeners = new ArrayList<PacketEventListener>();
-    private static boolean hasInitialised = init();
+    private static boolean _init = init();
 
-    private static boolean init() {
-        if(!hasInitialised)
-            registerPacketListeners();
-
+    public static boolean init() {
+        _listeners.clear();
+        _plugin = NoXray.getInstance();
+        _pm = ProtocolLibrary.getProtocolManager();
+        if(!_init) registerPacketListeners();
         return true;
     }
 
@@ -56,6 +57,10 @@ public class PacketListener {
         _pm.addPacketListener(new NamedEntityDestroyAdapter());
         _pm.addPacketListener(new EntitySpawnAdapter());
         _pm.addPacketListener(new EntityUpdateAdapter());
+    }
+
+    public static void unregisterPacketListeners() {
+        _pm.removePacketListeners(NoXray.getInstance());
     }
 
     private static class NamedEntitySpawnAdapter extends PacketAdapter {

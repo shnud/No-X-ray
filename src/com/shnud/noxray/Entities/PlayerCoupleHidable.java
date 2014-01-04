@@ -16,7 +16,8 @@ public class PlayerCoupleHidable extends PlayerCouple {
     private static final int MAX_PLAYER_VISIBLE_DISTANCE = 50;
     private double _lastDistance;
     private boolean _distanceInitialised = false;
-    private boolean _areHidden = false;
+    private boolean _areHidden = true;
+    private boolean _initalDecision = true;
 
     public PlayerCoupleHidable(Player player1, Player player2) {
         super(player1, player2);
@@ -92,6 +93,7 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
     public void hide() {
         _areHidden = true;
+        _initalDecision = false;
         if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
             PacketDispatcher.destroyEntityForPlayer(getPlayer2(), getPlayer1());
             PacketDispatcher.destroyEntityForPlayer(getPlayer1(), getPlayer2());
@@ -100,6 +102,7 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
     public void show() {
         _areHidden = false;
+        _initalDecision = false;
         if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
             PacketDispatcher.spawnEntityForPlayer(getPlayer2(), getPlayer1());
             PacketDispatcher.spawnEntityForPlayer(getPlayer1(), getPlayer2());
@@ -126,5 +129,9 @@ public class PlayerCoupleHidable extends PlayerCouple {
 
     public String toString() {
         return "Player 1: " + getPlayer1() + " Player 2: " + getPlayer2() + " Hidden: " + areHidden();
+    }
+
+    public boolean isNewCouple() {
+        return _initalDecision;
     }
 }

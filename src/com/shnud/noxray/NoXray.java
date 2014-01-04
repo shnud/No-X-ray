@@ -4,6 +4,7 @@ import com.shnud.noxray.Commands.CommandListener;
 import com.shnud.noxray.Hiders.EntityHider;
 import com.shnud.noxray.Hiders.PlayerHider;
 import com.shnud.noxray.Hiders.RoomHider;
+import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Settings.NoXraySettings;
 import com.shnud.noxray.Settings.PlayerMetadata;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
