@@ -3,6 +3,7 @@ package com.shnud.noxray.Entities;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.shnud.noxray.Structures.IterableHashMap;
+import com.shnud.noxray.Structures.SyncIterableHashMap;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 public class EntityWatcherEntry {
 
     private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
-    private IterableHashMap<String, Player> _watchers = new IterableHashMap<String, Player>();
+    private SyncIterableHashMap<String, Player> _watchers = new SyncIterableHashMap<String, Player>();
     private Entity _subject;
     private World _initialWorld;
 
@@ -49,7 +50,7 @@ public class EntityWatcherEntry {
      * are thus, watching unnecessarily
      */
     public void purgeWatchers() {
-        IterableHashMap<String, Player> _leftoverWatchers = new IterableHashMap<String, Player>();
+        SyncIterableHashMap<String, Player> _leftoverWatchers = new SyncIterableHashMap<String, Player>();
 
         try {
             List<Player> realWatchers = _pm.getEntityTrackers(_subject);
