@@ -1,29 +1,18 @@
 package com.shnud.noxray.Settings;
 
-import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Structures.HashMapArrayList;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.YamlConfiguration;
+import com.shnud.noxray.Structures.IterableHashMap;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-
 /**
  * Created by Andrew on 03/01/2014.
  */
 public class PlayerMetadata implements Listener {
 
-    private HashMapArrayList<String, PlayerMetadataEntry> _players = new HashMapArrayList<String, PlayerMetadataEntry>();
+    private IterableHashMap<String, PlayerMetadataEntry> _players = new IterableHashMap<String, PlayerMetadataEntry>();
 
     public PlayerMetadata() {
 

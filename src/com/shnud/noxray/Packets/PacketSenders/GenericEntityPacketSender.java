@@ -29,16 +29,13 @@ public abstract class GenericEntityPacketSender extends PacketSender {
 
             if(subject == null) {
                 it.remove();
-                NoXray.getInstance().getLogger().log(Level.WARNING, "Entity was not sent with others as it was null");
+                // NoXray.getInstance().getLogger().log(Level.WARNING, "Entity was not sent with others as it was null");
             }
             else if(subject.isDead()) {
                 it.remove();
-                NoXray.getInstance().getLogger().log(Level.WARNING, "Entity was not sent with others as it was dead");
+                // NoXray.getInstance().getLogger().log(Level.WARNING, "Entity was not sent with others as it was dead");
             }
         }
-
-        if(subjects.isEmpty())
-            throw new IllegalArgumentException("List of entities was not valid");
 
         _subjects = subjects;
     }

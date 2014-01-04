@@ -1,6 +1,6 @@
 package com.shnud.noxray.World;
 
-import com.shnud.noxray.Structures.HashMapArrayList;
+import com.shnud.noxray.Structures.IterableHashMap;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,7 +9,7 @@ import java.util.Iterator;
  * Created by Andrew on 02/01/2014.
  */
 public class MirrorRegionMap implements Iterable<MirrorRegion> {
-    private HashMapArrayList<String, MirrorRegion> _regionMap = new HashMapArrayList<String, MirrorRegion>();
+    private IterableHashMap<String, MirrorRegion> _regionMap = new IterableHashMap<String, MirrorRegion>();
 
     public MirrorRegion getRegion(int regionX, int regionZ) {
         String key = keyFromCoordinates(regionX, regionZ);

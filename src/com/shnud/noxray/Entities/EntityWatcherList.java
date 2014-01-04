@@ -1,94 +1,81 @@
 package com.shnud.noxray.Entities;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.shnud.noxray.Structures.HashMapArrayList;
-import org.bukkit.World;
+import com.shnud.noxray.Structures.IterableHashMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by Andrew on 27/12/2013.
  */
-public class EntityWatcherList implements Iterable<Player> {
+public class EntityWatcherList implements Iterable<EntityWatcherEntry> {
 
-    private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
-    private HashMapArrayList<String, Player> _watchers = new HashMapArrayList<String, Player>();
-    private Entity _subject;
-    private World _initialWorld;
+    IterableHashMap<Integer, EntityWatcherEntry> _entities = new IterableHashMap<Integer, EntityWatcherEntry>();
 
-    public EntityWatcherList(Entity subject) {
-        _subject = subject;
-        _initialWorld = subject.getWorld();
+    public void addWatcherToEntity(Player newWatcher, Entity subject) {
+        if(containsEntity(subject))
+            _entities.get(subject.getEntityId()).addWatcher(newWatcher);
+        else
+            _entities.put(subject.getEntityId(), new EntityWatcherEntry(subject, newWatcher));
     }
 
-    public EntityWatcherList(Entity subject, Player firstwatcher) {
-        this(subject);
-        _watchers.put(firstwatcher.getName(), firstwatcher);
+    public boolean containsEntity(Entity entity) {
+        return _entities.containsKey(entity.getEntityId());
     }
 
-    public void addWatcher(Player player) {
-        if(isWatching(player))
-            return;
-
-        _watchers.put(player.getName(), player);
+    public EntityWatcherEntry getEntryForEntity(Entity entity) {
+        return _entities.get(entity.getEntityId());
     }
 
-    public void removeWatcher(Player player) {
-        if(isWatching(player))
-            _watchers.remove(player.getName());
+    public void removeEntityEntry(Entity entity) {
+        _entities.remove(entity.getEntityId());
+    }
+
+    public void removeWatcherFromEntity(Player watcher, Entity entity) {
+        if(containsEntity(entity)) {
+            EntityWatcherEntry entry = getEntryForEntity(entity);
+            entry.removeWatcher(watcher);
+
+            if(entry.numberOfWatchers() == 0)
+                removeEntityEntry(entity);
+        }
+    }
+
+    public boolean doesEntityHaveWatcher(Entity entity, Player watcher) {
+        if(!containsEntity(entity))
+            return false;
+
+        return getEntryForEntity(entity).hasWatcher(watcher);
     }
 
     /*
-     * Uses protocolLib to find the players that should
-     * actually be watching the entity for events,
-     * and removes any watchers than are not in this and
-     * are thus, watching unnecessarily
+     * Removes any entities from the list which have no real
+     * watchers according to protocolLib, or are dead, or have
+     * transported into a different world
      */
-    public void purgeWatchers() {
-        HashMapArrayList<String, Player> _leftoverWatchers = new HashMapArrayList<String, Player>();
+    public void purgeList() {
+        Iterator it = _entities.iterator();
 
-        try {
-            List<Player> realWatchers = _pm.getEntityTrackers(_subject);
-
-            for (Player p : realWatchers) {
-                if(isWatching(p))
-                    _leftoverWatchers.put(p.getName(), p);
+        while(it.hasNext()) {
+            EntityWatcherEntry ew = (EntityWatcherEntry) it.next();
+            if(ew.isDead() || ew.hasChangedWorlds()) {
+                it.remove();
+                continue;
             }
-        } catch (IllegalArgumentException e) {
-            /* Some bug with ProtocolLib throws an exception when there are no watchers,
-             * so we have to catch it here instead of testing for a simple empty list
-             */
+
+            ew.purgeWatchers();
+            if(ew.numberOfWatchers() == 0)
+                it.remove();
         }
-
-        _watchers = _leftoverWatchers;
     }
 
-    public boolean isWatching(Player player) {
-        return _watchers.containsKey(player.getName());
-    }
-
-    public int numberOfWatchers() {
-        return _watchers.size();
-    }
-
-    public boolean hasChangedWorlds() {
-        return !_subject.getWorld().equals(_initialWorld);
-    }
-
-    public boolean subjectIsDead() {
-        return _subject.isDead();
-    }
-
-    public Entity getSubject() {
-        return _subject;
+    public int size() {
+        return _entities.size();
     }
 
     @Override
-    public Iterator<Player> iterator() {
-        return _watchers.iterator();
+    public Iterator<EntityWatcherEntry> iterator() {
+        return _entities.iterator();
     }
 }

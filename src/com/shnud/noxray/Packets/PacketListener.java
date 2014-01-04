@@ -54,7 +54,7 @@ public class PacketListener {
 
     private static void registerPacketListeners() {
         _pm.addPacketListener(new NamedEntitySpawnAdapter());
-        _pm.addPacketListener(new NamedEntityDestroyAdapter());
+        _pm.addPacketListener(new EntityDestroyAdapter());
         _pm.addPacketListener(new EntitySpawnAdapter());
         _pm.addPacketListener(new EntityUpdateAdapter());
     }
@@ -85,13 +85,13 @@ public class PacketListener {
         }
     }
 
-    private static class NamedEntityDestroyAdapter extends PacketAdapter {
+    private static class EntityDestroyAdapter extends PacketAdapter {
 
         /*
          * We set this priority to highest, so that the destory packets we send
          * from our plugin don't get filtered
          */
-        public NamedEntityDestroyAdapter() {
+        public EntityDestroyAdapter() {
             super(_plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.ENTITY_DESTROY);
         }
 
@@ -109,6 +109,10 @@ public class PacketListener {
 
                 if(subject != null && subject.getType() == EntityType.PLAYER) {
                     PlayerDestroyPacketEvent destroyEvent = new PlayerDestroyPacketEvent(event.getPlayer(), subject, event);
+                    dispatchEventToListeners(destroyEvent);
+                }
+                else if(subject != null && subject.getType() != EntityType.PLAYER) {
+                    EntityDestroyPacketEvent destroyEvent = new EntityDestroyPacketEvent(event.getPlayer(), subject, event);
                     dispatchEventToListeners(destroyEvent);
                 }
             }

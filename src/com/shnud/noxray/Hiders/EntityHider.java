@@ -1,8 +1,9 @@
 package com.shnud.noxray.Hiders;
 
+import com.shnud.noxray.Entities.EntityWatcherEntry;
 import com.shnud.noxray.Entities.EntityWatcherList;
-import com.shnud.noxray.Entities.EntityWatcherListList;
 import com.shnud.noxray.Events.BasePacketEvent;
+import com.shnud.noxray.Events.EntityDestroyPacketEvent;
 import com.shnud.noxray.Events.EntitySpawnPacketEvent;
 import com.shnud.noxray.Events.EntityUpdatePacketEvent;
 import com.shnud.noxray.NoXray;
@@ -19,6 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Created by Andrew on 27/12/2013.
@@ -29,11 +31,10 @@ public class EntityHider implements PacketEventListener {
     private static final int MINIMUM_XZ_DISTANCE_FOR_VISIBLE_ENTITIES = 20;
     private static final int MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES = 8;
     private static final int ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 4;
-    private static final int ENTITY_VISIBILITY_CHECKS_PER_PURGE = 10;
+    private static final int ENTITY_VISIBILITY_CHECKS_PER_PURGE = 30;
 
     private World _world;
-    private EntityWatcherListList _watcherListList = new EntityWatcherListList();
-    private int _checkingTask = -1;
+    private EntityWatcherList _entityList = new EntityWatcherList();
     private int checkCount = 0;
 
     public EntityHider(World world) {
@@ -43,10 +44,15 @@ public class EntityHider implements PacketEventListener {
         _world = world;
         PacketListener.addEventListener(this);
 
-        if(_checkingTask > 0)
-            Bukkit.getScheduler().cancelTask(_checkingTask);
+        // Make sure that if the server has reloaded we try to respawn
+        // all of the entities again because we may have been hiding entities
+        // before that have now disappeard off the list and players could
+        // be hit by invisible enemies
+        PacketDispatcher.resendAllEntitySpawnPacketsForWorld(world);
 
-        _checkingTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(
+        // All tasks get cancelled on plugin disable so we don't need to
+        // worry about stopping this
+        Bukkit.getScheduler().runTaskTimer(
                 NoXray.getInstance(),
                 new WatcherCheckThread(),
                 ENTITY_TICK_CHECK_FREQUENCY,
@@ -62,34 +68,45 @@ public class EntityHider implements PacketEventListener {
 
         else if (event instanceof EntitySpawnPacketEvent)
             handleEntitySpawnPacketEvent((EntitySpawnPacketEvent) event);
+        else if (event instanceof EntityDestroyPacketEvent)
+            handleEntityDestroyPacketEvent((EntityDestroyPacketEvent) event);
         else if (event instanceof EntityUpdatePacketEvent)
             handleEntityUpdatePacketEvent((EntityUpdatePacketEvent) event);
     }
 
-    public void checkWatchers() {
+    public void checkEntities() {
         checkCount++;
         ArrayList<Player> playersToSendCurrentEntity = new ArrayList<Player>();
 
-        for(EntityWatcherList watcherList : _watcherListList) {
-            Entity e = watcherList.getSubject();
-            playersToSendCurrentEntity.clear();
+        Iterator<EntityWatcherEntry> entityIterator = _entityList.iterator();
 
-            for(Player p : watcherList) {
-                if(shouldShowEntityToWatcher(e, p)) {
-                    watcherList.removeWatcher(p);
-                    playersToSendCurrentEntity.add(p);
+        while(entityIterator.hasNext()) {
+            playersToSendCurrentEntity.clear();
+            EntityWatcherEntry entry = entityIterator.next();
+
+            Entity entity = entry.getEntity();
+            Iterator<Player> watcherIterator = entry.getWatcherIterator();
+
+            while(watcherIterator.hasNext()) {
+                Player watcher = watcherIterator.next();
+
+                if(shouldShowEntityToWatcher(entity, watcher)) {
+                    watcherIterator.remove();
+                    playersToSendCurrentEntity.add(watcher);
                 }
             }
 
             if(!playersToSendCurrentEntity.isEmpty())
-                PacketDispatcher.spawnEntityForPlayers(e, playersToSendCurrentEntity);
-        }
+                PacketDispatcher.spawnEntityForPlayers(entity, playersToSendCurrentEntity);
 
+            if(entry.numberOfWatchers() == 0)
+                entityIterator.remove();
+        }
 
         if(checkCount < ENTITY_VISIBILITY_CHECKS_PER_PURGE)
             return;
 
-        _watcherListList.purgeList();
+        _entityList.purgeList();
         checkCount = 0;
     }
 
@@ -120,28 +137,30 @@ public class EntityHider implements PacketEventListener {
         if(event.getSubject().getType() == EntityType.PLAYER)
             return;
 
-        if(shouldShowEntityToWatcher(event.getSubject(), event.getReceiver()))
-            return;
-
-        else {
+        if(!shouldShowEntityToWatcher(event.getSubject(), event.getReceiver())) {
             event.cancel();
-            _watcherListList.addWatcher(event.getSubject(), event.getReceiver());
+            _entityList.addWatcherToEntity(event.getReceiver(), event.getSubject());
         }
+    }
+
+    private void handleEntityDestroyPacketEvent(EntityDestroyPacketEvent event) {
+        _entityList.removeWatcherFromEntity(event.getReceiver(), event.getSubject());
     }
 
     private void handleEntityUpdatePacketEvent(EntityUpdatePacketEvent event) {
         if(event.getSubject().getType() == EntityType.PLAYER)
             return;
 
-        if(_watcherListList.isEntityBeingHiddenFrom(event.getSubject(), event.getReceiver()))
+        if(_entityList.doesEntityHaveWatcher(event.getSubject(), event.getReceiver())) {
             event.cancel();
+        }
     }
 
     private class WatcherCheckThread implements Runnable {
 
         @Override
         public void run() {
-            checkWatchers();
+            checkEntities();
         }
     }
 }
