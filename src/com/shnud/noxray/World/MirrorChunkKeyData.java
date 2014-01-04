@@ -61,9 +61,9 @@ public class MirrorChunkKeyData {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
-        int localX = coords.blockX() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
-        int localY = coords.blockY();
-        int localZ = coords.blockZ() % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+        int localX = coords.chunkRelativeBlockX();
+        int localY = coords.chunkRelativeBlockY();
+        int localZ = coords.chunkRelativeBlockZ();
 
         setLocalBlockKey(localX, localY, localZ, roomID);
     }

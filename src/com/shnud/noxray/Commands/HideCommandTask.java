@@ -108,8 +108,6 @@ public class HideCommandTask implements Runnable {
         int foundID = -1;
         boolean foundMultiple = false;
 
-        System.out.println("HELLO");
-
         Location loc = _caller.getEyeLocation();
         ParticlePacketSender packet = new ParticlePacketSender(Lists.newArrayList(_caller), ParticlePacketSender.ParticleEffect.CRIT, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
         int i = 0;
