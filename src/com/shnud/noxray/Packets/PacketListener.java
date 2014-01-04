@@ -11,6 +11,7 @@ import com.shnud.noxray.Events.*;
 import com.shnud.noxray.NoXray;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
 
@@ -52,6 +53,7 @@ public class PacketListener {
 
     private static void registerPacketListeners() {
         _pm.addPacketListener(new NamedEntitySpawnAdapter());
+        _pm.addPacketListener(new NamedEntityDestroyAdapter());
         _pm.addPacketListener(new EntitySpawnAdapter());
         _pm.addPacketListener(new EntityUpdateAdapter());
     }
@@ -75,6 +77,36 @@ public class PacketListener {
 
             PlayerSpawnPacketEvent entityEvent = new PlayerSpawnPacketEvent(event.getPlayer(), subject, event);
             dispatchEventToListeners(entityEvent);
+        }
+    }
+
+    private static class NamedEntityDestroyAdapter extends PacketAdapter {
+
+        /*
+         * We set this priority to highest, so that the destory packets we send
+         * from our plugin don't get filtered
+         */
+        public NamedEntityDestroyAdapter() {
+            super(_plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.ENTITY_DESTROY);
+        }
+
+        @Override
+        public void onPacketSending(PacketEvent event) {
+            if(event.isCancelled())
+                return;
+
+            PacketContainer packet = event.getPacket();
+            World world = event.getPlayer().getWorld();
+
+            int[] subjectIDs = packet.getIntegerArrays().read(0);
+            for(int subjectID : subjectIDs) {
+                Entity subject = _pm.getEntityFromID(world, subjectID);
+
+                if(subject != null && subject.getType() == EntityType.PLAYER) {
+                    PlayerDestroyPacketEvent destroyEvent = new PlayerDestroyPacketEvent(event.getPlayer(), subject, event);
+                    dispatchEventToListeners(destroyEvent);
+                }
+            }
         }
     }
 

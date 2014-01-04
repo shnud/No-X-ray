@@ -34,4 +34,8 @@ public class BasePacketEvent {
     public void uncancel() {
         _event.setCancelled(false);
     }
+
+    protected PacketEvent getPacketEvent() {
+        return _event;
+    }
 }

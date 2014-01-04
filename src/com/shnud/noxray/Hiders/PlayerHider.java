@@ -4,6 +4,7 @@ import com.shnud.noxray.Entities.PlayerCoupleHidable;
 import com.shnud.noxray.Entities.PlayerCoupleList;
 import com.shnud.noxray.Events.BasePacketEvent;
 import com.shnud.noxray.Events.EntityUpdatePacketEvent;
+import com.shnud.noxray.Events.PlayerDestroyPacketEvent;
 import com.shnud.noxray.Events.PlayerSpawnPacketEvent;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketDispatcher;
@@ -83,11 +84,25 @@ public class PlayerHider implements PacketEventListener {
 
         else if (event instanceof PlayerSpawnPacketEvent)
             onPlayerSpawnPacketEvent((PlayerSpawnPacketEvent) event);
+        else if (event instanceof PlayerDestroyPacketEvent)
+            onPlayerDestroyPacketEvent((PlayerDestroyPacketEvent) event);
         else if (event instanceof EntityUpdatePacketEvent)
             onEntityUpdatePacketEvent((EntityUpdatePacketEvent) event);
     }
 
-    public void onPlayerSpawnPacketEvent(PlayerSpawnPacketEvent event) {
+    /*
+     * Hopefully this shouldn't receive the destory packets that we send out
+     */
+    private void onPlayerDestroyPacketEvent(PlayerDestroyPacketEvent event) {
+        long id = PlayerCoupleHidable.uniqueIDFromEntityPair(event.getReceiver(), event.getSubject());
+        if(_coupleWatchList.containsCoupleFromID(id)) {
+            _coupleWatchList.removeCouple(id);
+        }
+    }
+
+    private void onPlayerSpawnPacketEvent(PlayerSpawnPacketEvent event) {
+        System.out.println("Spawned");
+
         // No point adding a couple with the same player, cannot hide from yourself
         if(event.getSubject().equals(event.getReceiver()))
             return;
@@ -125,7 +140,7 @@ public class PlayerHider implements PacketEventListener {
         updateCoupleHiddenStatus(couple);
     }
 
-    public void onEntityUpdatePacketEvent(EntityUpdatePacketEvent event) {
+    private void onEntityUpdatePacketEvent(EntityUpdatePacketEvent event) {
         // We're only interested in player entity updates
         if(event.getSubject().getType() != EntityType.PLAYER)
             return;
@@ -143,7 +158,7 @@ public class PlayerHider implements PacketEventListener {
          */
     }
 
-    public void updateCoupleHiddenStatus(PlayerCoupleHidable couple) {
+    private void updateCoupleHiddenStatus(PlayerCoupleHidable couple) {
         boolean LOS = couple.haveClearLOS();
 
         if(LOS && couple.areHidden())
@@ -169,7 +184,7 @@ public class PlayerHider implements PacketEventListener {
             _checkingTask.cancel();
     }
 
-    public class CoupleCheckThread implements Runnable {
+    private class CoupleCheckThread implements Runnable {
 
         @Override
         public void run() {

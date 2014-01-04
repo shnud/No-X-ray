@@ -88,4 +88,8 @@ public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
     public int size() {
         return _couples.size();
     }
+
+    public void removeCouple(long id) {
+        _couples.remove(id);
+    }
 }
