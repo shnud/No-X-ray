@@ -14,7 +14,7 @@ import java.util.LinkedList;
  */
 public class RoomSearcher {
     private int _originX, _originY, _originZ;
-    private Material[] _wallBlocks = new Material[]{Material.GRAVEL, Material.STONE, Material.DIRT, Material.IRON_ORE, Material.COAL_ORE, Material.GOLD_ORE, Material.DIAMOND_ORE, Material.REDSTONE_ORE, Material.EMERALD_ORE};
+    private static HashSet<Material> _wallBlocks = new HashSet<Material>();
     private World _world;
     private static final int MAX_BLOCK_SEARCH = 100000;
 
@@ -23,10 +23,22 @@ public class RoomSearcher {
         _originY = y;
         _originZ = z;
         _world = world;
+
+        if(_wallBlocks.isEmpty()) {
+            _wallBlocks.add(Material.GRAVEL);
+            _wallBlocks.add(Material.STONE);
+            _wallBlocks.add(Material.DIRT);
+            _wallBlocks.add(Material.IRON_ORE);
+            _wallBlocks.add(Material.COAL_ORE);
+            _wallBlocks.add(Material.GOLD_ORE);
+            _wallBlocks.add(Material.DIAMOND_ORE);
+            _wallBlocks.add(Material.REDSTONE_ORE);
+            _wallBlocks.add(Material.EMERALD_ORE);
+        }
     }
 
-    public void setWallBlocks(Material[] materials) {
-        if(materials.length == 0)
+    public void setWallBlocks(HashSet<Material> materials) {
+        if(materials == null || materials.size() == 0)
             throw new IllegalArgumentException("Search will go on forever with no wall blocks");
 
         _wallBlocks = materials;
@@ -84,12 +96,10 @@ public class RoomSearcher {
     private boolean isBlockValid(XYZ block) {
         Material type = _world.getBlockAt(block.x, block.y, block.z).getType();
 
-        for(Material wall : _wallBlocks) {
-            if(type == wall)
-                return false;
-        }
-
-        return true;
+        if(_wallBlocks.contains(type))
+            return false;
+        else
+            return true;
     }
 
     private boolean isChunkLoadedForBlock(XYZ block) {
