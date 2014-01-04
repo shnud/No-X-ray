@@ -1,6 +1,7 @@
 package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Structures.IterableHashMap;
+import com.shnud.noxray.Structures.SyncIterableHashMap;
 import org.bukkit.entity.Entity;
 
 import java.util.*;
@@ -10,10 +11,7 @@ import java.util.*;
  */
 public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
 
-    /*
-     * Thread-safe; uses synchronized HashMap/Array
-     */
-    private IterableHashMap<Long, T> _couples = new IterableHashMap<Long, T>();
+    private SyncIterableHashMap<Long, T> _couples = new SyncIterableHashMap<Long, T>();
 
     public void addCouples(T[] couples) {
         for (T couple : couples) {

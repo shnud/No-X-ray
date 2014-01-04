@@ -1,5 +1,6 @@
 package com.shnud.noxray.Packets.PacketSenders;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -22,7 +23,8 @@ public class EntitySpawnPacketSender extends GenericEntityPacketSender {
     @Override
     protected void sendImplementation() {
         for(Entity subject : _subjects) {
-            getProtocolManager().updateEntity(subject, _receivers);
+            if(subject != null && !subject.isDead() && subject.isValid())
+                getProtocolManager().updateEntity(subject, _receivers);
         }
     }
 }

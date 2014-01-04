@@ -1,5 +1,6 @@
 package com.shnud.noxray.Hiders;
 
+import com.google.common.collect.Lists;
 import com.shnud.noxray.Entities.EntityWatcherEntry;
 import com.shnud.noxray.Entities.EntityWatcherList;
 import com.shnud.noxray.Events.BasePacketEvent;
@@ -52,7 +53,7 @@ public class EntityHider implements PacketEventListener {
 
         // All tasks get cancelled on plugin disable so we don't need to
         // worry about stopping this
-        Bukkit.getScheduler().runTaskTimer(
+        Bukkit.getScheduler().runTaskTimerAsynchronously(
                 NoXray.getInstance(),
                 new WatcherCheckThread(),
                 ENTITY_TICK_CHECK_FREQUENCY,
@@ -97,7 +98,7 @@ public class EntityHider implements PacketEventListener {
             }
 
             if(!playersToSendCurrentEntity.isEmpty())
-                PacketDispatcher.spawnEntityForPlayers(entity, playersToSendCurrentEntity);
+                PacketDispatcher.spawnEntityForPlayers(entity, Lists.newArrayList(playersToSendCurrentEntity));
 
             if(entry.numberOfWatchers() == 0)
                 entityIterator.remove();

@@ -19,8 +19,8 @@ public abstract class GenericEntityPacketSender extends PacketSender {
     public GenericEntityPacketSender(List<Player> receivers, List<Entity> subjects) {
         super(receivers);
 
-        if(subjects == null)
-            throw new IllegalArgumentException("Subjects cannot be null");
+        if(subjects == null || subjects.isEmpty())
+            throw new IllegalArgumentException("Subjects cannot be empty or null");
 
         Iterator<Entity> it = subjects.iterator();
 

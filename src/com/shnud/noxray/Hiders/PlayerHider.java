@@ -174,7 +174,7 @@ public class PlayerHider implements PacketEventListener {
         if(_checkingTask != null)
             _checkingTask.cancel();
 
-        _checkingTask = Bukkit.getScheduler().runTaskTimer(
+        _checkingTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
                 NoXray.getInstance(),
                 new CoupleCheckThread(),
                 PLAYER_TICK_CHECK_FREQUENCY,
