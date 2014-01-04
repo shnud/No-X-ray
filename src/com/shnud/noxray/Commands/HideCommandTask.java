@@ -11,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.ArrayList;
 
 /**
@@ -54,7 +55,7 @@ public class HideCommandTask implements Runnable {
         if(reCall(_stage.isSync()))
             return;
 
-        switch(getStage()) {
+        switch(_stage) {
             case SEARCH_REAL_WORLD:
                 searchRealWorld();
                 break;
@@ -75,17 +76,17 @@ public class HideCommandTask implements Runnable {
             Location loc = _caller.getEyeLocation();
             RoomSearcher searcher = new RoomSearcher(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), _caller.getWorld());
 
-            synchronized (this) {
-                _roomBlocks = searcher.getRoomBlocks();
-            }
+
+            _roomBlocks = searcher.getRoomBlocks();
+
 
             switchStage(TaskStage.CHECK_BLOCKS);
             return;
 
         } catch (RoomSearcher.ChunkNotLoadedException e) {
-            setPlayerMessage("While searching we ventured into unloaded territory");
+            _playerMessage = ChatColor.RED + "While searching we ventured into unloaded territory";
         } catch (RoomSearcher.MaxBlocksReachedException e) {
-            setPlayerMessage("The room was too big and we ran out of time to search, is it totally enclosed?");
+            _playerMessage = ChatColor.RED + "The room was too big and we ran out of time to search, is it totally enclosed?";
         }
 
         switchStage(TaskStage.NOTIFY_PLAYER_RESULT);
@@ -94,7 +95,7 @@ public class HideCommandTask implements Runnable {
 
     public void checkBlocks() {
         if(_roomBlocks == null || _roomBlocks.isEmpty()) {
-            setPlayerMessage("Unable to find any blocks");
+            _playerMessage = "Unable to find any blocks";
             notifyPlayer();
             return;
         }
@@ -137,26 +138,22 @@ public class HideCommandTask implements Runnable {
         }
 
         if(foundMultiple) {
-            setPlayerMessage(ChatColor.RED + "More than one different room was found, please unhide at least one of these rooms first");
+            _playerMessage = ChatColor.RED + "More than one different room was found, please unhide at least one of these rooms first";
             notifyPlayer();
             return;
         }
 
-        if(foundID == -1) {
-            setRoomID(hider.getRooms().getUnusedRoomID());
-            notifyPlayer();
-            return;
-        }
-        else {
-            setRoomID(foundID);
-            addBlocks();
-            return;
-        }
+        if(foundID < 1)
+            _roomID = hider.getRooms().getUnusedRoomID();
+        else
+            _roomID = foundID;
+
+        switchStage(TaskStage.ADD_BLOCKS);
     }
 
     private void addBlocks() {
-        if(getRoomID() < 1) {
-            setPlayerMessage("Unable to create new room ID");
+        if(_roomID < 1) {
+            _playerMessage = "Unable to create new room ID";
             notifyPlayer();
             return;
         }
@@ -167,16 +164,31 @@ public class HideCommandTask implements Runnable {
             return;
 
         for(XYZ block : _roomBlocks) {
-            hider.setBlockToRoomID(block.x, block.y, block.z, getRoomID());
+            hider.setBlockToRoomID(block.x, block.y, block.z, _roomID);
         }
 
-        setPlayerMessage(ChatColor.GREEN + "Successfully protected " + _roomBlocks.size() + " blocks with room ID: " + getRoomID());
+        _playerMessage = ChatColor.GREEN + "Successfully protected " + _roomBlocks.size() + " blocks with room ID: " + _roomID;
         notifyPlayer();
-        return;
     }
 
     private void notifyPlayer() {
-        _caller.sendMessage(getPlayerMessage());
+        _caller.sendMessage(_playerMessage);
+    }
+
+    private void switchStage(TaskStage stage) {
+        _stage = stage;
+        run();
+    }
+
+    /**
+     * Re-call this task either async or sync, true = sync
+     * @return whether the task was scheduled (false if we're already in the right thread)
+     */
+    private boolean reCall(boolean sync) {
+        if(sync)
+            return switchToSync();
+        else
+            return switchToAsync();
     }
 
     /**
@@ -201,37 +213,5 @@ public class HideCommandTask implements Runnable {
 
         Bukkit.getScheduler().runTask(NoXray.getInstance(), this);
         return true;
-    }
-
-    synchronized private void switchStage(TaskStage stage) {
-        _stage = stage;
-        reCall(stage.isSync());
-    }
-
-    synchronized private TaskStage getStage() {
-        return _stage;
-    }
-
-    synchronized private void setPlayerMessage(String message) {
-        _playerMessage = message;
-    }
-
-    synchronized private String getPlayerMessage() {
-        return _playerMessage;
-    }
-
-    synchronized private void setRoomID(int roomID) {
-        _roomID = roomID;
-    }
-
-    synchronized private int getRoomID() {
-        return _roomID;
-    }
-
-    private boolean reCall(boolean sync) {
-        if(sync)
-            return switchToSync();
-        else
-            return switchToAsync();
     }
 }
