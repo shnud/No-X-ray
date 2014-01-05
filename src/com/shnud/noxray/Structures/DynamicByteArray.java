@@ -5,6 +5,7 @@ import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -59,7 +60,7 @@ public final class DynamicByteArray extends ByteArray {
 
     /**
      * Get the uncompressed byte array used to back this chunk data array
-     * @return the actual byte array; be careful - make a copy if you're going to change anything
+     * @return a copy of the uncompressed byte array, or the compressed array if inflation wasn't possible
      */
     public byte[] getPrimitiveByteArray() {
         if(_isCompressed) {
@@ -71,18 +72,18 @@ public final class DynamicByteArray extends ByteArray {
             }
         }
 
-        return _byteArray;
+        return Arrays.copyOf(_byteArray, _byteArray.length);
     }
 
     /**
      * Get the compressed version of the byte array used to back this chunk data array
-     * @return the actual byte array; be careful - make a copy if you're going to change anything
+     * @return a copy of the compressed byte array
      */
     public byte[] getCompressedPrimitiveByteArray() {
         if(!_isCompressed)
-            compress();
-
-        return _byteArray;
+            return compressAndReturnResult(_byteArray);
+        else
+            return Arrays.copyOf(_byteArray, _byteArray.length);
     }
 
     public byte getValueAtIndex(int index) {
