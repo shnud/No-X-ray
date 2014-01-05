@@ -55,6 +55,7 @@ public class NoXraySettings {
             _entitiesToHide.add(EntityType.MUSHROOM_COW);
             _entitiesToHide.add(EntityType.CHICKEN);
             _entitiesToHide.add(EntityType.EGG);
+            _entitiesToHide.add(EntityType.PIG);
             _entitiesToHide.add(EntityType.SHEEP);
             _entitiesToHide.add(EntityType.HORSE);
             _entitiesToHide.add(EntityType.LEASH_HITCH);
