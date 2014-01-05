@@ -1,6 +1,5 @@
 package com.shnud.noxray.Entities;
 
-import com.shnud.noxray.Structures.IterableHashMap;
 import com.shnud.noxray.Structures.SyncIterableHashMap;
 import org.bukkit.entity.Entity;
 
@@ -25,15 +24,11 @@ public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
         }
     }
 
-    /*
-     * Will not put a couple that already exists, every entry must be unique
-     */
     public void addCouple(T couple) {
         if(couple == null)
             throw new IllegalArgumentException("Couple cannot be null");
 
-        if(!containsCouple(couple))
-            _couples.put(couple.uniqueID(), couple);
+        _couples.put(couple.uniqueID(), couple);
     }
 
     public void removeCouple(PlayerCouple couple) {
@@ -43,31 +38,35 @@ public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
         _couples.remove(couple.uniqueID());
     }
 
-    public T getCoupleFromID(long ID) {
+    public void removeCouple(long ID) {
+        _couples.remove(ID);
+    }
+
+    public T getCouple(long ID) {
         if(!_couples.containsKey(ID))
             return null;
 
         return _couples.get(ID);
     }
 
-    public T getCoupleFromEntities(Entity e1, Entity e2) {
+    public T getCouple(Entity e1, Entity e2) {
         if(e1 == null || e2 == null)
             throw new IllegalArgumentException("Entities cannot be null");
 
         long ID = PlayerCouple.uniqueIDFromEntityPair(e1, e2);
-        return getCoupleFromID(ID);
+        return getCouple(ID);
     }
 
-    public boolean containsCoupleFromID(long ID) {
-        return getCoupleFromID(ID) != null;
+    public boolean containsCouple(long ID) {
+        return getCouple(ID) != null;
     }
 
-    public boolean containsCoupleFromEntities(Entity e1, Entity e2) {
+    public boolean containsCouple(Entity e1, Entity e2) {
         if(e1 == null || e2 == null)
             throw new IllegalArgumentException("Entities cannot be null");
 
         long ID = PlayerCouple.uniqueIDFromEntityPair(e1, e2);
-        return getCoupleFromID(ID) != null;
+        return getCouple(ID) != null;
     }
 
     public boolean containsCouple(PlayerCouple couple) {
@@ -87,7 +86,5 @@ public class PlayerCoupleList<T extends PlayerCouple> implements Iterable<T> {
         return _couples.size();
     }
 
-    public void removeCouple(long id) {
-        _couples.remove(id);
-    }
+
 }

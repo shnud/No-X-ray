@@ -9,7 +9,6 @@ import com.shnud.noxray.Events.PlayerSpawnPacketEvent;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketDispatcher;
 import com.shnud.noxray.Packets.PacketListener;
-import com.shnud.noxray.Settings.NoXraySettings;
 import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -95,7 +94,7 @@ public class PlayerHider implements PacketEventListener {
      */
     private void onPlayerDestroyPacketEvent(PlayerDestroyPacketEvent event) {
         long id = PlayerCoupleHidable.uniqueIDFromEntityPair(event.getReceiver(), event.getSubject());
-        if(_coupleWatchList.containsCoupleFromID(id)) {
+        if(_coupleWatchList.containsCouple(id)) {
             _coupleWatchList.removeCouple(id);
         }
     }
@@ -106,9 +105,9 @@ public class PlayerHider implements PacketEventListener {
             return;
 
         // If we're already monitoring the couple, no need to re-put it to the watch list
-        if(_coupleWatchList.containsCoupleFromEntities(event.getReceiver(), event.getSubject())) {
+        if(_coupleWatchList.containsCouple(event.getReceiver(), event.getSubject())) {
 
-            if(_coupleWatchList.getCoupleFromEntities(event.getReceiver(), event.getSubject()).areHidden())
+            if(_coupleWatchList.getCouple(event.getReceiver(), event.getSubject()).areHidden())
                 event.cancel();
 
             /*
@@ -146,7 +145,7 @@ public class PlayerHider implements PacketEventListener {
         // If we're currently hiding the couple, then don't send
         // any entity updates as it could give a clue as to whether
         // a player may be nearby
-        if(_coupleWatchList.containsCoupleFromEntities(event.getReceiver(), event.getSubject()) && _coupleWatchList.getCoupleFromEntities(event.getReceiver(), event.getSubject()).areHidden())
+        if(_coupleWatchList.containsCouple(event.getReceiver(), event.getSubject()) && _coupleWatchList.getCouple(event.getReceiver(), event.getSubject()).areHidden())
             event.cancel();
 
         /* Maybe here we could put some sort of flag to the couple to store the last time

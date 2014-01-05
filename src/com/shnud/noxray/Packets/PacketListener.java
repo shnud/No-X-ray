@@ -1,6 +1,7 @@
 package com.shnud.noxray.Packets;
 
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.Packets;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -12,6 +13,7 @@ import com.shnud.noxray.NoXray;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 
@@ -57,6 +59,7 @@ public class PacketListener {
         _pm.addPacketListener(new EntityDestroyAdapter());
         _pm.addPacketListener(new EntitySpawnAdapter());
         _pm.addPacketListener(new EntityUpdateAdapter());
+        _pm.getAsynchronousManager().registerAsyncHandler(new ChunkDataAdapter());
     }
 
     public static void unregisterPacketListeners() {
@@ -158,6 +161,21 @@ public class PacketListener {
             Entity subject = _pm.getEntityFromID(world, subjectID);
             EntityUpdatePacketEvent entityEvent = new EntityUpdatePacketEvent(event.getPlayer(), subject, event);
             dispatchEventToListeners(entityEvent);
+        }
+    }
+
+    private static class ChunkDataAdapter extends PacketAdapter {
+
+        public ChunkDataAdapter() {
+            super(_plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.MAP_CHUNK);
+        }
+
+        @Override
+        public void onPacketSending(PacketEvent event) {
+            if(event.isCancelled())
+                return;
+
+
         }
     }
 }
