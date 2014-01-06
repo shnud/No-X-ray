@@ -34,8 +34,8 @@ public class EntityHider implements PacketEventListener {
     private static final int ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 4;
     private static final int ENTITY_VISIBILITY_CHECKS_PER_PURGE = 20;
 
-    private World _world;
-    private EntityWatcherList _entityList = new EntityWatcherList();
+    private final World _world;
+    private final EntityWatcherList _entityList = new EntityWatcherList();
     private int checkCount = 0;
 
     public EntityHider(World world) {

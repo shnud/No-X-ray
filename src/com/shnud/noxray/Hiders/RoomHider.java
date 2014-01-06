@@ -15,9 +15,9 @@ import java.util.ArrayList;
  */
 public class RoomHider {
 
-    private World _world;
-    private MirrorWorld _mirrorWorld;
-    private RoomList _rooms;
+    private final World _world;
+    private final MirrorWorld _mirrorWorld;
+    private final RoomList _rooms;
 
     public RoomHider(World world) {
         if(world == null)
