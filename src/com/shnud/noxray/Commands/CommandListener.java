@@ -90,18 +90,7 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void handleStatus(Player sender) {
-        RoomHider hider = NoXray.getInstance().getRoomHiderForWorld(sender.getWorld());
 
-        if(hider == null) {
-            sender.sendMessage("Unable to find room hider for that world");
-            return;
-        }
 
-        int roomID = hider.getRoomIDAtPlayerLocation(sender);
-
-        if(roomID == 0)
-            sender.sendMessage(ChatColor.YELLOW + "This room is not protected");
-        else
-            sender.sendMessage(ChatColor.YELLOW + "This room is protected with an ID of " + roomID);
     }
 }

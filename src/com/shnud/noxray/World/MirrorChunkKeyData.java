@@ -15,10 +15,11 @@ import java.util.zip.DataFormatException;
 public class MirrorChunkKeyData {
 
     private static final int DATA_SECTIONS = 8;
+    private static final int DATA_SECTIONS_PER_REAL_CHUNK_SECTION = 16 / DATA_SECTIONS;
     private static final int BLOCKS_PER_SECTION = MagicValues.BLOCKS_IN_CHUNK / DATA_SECTIONS;
     private static final int DEFAULT_BIT_PER_VALUE_ENCODING = 2;
     private static final int MAX_BIT_PER_VALUE_ENCODING = 6;
-    private DynamicByteBitWrapper[] _sections = new DynamicByteBitWrapper[DATA_SECTIONS];
+    private final DynamicByteBitWrapper[] _sections = new DynamicByteBitWrapper[DATA_SECTIONS];
     private boolean _isEmpty = true;
 
     private MirrorChunkKeyData() {}
@@ -158,5 +159,9 @@ public class MirrorChunkKeyData {
         }
 
         return true;
+    }
+
+    public boolean isSectionEmpty(int section) {
+        return _sections[section / DATA_SECTIONS_PER_REAL_CHUNK_SECTION] == null;
     }
 }

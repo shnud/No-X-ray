@@ -101,4 +101,11 @@ public class MirrorChunk {
     public void cleanUp() {
         _timeOfLastCleanUp = System.currentTimeMillis();
     }
+
+    public boolean isSectionEmpty(int section) {
+        if(section < 0 || section > 15)
+            throw new IllegalArgumentException("Section must be between 0 and 15 inclusive");
+
+        return _data.isSectionEmpty(section);
+    }
 }

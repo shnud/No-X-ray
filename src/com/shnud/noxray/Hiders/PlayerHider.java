@@ -24,7 +24,7 @@ import java.util.Iterator;
  */
 public class PlayerHider implements PacketEventListener {
 
-    private  static final int PLAYER_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 3;
+    private static final int PLAYER_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 3;
 
     private final World _world;
     private final PlayerCoupleList<PlayerCoupleHidable> _coupleWatchList = new PlayerCoupleList<PlayerCoupleHidable>();

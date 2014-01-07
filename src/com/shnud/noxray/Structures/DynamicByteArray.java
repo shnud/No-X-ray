@@ -1,5 +1,6 @@
 package com.shnud.noxray.Structures;
 
+import com.shnud.noxray.Concurrency.BasicExecutor;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.Bukkit;
@@ -22,17 +23,22 @@ public final class DynamicByteArray extends ByteArray {
     private static final byte[] _buffer = new byte[MagicValues.BLOCKS_IN_CHUNK];
     private static final int MAX_SECONDS_UNTIL_RECOMPRESSION = 20;
     private static final int MINIMUM_MILLISECONDS_BETWEEN_SCHEDULING_TASKS = (MAX_SECONDS_UNTIL_RECOMPRESSION / 2) * 1000;
-    private long _timeTimerLastReset;
+    private final int uncompressedLength;
     private boolean _isCompressed;
-    private int _originalByteArrayLength = -1;
+
+    /*
+     * We could just use our BasicExecutor scheduler here but we don't have
+     * cancellation support so we might as well just use the bukkit task to
+     * add to our executor if necessary
+     */
     private BukkitTask _compressionTask;
-    private Runnable _compressionTaskRunner = new CompressionTaskRunner();
+    private long _timeTimerLastReset;
 
     /**
      * Creates a new dynamically compressed byte array from an already existing byte array
      * @param array the byte array to wrap (assumes uncompressed)
      */
-    public DynamicByteArray(byte[] array) {
+    public DynamicByteArray(final byte[] array) {
         this(array, false);
     }
 
@@ -41,13 +47,22 @@ public final class DynamicByteArray extends ByteArray {
      * @param array  the byte array to wrap
      * @param compressed whether the byte array is already deflated
      */
-    public DynamicByteArray(byte[] array, boolean compressed) {
+    public DynamicByteArray(final byte[] array, final boolean compressed) {
         super(array);
         _isCompressed = compressed;
 
         if(!_isCompressed) {
-            _originalByteArrayLength = array.length;
+            uncompressedLength = array.length;
             compress();
+        }
+        else {
+            int uncompressedLength = 0;
+            try {
+                uncompressedLength = uncompressAndReturnResult(array).length;
+            } catch (DataFormatException e) {
+                e.printStackTrace();
+            }
+            this.uncompressedLength = uncompressedLength;
         }
     }
 
@@ -115,7 +130,12 @@ public final class DynamicByteArray extends ByteArray {
 
         _compressionTask = Bukkit.getScheduler().runTaskLater(
                 NoXray.getInstance(),
-                _compressionTaskRunner,
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        compress();
+                    }
+                },
                 MagicValues.MINECRAFT_TICKS_PER_SECOND * MAX_SECONDS_UNTIL_RECOMPRESSION
         );
 
@@ -126,7 +146,6 @@ public final class DynamicByteArray extends ByteArray {
         if(_isCompressed)
             return;
 
-        _originalByteArrayLength = _byteArray.length;
         _byteArray = compressAndReturnResult(_byteArray);
         _isCompressed = true;
     }
@@ -144,10 +163,10 @@ public final class DynamicByteArray extends ByteArray {
              * written to a intermediary buffer.
              */
 
-            if(_originalByteArrayLength > 0) {
+            if(uncompressedLength > 0) {
                 Inflater _inf = new Inflater();
                 _inf.setInput(_byteArray);
-                byte[] uncompressedArray = new byte[_originalByteArrayLength];
+                byte[] uncompressedArray = new byte[uncompressedLength];
                 _inf.inflate(uncompressedArray);
                 _byteArray = uncompressedArray;
                 _inf.end();
@@ -185,16 +204,8 @@ public final class DynamicByteArray extends ByteArray {
         return output;
     }
 
-    private class CompressionTaskRunner implements Runnable {
-        @Override
-        public void run() {
-            if(Bukkit.isPrimaryThread())
-                compress();
-        }
-    }
-
     public int size() {
-        return _originalByteArrayLength;
+        return uncompressedLength;
     }
 
     public void clear() {
