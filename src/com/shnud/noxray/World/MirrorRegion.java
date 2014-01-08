@@ -193,4 +193,9 @@ public class MirrorRegion {
     private String regionFileName() {
         return _x + "." + _z + ".mrr";
     }
+
+    public boolean isMirrorChunkLoaded(DynamicCoordinates coordinates) {
+        int index = getChunkIndex(coordinates.chunkX(), coordinates.chunkZ());
+        return _chunks[index] != null;
+    }
 }

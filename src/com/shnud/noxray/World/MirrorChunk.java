@@ -11,9 +11,9 @@ import java.io.RandomAccessFile;
 public class MirrorChunk {
 
     private static final boolean SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL = true;
-    private MirrorChunkKeyData _data;
-    private MirrorChunkIDMap _keyToIDMap;
-    private int _x, _z;
+    private final MirrorChunkKeyData _data;
+    private final MirrorChunkIDMap _keyToIDMap;
+    private final int _x, _z;
     private long _timeOfLastCleanUp = 0;
 
     public MirrorChunk(int x, int z) {
@@ -73,6 +73,10 @@ public class MirrorChunk {
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
+    public int getRoomIDAtIndex(int index) {
+        return _data.getValueAtIndex(index);
+    }
+
     public void removeRoomID(int roomID) {
         int key = _keyToIDMap.getKeyForRoomID(roomID);
 
@@ -99,6 +103,8 @@ public class MirrorChunk {
     }
 
     public void cleanUp() {
+        // TODO cleanup logic
+
         _timeOfLastCleanUp = System.currentTimeMillis();
     }
 

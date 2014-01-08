@@ -1,13 +1,12 @@
 package com.shnud.noxray.World;
 
+import com.shnud.noxray.Structures.DynamicVariableBitArray;
 import com.shnud.noxray.Structures.DynamicByteArray;
-import com.shnud.noxray.Structures.DynamicByteBitWrapper;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.zip.DataFormatException;
 
 /**
  * Created by Andrew on 29/12/2013.
@@ -19,7 +18,7 @@ public class MirrorChunkKeyData {
     private static final int BLOCKS_PER_SECTION = MagicValues.BLOCKS_IN_CHUNK / DATA_SECTIONS;
     private static final int DEFAULT_BIT_PER_VALUE_ENCODING = 2;
     private static final int MAX_BIT_PER_VALUE_ENCODING = 6;
-    private final DynamicByteBitWrapper[] _sections = new DynamicByteBitWrapper[DATA_SECTIONS];
+    private final DynamicVariableBitArray[] _sections = new DynamicVariableBitArray[DATA_SECTIONS];
     private boolean _isEmpty = true;
 
     private MirrorChunkKeyData() {}
@@ -36,9 +35,9 @@ public class MirrorChunkKeyData {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
-        int localX = (coords.blockX() < 0 ? -coords.blockX() : coords.blockX()) % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
-        int localY = coords.blockY();
-        int localZ = (coords.blockZ() < 0 ? -coords.blockZ() : coords.blockZ()) % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK;
+        int localX = coords.chunkRelativeBlockX();
+        int localY = coords.chunkRelativeBlockY();
+        int localZ = coords.chunkRelativeBlockZ();
 
         return getLocalBlockKey(localX, localY, localZ);
     }
@@ -49,7 +48,7 @@ public class MirrorChunkKeyData {
         return getValueAtIndex(index);
     }
 
-    private int getValueAtIndex(int index) {
+    public int getValueAtIndex(int index) {
         int sectionIndex = index / BLOCKS_PER_SECTION;
 
         if(_sections[sectionIndex] == null)
@@ -79,10 +78,10 @@ public class MirrorChunkKeyData {
         int sectionIndex = index / BLOCKS_PER_SECTION;
 
         if(_sections[sectionIndex] == null)
-            _sections[sectionIndex] = new DynamicByteBitWrapper(DEFAULT_BIT_PER_VALUE_ENCODING, BLOCKS_PER_SECTION);
+            _sections[sectionIndex] = new DynamicVariableBitArray(DEFAULT_BIT_PER_VALUE_ENCODING, BLOCKS_PER_SECTION);
 
 
-        DynamicByteBitWrapper section = _sections[sectionIndex];
+        DynamicVariableBitArray section = _sections[sectionIndex];
         while(value > section.maxValue()) {
             if(section.maxValue() >= MAX_BIT_PER_VALUE_ENCODING)
                 throw new IllegalArgumentException("Value too large for encoding");
@@ -95,7 +94,7 @@ public class MirrorChunkKeyData {
     }
 
     public void removeAllKeys(int roomID) {
-        for(DynamicByteBitWrapper section : _sections) {
+        for(DynamicVariableBitArray section : _sections) {
             if(section == null)
                 continue;
 
@@ -107,7 +106,7 @@ public class MirrorChunkKeyData {
     }
 
     public void writeToFile(RandomAccessFile ram) throws IOException {
-        for(DynamicByteBitWrapper section : _sections) {
+        for(DynamicVariableBitArray section : _sections) {
 
             // If this section of the chunk is NOT contained within the data
             if(section == null) {
@@ -144,7 +143,7 @@ public class MirrorChunkKeyData {
                 ram.readFully(compressed, 0, compressedLength);
                 DynamicByteArray array = new DynamicByteArray(compressed, true);
 
-                _sections[i] = new DynamicByteBitWrapper(bitValueLength, array);
+                _sections[i] = new DynamicVariableBitArray(bitValueLength, array);
             }
         }
     }
@@ -153,7 +152,7 @@ public class MirrorChunkKeyData {
         if(_isEmpty)
             return true;
 
-        for(DynamicByteBitWrapper section : _sections) {
+        for(DynamicVariableBitArray section : _sections) {
             if(section != null)
                 return false;
         }

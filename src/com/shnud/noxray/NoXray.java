@@ -4,11 +4,9 @@ import com.shnud.noxray.Commands.CommandListener;
 import com.shnud.noxray.Hiders.EntityHider;
 import com.shnud.noxray.Hiders.PlayerHider;
 import com.shnud.noxray.Hiders.RoomHider;
-import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Settings.NoXraySettings;
-import com.shnud.noxray.Settings.PlayerMetadata;
+import com.shnud.noxray.Settings.PlayerMetadataBank;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,11 +29,11 @@ public class NoXray extends JavaPlugin {
         return _instance;
     }
 
-    private ArrayList<PlayerHider> _playerHiders = new ArrayList<PlayerHider>();
-    private ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
-    private ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
-    private PlayerMetadata _playerMetadata = new PlayerMetadata();
-    private CommandListener _commandListener = new CommandListener();
+    private final ArrayList<PlayerHider> _playerHiders = new ArrayList<PlayerHider>();
+    private final ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
+    private final ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
+    private final PlayerMetadataBank _metadataBank = new PlayerMetadataBank();
+    private final CommandListener _commandListener = new CommandListener();
 
     @Override
     public void onEnable() {
@@ -56,12 +54,12 @@ public class NoXray extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        for(RoomHider rh : _roomHiders) rh.saveAllData();
-        _playerMetadata.save();
+        for(RoomHider rh : _roomHiders) rh.disable();
+        _metadataBank.save();
         getServer().getScheduler().cancelTasks(this);
     }
 
-    public void loadPlayerHiders() {
+    private void loadPlayerHiders() {
         for (String worldName : NoXraySettings.getPlayerHideWorlds()) {
             World world = getServer().getWorld(worldName);
             if(world != null)
@@ -71,7 +69,7 @@ public class NoXray extends JavaPlugin {
         }
     }
 
-    public void loadEntityHiders() {
+    private void loadEntityHiders() {
         for (String worldName : NoXraySettings.getEntityHideWorlds()) {
             World world = getServer().getWorld(worldName);
             if(world != null)
@@ -81,7 +79,7 @@ public class NoXray extends JavaPlugin {
         }
     }
 
-    public void loadRoomHiders() {
+    private void loadRoomHiders() {
         for (String worldName : NoXraySettings.getRoomHideWorlds()) {
             World world = getServer().getWorld(worldName);
             if(world != null)
@@ -91,7 +89,7 @@ public class NoXray extends JavaPlugin {
         }
     }
 
-    public RoomHider getRoomHiderForWorld(World world) {
+    public RoomHider getRoomHider(World world) {
         for(RoomHider hider : _roomHiders) {
             if(hider.getWorld().equals(world))
                 return hider;
@@ -100,11 +98,11 @@ public class NoXray extends JavaPlugin {
         return null;
     }
 
-    public PlayerMetadataEntry getMetadataForPlayer(String name) {
-        return _playerMetadata.getMetadataForPlayer(name);
+    public PlayerMetadataEntry getPlayerMetadata(String name) {
+        return _metadataBank.getMetadataForPlayer(name);
     }
 
-    public PlayerMetadataEntry getMetadataForPlayer(Player player) {
-        return getMetadataForPlayer(player.getName());
+    public PlayerMetadataEntry getPlayerMetadata(Player player) {
+        return getPlayerMetadata(player.getName());
     }
 }
