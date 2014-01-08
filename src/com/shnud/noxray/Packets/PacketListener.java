@@ -7,6 +7,7 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.google.common.collect.Lists;
 import com.shnud.noxray.Events.*;
 import com.shnud.noxray.NoXray;
 import org.bukkit.World;
@@ -58,7 +59,7 @@ public class PacketListener {
         _pm.addPacketListener(new EntitySpawnAdapter());
         _pm.addPacketListener(new EntityUpdateAdapter());
 
-        _pm.getAsynchronousManager().registerAsyncHandler(new ChunkDataAdapter());
+        _pm.getAsynchronousManager().registerAsyncHandler(new ChunkDataAdapter()).start();
     }
 
     private static class NamedEntitySpawnAdapter extends PacketAdapter {
@@ -162,13 +163,16 @@ public class PacketListener {
     private static class ChunkDataAdapter extends PacketAdapter {
 
         public ChunkDataAdapter() {
-            super(_plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.MAP_CHUNK);
+            super(_plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.MAP_CHUNK, PacketType.Play.Server.MAP_CHUNK_BULK);
         }
 
         @Override
         public void onPacketSending(PacketEvent event) {
             if(event.isCancelled())
                 return;
+
+            MapChunkPacketEvent chunkEvent = new MapChunkPacketEvent(event.getPlayer(), event);
+            dispatchEventToListeners(chunkEvent);
         }
     }
 }
