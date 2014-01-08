@@ -29,4 +29,8 @@ public class MathHelper {
 
         return ((x + y) * (x + y + 1)) / 2 + y;
     }
+
+    public static int positiveMod(int val, int mod) {
+        return val < 0 ? (val % mod) + mod : val % mod;
+    }
 }

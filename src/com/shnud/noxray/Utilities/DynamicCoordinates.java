@@ -50,12 +50,12 @@ public class DynamicCoordinates {
     public int regionX() {return _blockX >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
     public int regionY() {return _blockY;}
     public int regionZ() {return _blockZ >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_REGION;}
-    public int chunkRelativeBlockX() { return (blockX() < 0 ? -blockX() : blockX()) % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK; }
+    public int chunkRelativeBlockX() { return MathHelper.positiveMod(blockX(), MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK); }
     public int chunkRelativeBlockY() { return blockY(); }
-    public int chunkRelativeBlockZ() { return (blockZ() < 0 ? -blockZ() : blockZ()) % MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK; }
-    public int regionRelativeChunkX() { return (chunkX() < 0 ? -chunkX() : chunkX()) % MagicValues.HORIZONTAL_CHUNKS_IN_REGION; }
+    public int chunkRelativeBlockZ() { return MathHelper.positiveMod(blockZ(), MagicValues.HORIZONTAL_BLOCKS_IN_CHUNK); }
+    public int regionRelativeChunkX() { return MathHelper.positiveMod(chunkX(), MagicValues.HORIZONTAL_CHUNKS_IN_REGION); }
     public int regionRelativeChunkY() { return chunkY(); }
-    public int regionRelativeChunkZ() { return (chunkZ() < 0 ? -chunkZ() : chunkZ()) % MagicValues.HORIZONTAL_CHUNKS_IN_REGION; }
+    public int regionRelativeChunkZ() { return MathHelper.positiveMod(chunkZ(), MagicValues.HORIZONTAL_CHUNKS_IN_REGION); }
 
     public PrecisionLevel getPrecisionLevel() {
         return _level;
