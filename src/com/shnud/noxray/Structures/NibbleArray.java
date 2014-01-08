@@ -23,7 +23,7 @@ public class NibbleArray implements ByteArrayWrapper {
 
         boolean even = (index & 1) == 0;
 
-        if(even)
+        if(!even)
             return (_byteArray.getValueAtIndex(index / 2) & 0xF0) >> 4;
         else
             return (_byteArray.getValueAtIndex(index / 2) & 0x0F);
@@ -40,7 +40,7 @@ public class NibbleArray implements ByteArrayWrapper {
         boolean even = (index & 1) == 0;
         index /= 2;
 
-        if(even)
+        if(!even)
         {
             value <<= 4; // Even indexed first, so move them to the left
 
