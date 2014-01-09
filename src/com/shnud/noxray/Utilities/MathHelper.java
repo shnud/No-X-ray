@@ -31,6 +31,7 @@ public class MathHelper {
     }
 
     public static int positiveMod(int val, int mod) {
-        return val < 0 ? (val % mod) + mod : val % mod;
+        int result = val % mod;
+        return result < 0 ? result + mod : result;
     }
 }

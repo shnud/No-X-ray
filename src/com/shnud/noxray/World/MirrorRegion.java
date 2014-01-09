@@ -4,6 +4,7 @@ import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Structures.BooleanArray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
+import com.shnud.noxray.Utilities.MathHelper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -35,7 +36,7 @@ public class MirrorRegion {
     }
 
     private static int getChunkIndex(int chunkX, int chunkZ) {
-        return (chunkX < 0 ? -chunkX : chunkX) % MagicValues.HORIZONTAL_CHUNKS_IN_REGION + (((chunkZ < 0 ? -chunkZ : chunkZ) % MagicValues.HORIZONTAL_CHUNKS_IN_REGION) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
+        return MathHelper.positiveMod(chunkX, MagicValues.HORIZONTAL_CHUNKS_IN_REGION) + ((MathHelper.positiveMod(chunkZ, MagicValues.HORIZONTAL_CHUNKS_IN_REGION)) * MagicValues.HORIZONTAL_CHUNKS_IN_REGION);
     }
 
     public MirrorChunk getChunk(DynamicCoordinates coordinates) {
