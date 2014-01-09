@@ -1,16 +1,18 @@
 package com.shnud.noxray.Hiders;
 
+import com.comphenix.protocol.ProtocolLibrary;
 import com.shnud.noxray.Concurrency.BasicExecutor;
 import com.shnud.noxray.Events.BasePacketEvent;
+import com.shnud.noxray.Events.MapChunkPacketEvent;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
+import com.shnud.noxray.Structures.ByteArraySection;
+import com.shnud.noxray.Structures.VariableBitArray;
+import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.XYZ;
 import com.shnud.noxray.World.*;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,6 +21,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -36,7 +39,9 @@ public class RoomHider implements Listener, PacketEventListener {
     private final MirrorWorld _mirrorWorld;
     private final RoomList _rooms;
     private final BasicExecutor _executor;
-    private final ArrayList<PlayerLocation> _playerLocations;
+    private final ArrayList<PlayerLocation> _playerLocations = new ArrayList<PlayerLocation>();
+    private final PlayerSeenRooms _playerRooms = new PlayerSeenRooms();
+    private final Material censorBlock;
 
     public RoomHider(World world) {
         if(world == null)
@@ -44,8 +49,22 @@ public class RoomHider implements Listener, PacketEventListener {
 
         _world = world;
         _mirrorWorld = new MirrorWorld(_world);
+
+        switch(_world.getEnvironment()) {
+            case NORMAL:
+                censorBlock = Material.STONE;
+                break;
+            case NETHER:
+                censorBlock = Material.NETHERRACK;
+                break;
+            case THE_END:
+                censorBlock = Material.ENDER_STONE;
+                break;
+            default:
+                censorBlock = Material.STONE;
+        }
+
         _rooms = new RoomList(_mirrorWorld);
-        _playerLocations = new ArrayList<PlayerLocation>();
         _executor = new BasicExecutor();
         _executor.start();
 
@@ -64,7 +83,7 @@ public class RoomHider implements Listener, PacketEventListener {
     }
 
     // Called from main thread
-    public void saveAllData() {
+    public void disable() {
         _executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -153,38 +172,55 @@ public class RoomHider implements Listener, PacketEventListener {
             return;
     }
 
-    // Called from main thread
-    @EventHandler(priority = EventPriority.MONITOR)
-    private void onChunkLoad(final ChunkLoadEvent event) {
-        if(!event.getWorld().equals(_world))
-            return;
-
-        _executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                _mirrorWorld.loadChunk(event.getChunk().getX(), event.getChunk().getZ());
-            }
-        });
-    }
-
-    // Called from main thread
-    @EventHandler (priority = EventPriority.MONITOR)
-    private void onChunkUnload(final ChunkUnloadEvent event) {
-        if(!event.getWorld().equals(_world))
-            return;
-
-        _executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                _mirrorWorld.unloadChunk(event.getChunk().getX(), event.getChunk().getZ());
-            }
-        });
-    }
-
-    // Called from main thread
+    // Called from async but not this thread
     @Override
     public void receivePacketEvent(BasePacketEvent event) {
+        // We don't care about the event if it's not regarding this world
+        if(event.getReceiver().getWorld() != _world)
+            return;
 
+        if(event instanceof MapChunkPacketEvent)
+            handleMapChunkPacketEvent((MapChunkPacketEvent) event);
+    }
+
+    // Called from main thread
+    public void handleMapChunkPacketEvent(final MapChunkPacketEvent event) {
+
+        // Before we hand over to our room hiding thread, make sure we increment the
+        // processing delay so that it doesn't send as soon as it returns
+        event.getPacketEvent().getAsyncMarker().incrementProcessingDelay();
+
+        _executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (event.getPacketEvent().getAsyncMarker().getProcessingLock()) {
+                    for (int chunkI = 0; chunkI < event.getAmountOfChunks(); chunkI++) {
+                        MapChunkData chunk = event.getChunk(chunkI);
+                        DynamicCoordinates coords = DynamicCoordinates.initWithChunkCoordinates(chunk.getX(), 0, chunk.getZ());
+
+                        // If the mirror chunk isn't loaded then it means it was empty so don't bother filtering this chunk. If
+                        // we try and get it the mirror world will create a new blank one which we don't want.
+                        if (!_mirrorWorld.isMirrorChunkLoaded(coords))
+                            continue;
+
+                        MirrorChunk mirror = _mirrorWorld.getMirrorChunk(coords);
+
+                        // It could still be possible that the chunk is empty even if it's loaded, and if that's the case
+                        // we don't want to bother going through the whole chunk if there's nothing to hide in it
+                        HashSet<Integer> seenRooms = _playerRooms.getVisibleRoomsForPlayer(event.getReceiver());
+
+                        // No return value as it works on the actual chunk, saves copying stuff
+                        ChunkCensor.censorChunk(chunk, mirror, seenRooms, censorBlock);
+                    }
+
+                    // Ensure that we recompress the modified data as that's what gets sent to the client
+                    event.compressDataForSendingToClient();
+
+                    // Because we incremented the processing delay we now have to signal that we want the packet to be sent
+                    ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(event.getPacketEvent());
+                }
+            }
+        });
     }
 
     public void triggerPlayerHasSeenRoom(Player player, int roomID) {
@@ -238,4 +274,42 @@ public class RoomHider implements Listener, PacketEventListener {
             });
         }
     }
+
+    public void execute(Runnable task) {
+        _executor.execute(task);
+    }
+
+    public MirrorWorld getMirrorWorld() {
+        return _mirrorWorld;
+    }
+
+    // Called from main thread
+    @EventHandler(priority = EventPriority.MONITOR)
+    private void onChunkLoad(final ChunkLoadEvent event) {
+        if(!event.getWorld().equals(_world))
+            return;
+
+        _executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                _mirrorWorld.loadMirrorChunk(event.getChunk().getX(), event.getChunk().getZ());
+            }
+        });
+    }
+
+    // Called from main thread
+    @EventHandler (priority = EventPriority.MONITOR)
+    private void onChunkUnload(final ChunkUnloadEvent event) {
+        if(!event.getWorld().equals(_world))
+            return;
+
+        _executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                _mirrorWorld.unloadMirrorChunk(event.getChunk().getX(), event.getChunk().getZ());
+            }
+        });
+    }
+
+
 }
