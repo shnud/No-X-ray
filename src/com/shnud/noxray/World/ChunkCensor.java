@@ -19,6 +19,7 @@ public class ChunkCensor {
         if(chunk.isEmpty() || mirror.isEmpty())
             return;
 
+        // Add the mechanism to hide columns which are not covered by solid blocks
         for(int sectionI = 15; sectionI >= 0; sectionI--) {
             if(mirror.isSectionEmpty(sectionI))
                 continue;

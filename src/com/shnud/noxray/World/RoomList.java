@@ -6,9 +6,7 @@ import com.shnud.noxray.Utilities.XZ;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -38,15 +36,14 @@ public class RoomList {
 
             while(ram.getFilePointer() < ram.length()) {
                 int roomID = ram.readInt();
-
+                int records = ram.readInt();
                 Room newRoom = new Room(roomID);
 
-                do {
+                for (int i = 0; i < records; i++) {
                     int chunkX = ram.readInt();
                     int chunkZ = ram.readInt();
-
                     newRoom.addChunk(new XZ(chunkX, chunkZ));
-                } while(ram.readChar() == ',');
+                }
 
                 _rooms.put(newRoom.getID(), newRoom);
             }
@@ -68,23 +65,20 @@ public class RoomList {
 
         try {
             RandomAccessFile ram = new RandomAccessFile(roomData, "rw");
-            Set<Integer> keys = _rooms.keySet();
 
-            for(Integer key : keys) {
-                Room room = _rooms.get(key);
+            for(Integer room : _rooms.keySet()) {
+                HashSet<XZ> chunks = _rooms.get(room).getKnownChunks();
+                // If the known chunks are empty don't bother saving the room to
+                // the file as it's a waste of space
+                if(!chunks.isEmpty())
+                    continue;
 
-                ram.writeInt(room.getID());
-
-                ArrayList<XZ> chunks = room.getListOfKnownChunks();
-
-                for(int i = 0; i < chunks.size(); i++) {
-                    ram.writeInt(chunks.get(i).x);
-                    ram.writeInt(chunks.get(i).z);
-
-                    if(i == chunks.size() - 1)
-                        ram.writeChar(';');
-                    else
-                        ram.writeChar(',');
+                ram.writeInt(room);
+                // Write integer specifying amount of chunk coordinate pairs to expect
+                ram.writeInt(chunks.size());
+                for (XZ chunk : chunks) {
+                    ram.writeInt(chunk.x);
+                    ram.writeInt(chunk.z);
                 }
             }
 
@@ -120,11 +114,11 @@ public class RoomList {
         _rooms.remove(roomID);
     }
 
-    public ArrayList<XZ> getKnownChunksForRoom(int roomID) {
+    public HashSet<XZ> getKnownChunksForRoom(int roomID) {
         if(!_rooms.containsKey(roomID))
-            return new ArrayList<XZ>();
+            return new HashSet<XZ>();
 
-        return _rooms.get(roomID).getListOfKnownChunks();
+        return _rooms.get(roomID).getKnownChunks();
     }
 
     public int getUnusedRoomID() {
