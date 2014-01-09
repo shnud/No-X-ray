@@ -7,9 +7,8 @@ import com.shnud.noxray.Events.MapChunkPacketEvent;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
-import com.shnud.noxray.Structures.ByteArraySection;
-import com.shnud.noxray.Structures.VariableBitArray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
+import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
 import com.shnud.noxray.World.*;
 import org.bukkit.*;
@@ -41,7 +40,7 @@ public class RoomHider implements Listener, PacketEventListener {
     private final BasicExecutor _executor;
     private final ArrayList<PlayerLocation> _playerLocations = new ArrayList<PlayerLocation>();
     private final PlayerSeenRooms _playerRooms = new PlayerSeenRooms();
-    private final Material censorBlock;
+    private final Material _censorBlock;
 
     public RoomHider(World world) {
         if(world == null)
@@ -52,16 +51,16 @@ public class RoomHider implements Listener, PacketEventListener {
 
         switch(_world.getEnvironment()) {
             case NORMAL:
-                censorBlock = Material.STONE;
+                _censorBlock = Material.STONE;
                 break;
             case NETHER:
-                censorBlock = Material.NETHERRACK;
+                _censorBlock = Material.NETHERRACK;
                 break;
             case THE_END:
-                censorBlock = Material.ENDER_STONE;
+                _censorBlock = Material.ENDER_STONE;
                 break;
             default:
-                censorBlock = Material.STONE;
+                _censorBlock = Material.STONE;
         }
 
         _rooms = new RoomList(_mirrorWorld);
@@ -144,14 +143,20 @@ public class RoomHider implements Listener, PacketEventListener {
                     int successBlocks = 0;
 
                     for(XYZ block : blocks) {
-                        if(_mirrorWorld.setRoomIDAtBlock(block.x, block.y, block.z, roomID)) successBlocks++;
+                        if(_mirrorWorld.setRoomIDAtBlock(block.x, block.y, block.z, roomID)) {
+                            successBlocks++;
+                            _rooms.addKnownChunkToRoom(block.x >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, block.z >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, roomID);
+                        }
                     }
 
                     if(successBlocks == 0)
                         player.sendMessage(ChatColor.RED + "Hiding was unsuccessful, no blocks could be hidden");
-                    else
+                    else {
+
                         player.sendMessage(ChatColor.GREEN + "Hiding successful! " + successBlocks + " blocks were hidden");
 
+
+                    }
                     // TODO Make sure we add that the player has actually seen this room
                     // TODO here so that if the chunk reloads he can see it straight away
 
@@ -210,7 +215,7 @@ public class RoomHider implements Listener, PacketEventListener {
                         HashSet<Integer> seenRooms = _playerRooms.getVisibleRoomsForPlayer(event.getReceiver());
 
                         // No return value as it works on the actual chunk, saves copying stuff
-                        ChunkCensor.censorChunk(chunk, mirror, seenRooms, censorBlock);
+                        ChunkCensor.censorChunk(chunk, mirror, seenRooms, _censorBlock);
                     }
 
                     // Ensure that we recompress the modified data as that's what gets sent to the client
@@ -233,13 +238,11 @@ public class RoomHider implements Listener, PacketEventListener {
             if(!Bukkit.isPrimaryThread())
                 return;
 
-            synchronized (RoomHider.this) {
-                _playerLocations.clear();
-                List<Player> players = _world.getPlayers();
+            _playerLocations.clear();
+            List<Player> players = _world.getPlayers();
 
-                for(Player p : players) {
-                    _playerLocations.add(new PlayerLocation(p, p.getLocation()));
-                }
+            for(Player p : players) {
+                _playerLocations.add(new PlayerLocation(p, p.getLocation()));
             }
 
             // Now that we have the locations, return control to the room hiding thread
@@ -254,8 +257,8 @@ public class RoomHider implements Listener, PacketEventListener {
 
                         for(int iX = -3; iX < 4; iX++) {
                             for(int iZ = -3; iZ < 4; iZ++) {
-                                // Only check Y blocks at feet and at eye level
-                                for(int iY = 0; iY < 2; iY++) {
+                                // Only check Y blocks below feet to eye level
+                                for(int iY = -1; iY < 2; iY++) {
                                     int roomID = _mirrorWorld.getRoomIDAtBlock(blockX + iX, blockY + iY, blockZ + iZ);
                                     if(roomID != 0)
                                         triggerPlayerHasSeenRoom(pl.getPlayer(), roomID);
@@ -266,7 +269,6 @@ public class RoomHider implements Listener, PacketEventListener {
                         //TODO stuff that reveals rooms
 
                     }
-
 
                     // Schedule another sync task to update the player locations and do this again
                     Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetreiver(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
@@ -310,6 +312,4 @@ public class RoomHider implements Listener, PacketEventListener {
             }
         });
     }
-
-
 }
