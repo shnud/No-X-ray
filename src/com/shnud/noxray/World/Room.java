@@ -3,6 +3,7 @@ package com.shnud.noxray.World;
 import com.shnud.noxray.Utilities.XZ;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 
 /**
@@ -14,7 +15,7 @@ public class Room {
     public static final int NOT_A_ROOM_ID = 0;
 
     private int _id;
-    private ArrayList<XZ> _knownChunks = new ArrayList<XZ>();
+    private HashSet<XZ> _knownChunks = new HashSet<XZ>();
 
     public Room(int id) {
         if(id < 0)
@@ -27,24 +28,20 @@ public class Room {
         return _id;
     }
 
-    public ArrayList<XZ> getListOfKnownChunks() {
+    public HashSet<XZ> getKnownChunks() {
         return _knownChunks;
     }
 
     public void addChunk(XZ coords) {
-        _knownChunks.add(coords);
+        if(!_knownChunks.contains(coords))
+            _knownChunks.add(coords);
     }
 
     public void removeChunk(XZ coords) {
-        Iterator it = _knownChunks.iterator();
+        _knownChunks.remove(coords);
+    }
 
-        while(it.hasNext()) {
-            XZ chunk = (XZ) it.next();
-
-            if(chunk.x == coords.x && chunk.z == coords.z) {
-                it.remove();
-                return;
-            }
-        }
+    public boolean isInChunk(XZ coords) {
+        return _knownChunks.contains(coords);
     }
 }
