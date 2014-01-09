@@ -29,7 +29,6 @@ public class BasicExecutor extends Thread {
     }
 
     public void run() {
-
         Thread.currentThread().setName("No X-ray Executor Thread");
 
         try {

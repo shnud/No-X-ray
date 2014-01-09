@@ -35,11 +35,7 @@ public class MirrorChunkKeyData {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
-        int localX = coords.chunkRelativeBlockX();
-        int localY = coords.chunkRelativeBlockY();
-        int localZ = coords.chunkRelativeBlockZ();
-
-        return getLocalBlockKey(localX, localY, localZ);
+        return getLocalBlockKey(coords.chunkRelativeBlockX(), coords.chunkRelativeBlockY(), coords.chunkRelativeBlockZ());
     }
 
     public int getLocalBlockKey(int x, int y, int z) {

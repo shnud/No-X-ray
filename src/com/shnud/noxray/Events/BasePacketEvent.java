@@ -1,5 +1,8 @@
 package com.shnud.noxray.Events;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import org.bukkit.entity.Player;
 
@@ -35,7 +38,13 @@ public class BasePacketEvent {
         _event.setCancelled(false);
     }
 
-    protected PacketEvent getPacketEvent() {
+    public PacketEvent getPacketEvent() {
         return _event;
+    }
+
+    protected PacketContainer getPacket() { return _event.getPacket(); }
+
+    protected ProtocolManager getProtocolManager() {
+        return ProtocolLibrary.getProtocolManager();
     }
 }

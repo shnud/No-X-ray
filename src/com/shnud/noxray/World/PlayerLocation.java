@@ -1,4 +1,4 @@
-package com.shnud.noxray.Hiders;
+package com.shnud.noxray.World;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

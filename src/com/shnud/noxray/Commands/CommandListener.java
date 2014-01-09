@@ -4,10 +4,7 @@ import com.shnud.noxray.Hiders.RoomHider;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Settings.NoXraySettings;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -50,7 +47,7 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void handleUnHide(Player sender) {
-        RoomHider hider = NoXray.getInstance().getRoomHiderForWorld(sender.getWorld());
+        RoomHider hider = NoXray.getInstance().getRoomHider(sender.getWorld());
 
         if(hider == null) {
             sender.sendMessage("Unable to find room hider for that world");
@@ -61,7 +58,7 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void handleHide(Player sender) {
-        PlayerMetadataEntry metadata = NoXray.getInstance().getMetadataForPlayer(sender);
+        PlayerMetadataEntry metadata = NoXray.getInstance().getPlayerMetadata(sender);
         long sinceUsed = metadata.getMillisecondsSinceLastHideCommand();
 
         if(sinceUsed < MILLISECONDS_BETWEEN_HIDES) {
@@ -72,7 +69,7 @@ public class CommandListener implements CommandExecutor {
             return;
         }
 
-        RoomHider hider = NoXray.getInstance().getRoomHiderForWorld(sender.getWorld());
+        RoomHider hider = NoXray.getInstance().getRoomHider(sender.getWorld());
 
         if(hider == null) {
             sender.sendMessage("Unable to find room hider for that world");
@@ -84,13 +81,32 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void handleAuto(Player sender) {
-        PlayerMetadataEntry metadata = NoXray.getInstance().getMetadataForPlayer(sender.getName());
+        PlayerMetadataEntry metadata = NoXray.getInstance().getPlayerMetadata(sender.getName());
         metadata.setAutoProtect(!metadata.isAutoProtectOn());
         sender.sendMessage(ChatColor.GREEN + "Autoprotect has been turned " + (metadata.isAutoProtectOn() ? "on" : "off"));
     }
 
-    private void handleStatus(Player sender) {
+    private void handleStatus(final Player sender) {
+        final RoomHider hider = NoXray.getInstance().getRoomHider(sender.getWorld());
 
+        if(hider == null) {
+            sender.sendMessage("Unable to find room hider for that world");
+            return;
+        }
 
+        final int x = sender.getEyeLocation().getBlockX();
+        final int y = sender.getEyeLocation().getBlockY();
+        final int z = sender.getEyeLocation().getBlockZ();
+
+        hider.execute(new Runnable() {
+            @Override
+            public void run() {
+                int roomID = hider.getMirrorWorld().getRoomIDAtBlock(x, y, z);
+                if(roomID != 0)
+                    sender.sendMessage(ChatColor.GREEN + "Block at eye level is hidden");
+                else
+                    sender.sendMessage(ChatColor.RED + "Block at eye level is not hidden");
+            }
+        });
     }
 }
