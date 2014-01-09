@@ -91,7 +91,7 @@ public class MapChunkPacketEvent extends BasePacketEvent {
                 System.arraycopy(thisChunk, 0, allChunks, runningOffset, thisChunk.length);
                 runningOffset += thisChunk.length;
             }
-
+            /*
             byte[] compressedBuffer = getPacket().getByteArrays().read(0);
             if(compressedBuffer == null)
                 return;
@@ -104,6 +104,8 @@ public class MapChunkPacketEvent extends BasePacketEvent {
             // Set the length of the compressed byte array
             int deflatedLength = def.deflate(compressedBuffer);
             getPacket().getIntegers().write(0, deflatedLength);
+            */
+
         }
 
         def.end();
