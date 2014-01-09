@@ -4,15 +4,22 @@ package com.shnud.noxray.Utilities;
  * Created by Andrew on 22/12/2013.
  */
 public class XZ {
-    public int x, z;
+    public final int x, z;
 
     public XZ(int x, int z) {
         this.x = x;
         this.z = z;
     }
 
+    private int _hashCode = -1;
+    private boolean _hashCodeCached = false;
+
     public int hashCode() {
-        return new String(x + ":" + z).hashCode();
+        if(!_hashCodeCached) {
+            _hashCode = new String(x + ":" + z).hashCode();
+            _hashCodeCached = true;
+        }
+        return _hashCode;
     }
 
     public boolean equals(Object o) {
