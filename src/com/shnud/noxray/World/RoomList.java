@@ -70,7 +70,7 @@ public class RoomList {
                 HashSet<XZ> chunks = _rooms.get(room).getKnownChunks();
                 // If the known chunks are empty don't bother saving the room to
                 // the file as it's a waste of space
-                if(!chunks.isEmpty())
+                if(chunks.isEmpty())
                     continue;
 
                 ram.writeInt(room);
