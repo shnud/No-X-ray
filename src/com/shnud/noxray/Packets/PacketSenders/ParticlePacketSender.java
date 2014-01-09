@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by Andrew on 30/12/2013.
  */
-public class ParticlePacketSender extends PacketSender {
+public class ParticlePacketSender extends AbstractPacketSender {
 
     public static enum ParticleEffect {
         HUGE_EXPLOSION("hugeexplosion"),

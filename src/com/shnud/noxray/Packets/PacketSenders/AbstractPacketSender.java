@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by Andrew on 28/12/2013.
  */
-public abstract class PacketSender implements Runnable {
+public abstract class AbstractPacketSender implements Runnable {
 
     private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
     protected List<Player> _receivers;
@@ -19,7 +19,7 @@ public abstract class PacketSender implements Runnable {
     /*
      * run() must be invoked to actually send the packet.
      */
-    public PacketSender(List<Player> receivers) {
+    public AbstractPacketSender(List<Player> receivers) {
         if(receivers == null || receivers.isEmpty())
             throw new IllegalArgumentException("List of receivers cannot be empty or null");
 

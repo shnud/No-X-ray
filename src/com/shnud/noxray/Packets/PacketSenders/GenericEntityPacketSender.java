@@ -1,18 +1,15 @@
 package com.shnud.noxray.Packets.PacketSenders;
 
-import com.shnud.noxray.NoXray;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * Created by Andrew on 28/12/2013.
  */
-public abstract class GenericEntityPacketSender extends PacketSender {
+public abstract class GenericEntityPacketSender extends AbstractPacketSender {
 
     protected List<Entity> _subjects;
 
