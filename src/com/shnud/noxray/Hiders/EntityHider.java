@@ -53,7 +53,7 @@ public class EntityHider implements PacketEventListener {
 
         // All tasks get cancelled on plugin disable so we don't need to
         // worry about stopping this
-        Bukkit.getScheduler().runTaskTimerAsynchronously(
+        Bukkit.getScheduler().runTaskTimer(
                 NoXray.getInstance(),
                 new WatcherCheckThread(),
                 ENTITY_TICK_CHECK_FREQUENCY,
