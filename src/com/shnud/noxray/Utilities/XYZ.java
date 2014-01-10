@@ -12,8 +12,15 @@ public class XYZ {
         this.z = z;
     }
 
+    private int _hashCode = -1;
+    private boolean _hashCodeCached = false;
+
     public int hashCode() {
-        return new String(x + ":" + y + ":" + z).hashCode();
+        if(!_hashCodeCached) {
+            _hashCode = new String(x + ":" + y + ":" + z).hashCode();
+            _hashCodeCached = true;
+        }
+        return _hashCode;
     }
 
     public boolean equals(Object o) {
