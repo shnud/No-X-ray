@@ -51,19 +51,30 @@ public class BlockChangePacketSender extends AbstractPacketSender {
             PacketContainer packet = new PacketContainer(PacketType.Play.Server.MULTI_BLOCK_CHANGE);
             packet.getChunkCoordIntPairs().write(0, new ChunkCoordIntPair(_chunkX, _chunkZ));
             // The data is 4 * the size of record count, 4 bytes per record
-            byte[] data = new byte[MAX_BLOCKS_PER_PACKET * 4];
+            int records;
+            if(section == sections - 1)
+                records = _localBlocks.size() % MAX_BLOCKS_PER_PACKET;
+            else
+                records = MAX_BLOCKS_PER_PACKET;
+
+            byte[] data = new byte[records * 4];
 
             int start = section * MAX_BLOCKS_PER_PACKET;
             int i;
             for(i = start; i < start + MAX_BLOCKS_PER_PACKET && i < _localBlocks.size(); i++) {
                 MapBlock block = _localBlocks.get(i);
-                int dataIndex = i * 4;
+                int dataIndex = (i-start) * 4;
 
+                // F0 00 00 00 <- x
                 data[dataIndex + 0] |= block.getX() << 4;
+                // 0F 00 00 00 <- z
                 data[dataIndex + 0] |= block.getZ();
+                // 00 FF 00 00 <- y
                 data[dataIndex + 1] |= block.getY();
+                // 00 00 FF F0 <- block ID
                 data[dataIndex + 2] |= block.getBlockID() >> 4;
                 data[dataIndex + 3] |= block.getBlockID() << 4;
+                // 00 00 00 0F <- block metadata
                 data[dataIndex + 3] |= block.getMetadata();
             }
 
@@ -71,7 +82,7 @@ public class BlockChangePacketSender extends AbstractPacketSender {
             packet.getByteArrays().write(0, data);
 
             // Set the record count
-            packet.getIntegers().write(0, i - start);
+            packet.getIntegers().write(0, records);
 
             for(Player p : _receivers) {
                 try {
