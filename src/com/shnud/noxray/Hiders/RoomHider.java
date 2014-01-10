@@ -11,6 +11,7 @@ import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
 import com.shnud.noxray.World.*;
+import net.minecraft.util.org.apache.commons.lang3.concurrent.ConcurrentUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +23,7 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * Created by Andrew on 26/12/2013.
@@ -233,13 +235,17 @@ public class RoomHider implements Listener, PacketEventListener {
     }
 
     private class LocationRetreiver implements Runnable {
+
         public void run() {
             // Must be ran on primary thread
             if(!Bukkit.isPrimaryThread())
                 return;
 
             _playerLocations.clear();
-            List<Player> players = _world.getPlayers();
+
+            // Don't need to worry about syncronizing because vector is thread safe
+            // and PlayerLocation is immutable
+            Vector<Player> players = new Vector<Player>(_world.getPlayers());
 
             for(Player p : players) {
                 _playerLocations.add(new PlayerLocation(p, p.getLocation()));
@@ -265,9 +271,6 @@ public class RoomHider implements Listener, PacketEventListener {
                                 }
                             }
                         }
-
-                        //TODO stuff that reveals rooms
-
                     }
 
                     // Schedule another sync task to update the player locations and do this again

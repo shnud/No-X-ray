@@ -32,7 +32,7 @@ public class BasicExecutor extends Thread {
         Thread.currentThread().setName("No X-ray Executor Thread");
 
         try {
-            while(true) {
+            while(!Thread.interrupted()) {
                 while(_tasks.isEmpty()) {
                     synchronized (_monitor) {
                         _running = false;
