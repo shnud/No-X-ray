@@ -1,9 +1,12 @@
 package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.DynamicCoordinates;
+import com.shnud.noxray.Utilities.XYZ;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Andrew on 22/12/2013.
@@ -68,13 +71,47 @@ public class MirrorChunk {
     }
 
     public int getRoomIDAtBlock(DynamicCoordinates coordinates) {
-        int key = _data.getBlockKey(coordinates);
-
+        int key = _data.getRoomKeyAtBlock(coordinates);
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
     public int getRoomIDAtIndex(int index) {
-        return _data.getValueAtIndex(index);
+        int key = _data.getRoomKeyAtIndex(index);
+        return _keyToIDMap.getRoomIDForKey(key);
+    }
+
+    public List<XYZ> getAllBlocksForRoomID(int roomID) {
+        List<XYZ> blocks = new ArrayList<XYZ>();
+
+        for(int section = 0; section < 16; section++) {
+            if(isSectionEmpty(section))
+                continue;
+
+            int x = 0;
+            int y = section * 16;
+            int z = 0;
+
+            int secStart = section * 4096;
+            int secFinish = secStart + 4096;
+
+            for(int blockIndex = secStart; blockIndex < secFinish; blockIndex++) {
+                if(getRoomIDAtIndex(blockIndex) == roomID)
+                    blocks.add(new XYZ(x, y, z));
+
+                if(x == 15) {
+                    x = 0;
+                    if(z == 15) {
+                        y++;
+                        z = 0;
+                    }
+                    else
+                        z++;
+                }
+                else
+                    x++;
+            }
+        }
+        return blocks;
     }
 
     public void removeRoomID(int roomID) {
