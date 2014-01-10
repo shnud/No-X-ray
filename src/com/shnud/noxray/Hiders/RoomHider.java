@@ -7,12 +7,15 @@ import com.shnud.noxray.Events.MapChunkPacketEvent;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
+import com.shnud.noxray.Packets.PacketSenders.BlockChangePacketSender;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
+import com.shnud.noxray.Utilities.XZ;
 import com.shnud.noxray.World.*;
-import net.minecraft.util.org.apache.commons.lang3.concurrent.ConcurrentUtils;
+import com.shnud.noxray.World.MapBlock;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,10 +23,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Created by Andrew on 26/12/2013.
@@ -99,6 +99,10 @@ public class RoomHider implements Listener, PacketEventListener {
         if(player.getWorld() != _world)
             return;
 
+        // Should probably make sure we don't add any new hidden blocks while blocks
+        // are being retreived to send to players who have just seen rooms
+        // Not the biggest of issues, though
+
         player.sendMessage(ChatColor.YELLOW + "Searching...");
         final Location loc = player.getEyeLocation();
 
@@ -171,7 +175,9 @@ public class RoomHider implements Listener, PacketEventListener {
                 }
             }
         });
+
     }
+
 
     // Called from main thread
     public void unHideAtPlayerLocation(Player player) {
@@ -230,8 +236,56 @@ public class RoomHider implements Listener, PacketEventListener {
         });
     }
 
-    public void triggerPlayerHasSeenRoom(Player player, int roomID) {
+    public void triggerPlayerHasSeenRoom(final Player player, final int roomID) {
+        // If the player can already see this room then there's no
+        // need to send him the uncensored blocks again
+        if(_playerRooms.isRoomVisibleForPlayer(roomID, player))
+            return;
 
+        final Object syncLock = new Object();
+
+        synchronized (syncLock) {
+            HashSet<XZ> chunks = _rooms.getRoomFromID(roomID).getKnownChunks();
+            final HashMap<XZ, List<XYZ>> blocksForEachChunk = new HashMap<XZ, List<XYZ>>();
+
+            for(XZ chunk : chunks) {
+                MirrorChunk mirChunk = _mirrorWorld.getMirrorChunk(chunk.x, chunk.z);
+                if(mirChunk == null)
+                    continue;
+
+                List<XYZ> blocks = mirChunk.getAllBlocksForRoomID(roomID);
+                if(blocks.isEmpty())
+                    continue;
+
+                blocksForEachChunk.put(chunk, blocks);
+            }
+
+            Bukkit.getScheduler().runTask(NoXray.getInstance(), new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (syncLock) {
+                        Iterator<Map.Entry<XZ, List<XYZ>>> it = blocksForEachChunk.entrySet().iterator();
+
+                        while(it.hasNext()) {
+                            Map.Entry<XZ, List<XYZ>> ent = it.next();
+
+                            List<XYZ> censoredBlocks = ent.getValue();
+                            Chunk chunk = _world.getChunkAt(ent.getKey().x, ent.getKey().z);
+
+                            List<MapBlock> realBlocks = new ArrayList<MapBlock>();
+                            for(XYZ coord : censoredBlocks) {
+                                Block current = chunk.getBlock(coord.x, coord.y, coord.z);
+                                realBlocks.add(new MapBlock(current.getTypeId(), current.getData(), coord.x, coord.y, coord.z));
+                            }
+
+                            new BlockChangePacketSender(player, chunk.getX(), chunk.getZ(), realBlocks).send();
+                        }
+                    }
+                }
+            });
+
+            _playerRooms.addVisibleRoomToPlayer(roomID, player);
+        }
     }
 
     private class LocationRetreiver implements Runnable {

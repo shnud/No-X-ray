@@ -138,6 +138,10 @@ public class MirrorWorld implements Listener {
         return _regionMap.getRegion(coordinates.regionX(), coordinates.regionZ()).getChunk(coordinates);
     }
 
+    public MirrorChunk getMirrorChunk(int x, int z) {
+        return getMirrorChunk(DynamicCoordinates.initWithChunkCoordinates(x, 0, z));
+    }
+
     public boolean isMirrorChunkLoaded(DynamicCoordinates coordinates) {
         if(!_regionMap.containsRegion(coordinates.regionX(), coordinates.regionZ()))
             return false;

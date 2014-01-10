@@ -31,7 +31,7 @@ public class MirrorChunkKeyData {
         return x + (z * 16) + (y * 256);
     }
 
-    public int getBlockKey(DynamicCoordinates coords) {
+    public int getRoomKeyAtBlock(DynamicCoordinates coords) {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
@@ -41,10 +41,10 @@ public class MirrorChunkKeyData {
     public int getLocalBlockKey(int x, int y, int z) {
         int index = blockIndexFromLocalCoords(x, y, z);
 
-        return getValueAtIndex(index);
+        return getRoomKeyAtIndex(index);
     }
 
-    public int getValueAtIndex(int index) {
+    public int getRoomKeyAtIndex(int index) {
         int sectionIndex = index / BLOCKS_PER_SECTION;
 
         if(_sections[sectionIndex] == null)
