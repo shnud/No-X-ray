@@ -2,6 +2,7 @@ package com.shnud.noxray.Packets.PacketSenders;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.google.common.collect.Lists;
 import com.shnud.noxray.NoXray;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -26,6 +27,10 @@ public abstract class AbstractPacketSender implements Runnable {
         _receivers = receivers;
     }
 
+    public AbstractPacketSender(Player receiver) {
+        this(Lists.newArrayList(receiver));
+    }
+
     /*
      * Subclasses must explicity state whether they
      * can be called from anything other than the main thread.
@@ -41,6 +46,17 @@ public abstract class AbstractPacketSender implements Runnable {
      */
     public final void send() {
         run();
+    }
+
+    /*
+     * Send the packet after a specific delay in ticks
+     */
+    public final void send(int delayTicks) {
+        if(delayTicks != 0) {
+            Bukkit.getScheduler().runTaskLaterAsynchronously(NoXray.getInstance(), this, delayTicks);
+        }
+        else
+            run();
     }
 
     /*
