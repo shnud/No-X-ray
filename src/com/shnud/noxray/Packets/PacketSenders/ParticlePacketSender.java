@@ -2,6 +2,7 @@ package com.shnud.noxray.Packets.PacketSenders;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
+import com.google.common.collect.Lists;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
@@ -72,6 +73,18 @@ public class ParticlePacketSender extends AbstractPacketSender {
         _z = z;
     }
 
+    public ParticlePacketSender(Player receiver, ParticleEffect effectType, float x, float y, float z) {
+        this(Lists.newArrayList(receiver), effectType, x, y, z);
+    }
+
+    public ParticlePacketSender(Player receiver, ParticleEffect effectType, int x, int y, int z) {
+        this(Lists.newArrayList(receiver), effectType, x + 0.5f, y + 0.5f, z + 0.5f);
+    }
+
+    public ParticlePacketSender(List<Player> receivers, ParticleEffect effectType, int x, int y, int z) {
+        this(receivers, effectType, x + 0.5f, y + 0.5f, z + 0.5f);
+    }
+
     public void setX(float x) {
         _x = x;
     }
@@ -102,10 +115,12 @@ public class ParticlePacketSender extends AbstractPacketSender {
         packet.getFloat().write(5, 0f); // z-offset
 
         for(Player receiver : _receivers) {
-            try {
-                getProtocolManager().sendServerPacket(receiver, packet);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
+            if(receiver != null && receiver.isOnline()) {
+                try {
+                    getProtocolManager().sendServerPacket(receiver, packet);
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
