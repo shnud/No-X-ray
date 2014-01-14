@@ -11,6 +11,7 @@ import com.shnud.noxray.Packets.PacketSenders.BlockChangePacketSender;
 import com.shnud.noxray.Packets.PacketSenders.ChatPacketSender;
 import com.shnud.noxray.Packets.PacketSenders.ParticlePacketSender;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
+import com.shnud.noxray.Structures.BooleanArray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
@@ -289,13 +290,13 @@ public class RoomHider implements Listener, PacketEventListener {
                                 realBlocks.add(new MapBlock(current.getTypeId(), current.getData(), coord.x, coord.y, coord.z));
                             }
 
-                            new ChatPacketSender(player, ChatColor.GREEN + "A room was revealed!").send();
                             new BlockChangePacketSender(player, chunk.getX(), chunk.getZ(), realBlocks).send();
                         }
                     }
                 }
             });
 
+            new ChatPacketSender(player, ChatColor.GREEN + "A room was revealed!").send();
             _playerRooms.addVisibleRoomToPlayer(roomID, player);
         }
     }
@@ -392,23 +393,41 @@ public class RoomHider implements Listener, PacketEventListener {
         final int blockZ = event.getBlock().getZ();
         final Player p = event.getPlayer();
 
+        final Object lock = new Object();
+        final boolean[] airBlocks;
+        synchronized (lock) {
+            airBlocks = new boolean[6];
+            airBlocks[0] = _world.getBlockAt(blockX - 1, blockY, blockZ).getType() == Material.AIR;
+            airBlocks[1] = _world.getBlockAt(blockX + 1, blockY, blockZ).getType() == Material.AIR;
+            airBlocks[2] = _world.getBlockAt(blockX, blockY - 1, blockZ).getType() == Material.AIR;
+            airBlocks[3] = _world.getBlockAt(blockX, blockY + 1, blockZ).getType() == Material.AIR;
+            airBlocks[4] = _world.getBlockAt(blockX, blockY, blockZ - 1).getType() == Material.AIR;
+            airBlocks[5] = _world.getBlockAt(blockX, blockY, blockZ + 1).getType() == Material.AIR;
+        }
+
         execute(new Runnable() {
             @Override
             public void run() {
                 // Don't try to autoprotect unless the player is actually in the protected area
-                if(_mirrorWorld.getRoomIDAtBlock(playerX, playerY, playerZ) != 0) {
+                if(_mirrorWorld.getRoomIDAtBlock(playerX, playerY, playerZ) == 0)
+                    return;
 
-                    int[] rooms = _mirrorWorld.getRoomIDAtBlockAndAdjacent(blockX, blockY, blockZ);
+                int[] rooms = _mirrorWorld.getRoomIDAtBlockAndAdjacent(blockX, blockY, blockZ);
 
-                    // If the hit block is already protected, return - no need to protect
-                    if(rooms[0] != 0)
-                        return;
+                // If the hit block is already protected, return - no need to protect
+                if(rooms[0] != 0)
+                    return;
 
+                int foundID = 0;
+                synchronized (lock) {
                     // We need to check all adjacent blocks incase we encounter two different rooms
-                    int foundID = 0;
                     for(int i = 1; i < rooms.length; i++) {
                         int ID = rooms[i];
 
+                        if(ID == 0 && airBlocks[i - 1]) {
+                            new ChatPacketSender(p, ChatColor.RED + "The block was connected to an unprotected air block").send();
+                            return;
+                        }
                         if(ID != 0) {
                             if(ID != foundID && foundID != 0) {
                                 new ChatPacketSender(p, ChatColor.RED + "Multiple room IDs were found; block could not be autoprotected").send();
@@ -417,16 +436,12 @@ public class RoomHider implements Listener, PacketEventListener {
                             else foundID = ID;
                         }
                     }
-
-                    if(foundID == 0) {
-                        new ChatPacketSender(p, ChatColor.RED + "The block was connected to an unprotected block");
-                        return;
-                    }
-
-                    _mirrorWorld.setRoomIDAtBlock(blockX, blockY, blockZ, foundID);
-                    new ParticlePacketSender(p, ParticlePacketSender.ParticleEffect.CRIT, blockX, blockY, blockZ).send(6);
                 }
+
+                _mirrorWorld.setRoomIDAtBlock(blockX, blockY, blockZ, foundID);
+                new ParticlePacketSender(p, ParticlePacketSender.ParticleEffect.CRIT, blockX, blockY, blockZ).send(6);
             }
+
         });
     }
 
