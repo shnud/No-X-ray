@@ -19,6 +19,13 @@ public class BlockChangePacketSender extends AbstractPacketSender {
     private final int _chunkZ;
     private final List<MapBlock> _localBlocks;
 
+    /**
+     * Construct a new BlockChangePacketSender for the given chunk
+     * @param receivers the player to send the block changes to
+     * @param chunkX the chunk x coordinate the blocks are contained in
+     * @param chunkZ the chunk z coordinate the blocks are contained in
+     * @param localBlocks a list of blocks with local coordinates and block id/metadata information
+     */
     public BlockChangePacketSender(List<Player> receivers, int chunkX, int chunkZ, List<MapBlock> localBlocks) {
         super(receivers);
         if(localBlocks == null)
@@ -52,7 +59,7 @@ public class BlockChangePacketSender extends AbstractPacketSender {
             packet.getChunkCoordIntPairs().write(0, new ChunkCoordIntPair(_chunkX, _chunkZ));
             // The data is 4 * the size of record count, 4 bytes per record
             int records;
-            if(section == sections - 1)
+            if(section == sections - 1 && _localBlocks.size() % MAX_BLOCKS_PER_PACKET != 0)
                 records = _localBlocks.size() % MAX_BLOCKS_PER_PACKET;
             else
                 records = MAX_BLOCKS_PER_PACKET;
@@ -85,10 +92,12 @@ public class BlockChangePacketSender extends AbstractPacketSender {
             packet.getIntegers().write(0, records);
 
             for(Player p : _receivers) {
-                try {
-                    getProtocolManager().sendServerPacket(p, packet, false);
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
+                if(p != null && p.isOnline()) {
+                    try {
+                        getProtocolManager().sendServerPacket(p, packet, false);
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
