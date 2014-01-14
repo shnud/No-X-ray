@@ -1,5 +1,6 @@
 package com.shnud.noxray.Settings;
 
+import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Structures.IterableHashMap;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -7,58 +8,29 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
  * Created by Andrew on 03/01/2014.
  */
+@ThreadSafe
 public class PlayerMetadataBank implements Listener {
 
     private IterableHashMap<String, PlayerMetadataEntry> _players = new IterableHashMap<String, PlayerMetadataEntry>();
 
     public PlayerMetadataBank() {
-
+        NoXray.getInstance().getServer().getPluginManager().registerEvents(this, NoXray.getInstance());
     }
 
     private void load() {
-        /*if(!_file.exists())
-            return;
-
-        _players.clear();
-
-        YamlConfiguration config = new YamlConfiguration();
-
-        try {
-            config.load(_file);
-
-            Set<String> players = config.getKeys(false);
-
-            for(String player : players) {
-                PlayerMetadataEntry metadata = new PlayerMetadataEntry(player);
-                boolean autoprotect = config.getBoolean(player + "autoprotect");
-                metadata.setAutoProtect(autoprotect);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvalidConfigurationException e) {
-            e.printStackTrace();
-        } */
+        // todo
     }
 
     public void save() {
-       /* try {
-            YamlConfiguration config = new YamlConfiguration();
-
-            for(PlayerMetadataEntry metadata : _players) {
-
-            }
-
-            config.save(_file);
-        } catch (IOException e) {
-            Bukkit.getLogger().log(Level.WARNING, "Unable to save player settings");
-        }   */
+        // todo
     }
 
-    public PlayerMetadataEntry getMetadataForPlayer(String name) {
+    synchronized public PlayerMetadataEntry getMetadataForPlayer(String name) {
         if(!_players.containsKey(name))
             _players.put(name, new PlayerMetadataEntry(name));
 
@@ -67,11 +39,11 @@ public class PlayerMetadataBank implements Listener {
 
     @EventHandler (priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
-
+        // todo logic to load player metadata
     }
 
     @EventHandler (priority = EventPriority.MONITOR)
     public void onPlayerLeave(PlayerQuitEvent event) {
-
+        // todo logic to save player metadata
     }
 }
