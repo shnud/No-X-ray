@@ -112,6 +112,22 @@ public class MirrorWorld implements Listener {
         return getRoomIDAtBlock(coordinates);
     }
 
+    public int[] getRoomIDAtBlockAndAdjacent(int x, int y, int z) {
+        int[] rooms = new int[7];
+        rooms[0] = getRoomIDAtBlock(x, y, z);
+        rooms[1] = getRoomIDAtBlock(x - 1, y, z);
+        rooms[2] = getRoomIDAtBlock(x + 1, y, z);
+        rooms[3] = getRoomIDAtBlock(x, y - 1, z);
+        rooms[4] = getRoomIDAtBlock(x, y + 1, z);
+        rooms[5] = getRoomIDAtBlock(x, y, z - 1);
+        rooms[6] = getRoomIDAtBlock(x, y, z + 1);
+        return rooms;
+    }
+
+    public int[] getRoomIDAtBlockAndAdjacent(DynamicCoordinates coords) {
+        return getRoomIDAtBlockAndAdjacent(coords.blockX(), coords.blockY(), coords.blockZ());
+    }
+
     public int getRoomIDAtBlock(DynamicCoordinates coordinates) {
         return _regionMap.getRegion(coordinates.regionX(), coordinates.regionZ()).getChunk(coordinates).getRoomIDAtBlock(coordinates);
     }
