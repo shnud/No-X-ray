@@ -1,12 +1,15 @@
 package com.shnud.noxray.Settings;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
  * Created by Andrew on 03/01/2014.
  */
+@ThreadSafe
 public class PlayerMetadataEntry {
-    private String _playerName;
-    private boolean _autoProtectOn = true;
-    private long _lastHideCommand = 0;
+    private final String _playerName;
+    volatile private boolean _autoProtectOn = true;
+    volatile private long _lastHideCommand = 0;
 
     public PlayerMetadataEntry(String playerName) {
         _playerName = playerName;
