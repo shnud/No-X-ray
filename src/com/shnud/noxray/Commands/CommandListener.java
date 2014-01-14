@@ -103,7 +103,7 @@ public class CommandListener implements CommandExecutor {
             public void run() {
                 int roomID = hider.getMirrorWorld().getRoomIDAtBlock(x, y, z);
                 if(roomID != 0)
-                    sender.sendMessage(ChatColor.GREEN + "Block at eye level is hidden");
+                    sender.sendMessage(ChatColor.GREEN + "Block at eye level is hidden with ID " + roomID);
                 else
                     sender.sendMessage(ChatColor.RED + "Block at eye level is not hidden");
             }
