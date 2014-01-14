@@ -23,6 +23,7 @@ public class NoXray extends JavaPlugin {
 
     public NoXray() {
         _instance = this;
+
     }
 
     public static NoXray getInstance() {
@@ -32,8 +33,8 @@ public class NoXray extends JavaPlugin {
     private final ArrayList<PlayerHider> _playerHiders = new ArrayList<PlayerHider>();
     private final ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
     private final ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
-    private final PlayerMetadataBank _metadataBank = new PlayerMetadataBank();
     private final CommandListener _commandListener = new CommandListener();
+    private PlayerMetadataBank _metadataBank;
 
     @Override
     public void onEnable() {
@@ -42,6 +43,7 @@ public class NoXray extends JavaPlugin {
 
         NoXraySettings.initSettings();
 
+        _metadataBank = new PlayerMetadataBank();
         loadPlayerHiders();
         loadEntityHiders();
         loadRoomHiders();
