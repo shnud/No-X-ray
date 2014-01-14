@@ -364,8 +364,19 @@ public class RoomHider implements Listener, PacketEventListener {
         if(event.getAction() != Action.LEFT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_BLOCK)
             return;
 
+        final int blockX = event.getClickedBlock().getX();
+        final int blockY = event.getClickedBlock().getY();
+        final int blockZ = event.getClickedBlock().getZ();
+        final Player p = event.getPlayer();
 
-        //todo
+        execute(new Runnable() {
+            @Override
+            public void run() {
+                int id = _mirrorWorld.getRoomIDAtBlock(blockX, blockY, blockZ);
+                if(id != 0)
+                    triggerPlayerHasSeenRoom(p, id);
+            }
+        });
     }
 
     // Called from main thread
