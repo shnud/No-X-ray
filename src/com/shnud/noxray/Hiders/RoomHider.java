@@ -373,6 +373,10 @@ public class RoomHider implements Listener, PacketEventListener {
         if(!event.getBlock().getWorld().equals(_world))
             return;
 
+        // Just incase the block break event hasn't been caused by a player
+        if(event.getPlayer() == null)
+            return;
+
         // Don't try to autoprotect if the player has autoprotect off
         PlayerMetadataEntry metadata = NoXray.getInstance().getPlayerMetadata(event.getPlayer().getName());
         if(!metadata.isAutoProtectOn())
