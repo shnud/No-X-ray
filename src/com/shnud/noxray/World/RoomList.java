@@ -121,6 +121,11 @@ public class RoomList {
         return _rooms.get(roomID).getKnownChunks();
     }
 
+    public void removeRoom(int roomID) {
+        if(_rooms.containsKey(roomID))
+            _rooms.remove(roomID);
+    }
+
     public int getUnusedRoomID() {
         Set<Integer> keySet = _rooms.keySet();
 

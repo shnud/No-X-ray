@@ -89,13 +89,13 @@ public class MirrorChunkKeyData {
         _isEmpty = false;
     }
 
-    public void removeAllKeys(int roomID) {
+    public void removeAllKeys(int key) {
         for(DynamicVariableBitArray section : _sections) {
             if(section == null)
                 continue;
 
             for(int i = 0; i < section.size(); i++) {
-                if(section.getValueAtIndex(i) == roomID)
+                if(section.getValueAtIndex(i) == key)
                     section.setValueAtIndex(i, 0);
             }
         }

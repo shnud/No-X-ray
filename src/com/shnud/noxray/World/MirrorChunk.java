@@ -80,6 +80,9 @@ public class MirrorChunk {
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
+    /*
+     * Returns chunk-relative coordinates of blocks
+     */
     public List<XYZ> getAllBlocksForRoomID(int roomID) {
         List<XYZ> blocks = new ArrayList<XYZ>();
 

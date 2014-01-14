@@ -164,4 +164,10 @@ public class MirrorWorld implements Listener {
 
         return _regionMap.getRegion(coordinates.regionX(), coordinates.regionZ()).isMirrorChunkLoaded(coordinates);
     }
+
+    public boolean isMirrorChunkLoaded(int x, int z) {
+        return isMirrorChunkLoaded(DynamicCoordinates.initWithChunkCoordinates(x, 0, z));
+    }
+
+
 }
