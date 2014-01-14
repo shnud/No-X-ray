@@ -168,7 +168,7 @@ public class RoomHider implements Listener, PacketEventListener {
                                 "no blocks could be hidden").send();
                     else {
                         new ChatPacketSender(player, ChatColor.GREEN + "Hiding successful! " + successBlocks + " blocks were hidden").send();
-
+                        new ChatPacketSender(player, ChatColor.GRAY + "Room ID: " + roomID).send();
                         // Make sure we add that the player has actually seen this room
                         // here so that if the chunk reloads he can see it straight away
 
@@ -187,11 +187,53 @@ public class RoomHider implements Listener, PacketEventListener {
 
     }
 
-
     // Called from main thread
-    public void unHideAtPlayerLocation(Player player) {
+    public void unHideAtPlayerLocation(final Player player) {
         if(player.getWorld() != _world)
             return;
+
+        final Location loc = player.getEyeLocation();
+        final int playerX = loc.getBlockX();
+        final int playerY = loc.getBlockY();
+        final int playerZ = loc.getBlockZ();
+
+        execute(new Runnable() {
+            @Override
+            public void run() {
+                int roomID = _mirrorWorld.getRoomIDAtBlock(playerX, playerY, playerZ);
+                if(roomID == 0) {
+                    new ChatPacketSender(player, ChatColor.RED + "No hidden blocks found at eye level");
+                    return;
+                }
+
+                HashSet<XZ> chunks = _rooms.getKnownChunksForRoom(roomID);
+
+                for (XZ chunk : chunks) {
+                    if(!_mirrorWorld.isMirrorChunkLoaded(chunk.x, chunk.z))
+                        continue;
+
+                    MirrorChunk mirror = _mirrorWorld.getMirrorChunk(chunk.x, chunk.z);
+                    mirror.removeRoomID(roomID);
+                }
+
+                if(chunks.size() > 0) {
+                    new ChatPacketSender(player, ChatColor.GREEN + "Room (ID: " + roomID + ") was unhidden from " + chunks.size() + " chunks").send();
+                }
+                else {
+                    // If we couldn't find the chunks that the room was in (shouldn't really happen), just remove them from the chunk that the player is in
+
+                    DynamicCoordinates coords = DynamicCoordinates.initWithBlockCoordinates(playerX, playerY, playerZ);
+                    MirrorChunk chunk = _mirrorWorld.getMirrorChunk(coords);
+
+                    chunk.removeRoomID(roomID);
+
+                    new ChatPacketSender(player, ChatColor.RED + "It was not possible to find all the chunks room " + roomID + " was contained within").send();
+                    new ChatPacketSender(player, ChatColor.RED + "Fragments of the room may still be hidden").send();
+                }
+
+                _rooms.removeRoom(roomID);
+            }
+        });
     }
 
     // Called from async but not this thread
@@ -261,6 +303,9 @@ public class RoomHider implements Listener, PacketEventListener {
             final HashMap<XZ, List<XYZ>> blocksForEachChunk = new HashMap<XZ, List<XYZ>>();
 
             for(XZ chunk : chunks) {
+                if(!_mirrorWorld.isMirrorChunkLoaded(chunk.x, chunk.z))
+                    continue;
+
                 MirrorChunk mirChunk = _mirrorWorld.getMirrorChunk(chunk.x, chunk.z);
                 if(mirChunk == null)
                     continue;
@@ -298,52 +343,6 @@ public class RoomHider implements Listener, PacketEventListener {
 
             new ChatPacketSender(player, ChatColor.GREEN + "A room was revealed!").send();
             _playerRooms.addVisibleRoomToPlayer(roomID, player);
-        }
-    }
-
-    private class LocationRetreiver implements Runnable {
-
-        public void run() {
-            // Must be ran on primary thread
-            if(!Bukkit.isPrimaryThread())
-                return;
-
-            _playerLocations.clear();
-
-            // Don't need to worry about syncronizing because vector is thread safe
-            // and PlayerLocation is immutable
-            Vector<Player> players = new Vector<Player>(_world.getPlayers());
-
-            for(Player p : players) {
-                _playerLocations.add(new PlayerLocation(p, p.getLocation()));
-            }
-
-            // Now that we have the locations, return control to the room hiding thread
-            _executor.execute(new Runnable() {
-                @Override
-                public void run() {
-
-                    for(PlayerLocation pl : _playerLocations) {
-                        int blockX = pl.getLocation().getBlockX();
-                        int blockY = pl.getLocation().getBlockY();
-                        int blockZ = pl.getLocation().getBlockZ();
-
-                        for(int iX = -3; iX < 4; iX++) {
-                            for(int iZ = -3; iZ < 4; iZ++) {
-                                // Only check Y blocks below feet to eye level
-                                for(int iY = -1; iY < 2; iY++) {
-                                    int roomID = _mirrorWorld.getRoomIDAtBlock(blockX + iX, blockY + iY, blockZ + iZ);
-                                    if(roomID != 0)
-                                        triggerPlayerHasSeenRoom(pl.getPlayer(), roomID);
-                                }
-                            }
-                        }
-                    }
-
-                    // Schedule another sync task to update the player locations and do this again
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetreiver(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
-                }
-            });
         }
     }
 
@@ -406,6 +405,7 @@ public class RoomHider implements Listener, PacketEventListener {
 
         final Object lock = new Object();
         final boolean[] airBlocks;
+
         synchronized (lock) {
             airBlocks = new boolean[6];
             airBlocks[0] = _world.getBlockAt(blockX - 1, blockY, blockZ).getType() == Material.AIR;
@@ -488,5 +488,51 @@ public class RoomHider implements Listener, PacketEventListener {
                 _mirrorWorld.unloadMirrorChunk(x, z);
             }
         });
+    }
+
+    private class LocationRetreiver implements Runnable {
+
+        public void run() {
+            // Must be ran on primary thread
+            if(!Bukkit.isPrimaryThread())
+                return;
+
+            _playerLocations.clear();
+
+            // Don't need to worry about syncronizing because vector is thread safe
+            // and PlayerLocation is immutable
+            Vector<Player> players = new Vector<Player>(_world.getPlayers());
+
+            for(Player p : players) {
+                _playerLocations.add(new PlayerLocation(p, p.getLocation()));
+            }
+
+            // Now that we have the locations, return control to the room hiding thread
+            _executor.execute(new Runnable() {
+                @Override
+                public void run() {
+
+                    for(PlayerLocation pl : _playerLocations) {
+                        int blockX = pl.getLocation().getBlockX();
+                        int blockY = pl.getLocation().getBlockY();
+                        int blockZ = pl.getLocation().getBlockZ();
+
+                        for(int iX = -1; iX < 2; iX++) {
+                            for(int iZ = -1; iZ < 2; iZ++) {
+                                // Only check Y blocks below feet to eye level
+                                for(int iY = -1; iY < 2; iY++) {
+                                    int roomID = _mirrorWorld.getRoomIDAtBlock(blockX + iX, blockY + iY, blockZ + iZ);
+                                    if(roomID != 0)
+                                        triggerPlayerHasSeenRoom(pl.getPlayer(), roomID);
+                                }
+                            }
+                        }
+                    }
+
+                    // Schedule another sync task to update the player locations and do this again
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetreiver(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
+                }
+            });
+        }
     }
 }
