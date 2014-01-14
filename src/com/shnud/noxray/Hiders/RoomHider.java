@@ -8,6 +8,9 @@ import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
 import com.shnud.noxray.Packets.PacketSenders.BlockChangePacketSender;
+import com.shnud.noxray.Packets.PacketSenders.ChatPacketSender;
+import com.shnud.noxray.Packets.PacketSenders.ParticlePacketSender;
+import com.shnud.noxray.Settings.PlayerMetadataEntry;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
@@ -20,6 +23,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
@@ -138,8 +144,9 @@ public class RoomHider implements Listener, PacketEventListener {
                     // If there are multiple IDs then ask the player whether they would like to
                     // merge the blocks with the same roomID
                     if(multiple) {
-                        player.sendMessage(ChatColor.YELLOW + "More than one different room was found while searching");
-                        player.sendMessage(ChatColor.YELLOW + "Do you want to merge the rooms? (y/n)");
+                        new ChatPacketSender(player, ChatColor.YELLOW + "More than one different room was found " +
+                                "while searching").send();
+                        new ChatPacketSender(player, ChatColor.YELLOW + "Do you want to merge the rooms? (y/n)").send();
 
                         //TODO set up some sort of question mechanism here, possibly question objects with a y/n result in the form of callable
                         return;
@@ -156,22 +163,23 @@ public class RoomHider implements Listener, PacketEventListener {
                     }
 
                     if(successBlocks == 0)
-                        player.sendMessage(ChatColor.RED + "Hiding was unsuccessful, no blocks could be hidden");
+                        new ChatPacketSender(player, ChatColor.RED + "Hiding was unsuccessful, " +
+                                "no blocks could be hidden").send();
                     else {
+                        new ChatPacketSender(player, ChatColor.GREEN + "Hiding successful! " + successBlocks + " blocks were hidden").send();
 
-                        player.sendMessage(ChatColor.GREEN + "Hiding successful! " + successBlocks + " blocks were hidden");
+                        // Make sure we add that the player has actually seen this room
+                        // here so that if the chunk reloads he can see it straight away
 
-
+                        _playerRooms.addVisibleRoomToPlayer(roomID, player);
                     }
-                    // TODO Make sure we add that the player has actually seen this room
-                    // TODO here so that if the chunk reloads he can see it straight away
 
                     return;
 
                 } catch (RoomSearcher.ChunkNotLoadedException e) {
-                    player.sendMessage(ChatColor.RED + "Search area was too large; is the area properly enclosed?");
+                    new ChatPacketSender(player, ChatColor.RED + "Search area was too large; is the area properly enclosed?").send();
                 } catch (RoomSearcher.MaxBlocksReachedException e) {
-                    player.sendMessage(ChatColor.RED + "Search area was too large; is the area properly enclosed?");
+                    new ChatPacketSender(player, ChatColor.RED + "Search area was too large; is the area properly enclosed?").send();
                 }
             }
         });
@@ -244,6 +252,9 @@ public class RoomHider implements Listener, PacketEventListener {
 
         final Object syncLock = new Object();
 
+        // Use syncronization here on an object that we will also send to the sync thread
+        // when getting the real block IDs so that we can ensure that all the blocks we add
+        // here are visible to the sync thread
         synchronized (syncLock) {
             HashSet<XZ> chunks = _rooms.getRoomFromID(roomID).getKnownChunks();
             final HashMap<XZ, List<XYZ>> blocksForEachChunk = new HashMap<XZ, List<XYZ>>();
@@ -264,13 +275,13 @@ public class RoomHider implements Listener, PacketEventListener {
                 @Override
                 public void run() {
                     synchronized (syncLock) {
-                        Iterator<Map.Entry<XZ, List<XYZ>>> it = blocksForEachChunk.entrySet().iterator();
+                        Iterator<Map.Entry<XZ, List<XYZ>>> chunks = blocksForEachChunk.entrySet().iterator();
 
-                        while(it.hasNext()) {
-                            Map.Entry<XZ, List<XYZ>> ent = it.next();
+                        while(chunks.hasNext()) {
+                            Map.Entry<XZ, List<XYZ>> chunkBlocks = chunks.next();
 
-                            List<XYZ> censoredBlocks = ent.getValue();
-                            Chunk chunk = _world.getChunkAt(ent.getKey().x, ent.getKey().z);
+                            List<XYZ> censoredBlocks = chunkBlocks.getValue();
+                            Chunk chunk = _world.getChunkAt(chunkBlocks.getKey().x, chunkBlocks.getKey().z);
 
                             List<MapBlock> realBlocks = new ArrayList<MapBlock>();
                             for(XYZ coord : censoredBlocks) {
@@ -278,6 +289,7 @@ public class RoomHider implements Listener, PacketEventListener {
                                 realBlocks.add(new MapBlock(current.getTypeId(), current.getData(), coord.x, coord.y, coord.z));
                             }
 
+                            new ChatPacketSender(player, ChatColor.GREEN + "A room was revealed!").send();
                             new BlockChangePacketSender(player, chunk.getX(), chunk.getZ(), realBlocks).send();
                         }
                     }
@@ -344,14 +356,89 @@ public class RoomHider implements Listener, PacketEventListener {
 
     // Called from main thread
     @EventHandler(priority = EventPriority.MONITOR)
+    private void onPlayerHit(final PlayerInteractEvent event) {
+        if(!event.getPlayer().getWorld().equals(_world))
+            return;
+
+        if(event.getAction() != Action.LEFT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_BLOCK)
+            return;
+
+
+        //todo
+    }
+
+    // Called from main thread
+    @EventHandler(priority = EventPriority.MONITOR)
+    private void onBlockBreak(final BlockBreakEvent event) {
+        if(!event.getBlock().getWorld().equals(_world))
+            return;
+
+        // Don't try to autoprotect if the player has autoprotect off
+        PlayerMetadataEntry metadata = NoXray.getInstance().getPlayerMetadata(event.getPlayer().getName());
+        if(!metadata.isAutoProtectOn())
+            return;
+
+        Location loc = event.getPlayer().getEyeLocation();
+        final int playerX = loc.getBlockX();
+        final int playerY = loc.getBlockY();
+        final int playerZ = loc.getBlockZ();
+        final String playerName = event.getPlayer().getName();
+        final int blockX = event.getBlock().getX();
+        final int blockY = event.getBlock().getY();
+        final int blockZ = event.getBlock().getZ();
+        final Player p = event.getPlayer();
+
+        execute(new Runnable() {
+            @Override
+            public void run() {
+                // Don't try to autoprotect unless the player is actually in the protected area
+                if(_mirrorWorld.getRoomIDAtBlock(playerX, playerY, playerZ) != 0) {
+
+                    int[] rooms = _mirrorWorld.getRoomIDAtBlockAndAdjacent(blockX, blockY, blockZ);
+
+                    // If the hit block is already protected, return - no need to protect
+                    if(rooms[0] != 0)
+                        return;
+
+                    // We need to check all adjacent blocks incase we encounter two different rooms
+                    int foundID = 0;
+                    for(int i = 1; i < rooms.length; i++) {
+                        int ID = rooms[i];
+
+                        if(ID != 0) {
+                            if(ID != foundID && foundID != 0) {
+                                new ChatPacketSender(p, ChatColor.RED + "Multiple room IDs were found; block could not be autoprotected").send();
+                                return;
+                            }
+                            else foundID = ID;
+                        }
+                    }
+
+                    if(foundID == 0) {
+                        new ChatPacketSender(p, ChatColor.RED + "The block was connected to an unprotected block");
+                        return;
+                    }
+
+                    _mirrorWorld.setRoomIDAtBlock(blockX, blockY, blockZ, foundID);
+                    new ParticlePacketSender(p, ParticlePacketSender.ParticleEffect.CRIT, blockX, blockY, blockZ).send(6);
+                }
+            }
+        });
+    }
+
+    // Called from main thread
+    @EventHandler(priority = EventPriority.MONITOR)
     private void onChunkLoad(final ChunkLoadEvent event) {
         if(!event.getWorld().equals(_world))
             return;
 
+        final int x = event.getChunk().getX();
+        final int z = event.getChunk().getZ();
+
         _executor.execute(new Runnable() {
             @Override
             public void run() {
-                _mirrorWorld.loadMirrorChunk(event.getChunk().getX(), event.getChunk().getZ());
+                _mirrorWorld.loadMirrorChunk(x, z);
             }
         });
     }
@@ -362,10 +449,13 @@ public class RoomHider implements Listener, PacketEventListener {
         if(!event.getWorld().equals(_world))
             return;
 
+        final int x = event.getChunk().getX();
+        final int z = event.getChunk().getZ();
+
         _executor.execute(new Runnable() {
             @Override
             public void run() {
-                _mirrorWorld.unloadMirrorChunk(event.getChunk().getX(), event.getChunk().getZ());
+                _mirrorWorld.unloadMirrorChunk(x, z);
             }
         });
     }
