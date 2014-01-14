@@ -155,11 +155,20 @@ public class RoomHider implements Listener, PacketEventListener {
 
                     if(roomID == 0) roomID = _rooms.getUnusedRoomID();
                     int successBlocks = 0;
+                    int particleInterval = 10;
+                    int maxParticles = 50;
+                    int particlesSent = 0;
 
                     for(XYZ block : blocks) {
+
                         if(_mirrorWorld.setRoomIDAtBlock(block.x, block.y, block.z, roomID)) {
                             successBlocks++;
                             _rooms.addKnownChunkToRoom(block.x >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, block.z >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, roomID);
+                            if(successBlocks % particleInterval == 0 && particlesSent < maxParticles) {
+                                new ParticlePacketSender(player, ParticlePacketSender.ParticleEffect.CRIT, block.x, block.y, block.z).send();
+
+                                particlesSent++;
+                            }
                         }
                     }
 
