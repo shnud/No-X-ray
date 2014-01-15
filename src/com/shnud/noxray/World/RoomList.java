@@ -132,7 +132,7 @@ public class RoomList {
         int previous = 0;
         for(Integer key : keySet) {
             if(key - previous > 1)
-                return key + 1;
+                return previous + 1;
 
             previous = key;
         }
