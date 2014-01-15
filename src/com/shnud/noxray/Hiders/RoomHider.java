@@ -258,7 +258,7 @@ public class RoomHider implements Listener, PacketEventListener {
                         continue;
 
                     MirrorChunk mirror = _mirrorWorld.getMirrorChunk(chunk.x, chunk.z);
-                    mirror.removeRoomID(roomID);
+                    mirror.removeRoom(roomID);
                 }
 
                 if(chunks.size() > 0) {
@@ -270,7 +270,7 @@ public class RoomHider implements Listener, PacketEventListener {
                     DynamicCoordinates coords = DynamicCoordinates.initWithBlockCoordinates(playerX, playerY, playerZ);
                     MirrorChunk chunk = _mirrorWorld.getMirrorChunk(coords);
 
-                    chunk.removeRoomID(roomID);
+                    chunk.removeRoom(roomID);
 
                     new ChatPacketSender(player, ChatColor.RED + "It was not possible to find all the chunks room " + roomID + " was contained within").send();
                     new ChatPacketSender(player, ChatColor.RED + "Fragments of the room may still be hidden").send();

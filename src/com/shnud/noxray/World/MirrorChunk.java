@@ -9,14 +9,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Andrew on 22/12/2013.
+ * An object that stores a key->value map of contained room IDs and uses the keys in a structure very similar to standard minecraft chunk data to keep track of which blocks are hidden.
  */
 public class MirrorChunk {
 
+    // Whether we should try and clean up the chunk (see cleanUp()) before we return that a new room could not be added
     private static final boolean SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL = true;
+
+    // The data where we store keys for each block in the chunk. These are associated with a roomID in the key->ID map
     private final MirrorChunkKeyData _data;
+
+    // The key->ID map where we store the keys for all the contained room IDs
     private final MirrorChunkIDMap _keyToIDMap;
+
+    // The chunk x and z coordinates for the Minecraft chunk that this is associated with
     private final int _x, _z;
+
+    // The time we last attempted to clean up the chunk (see cleanUp())
     private long _timeOfLastCleanUp = 0;
 
     public MirrorChunk(int x, int z) {
@@ -26,6 +35,11 @@ public class MirrorChunk {
         _keyToIDMap = new MirrorChunkIDMap();
     }
 
+    /**
+     * Save this mirror chunk to a file
+     * @param ram the file (file pointer must already be at the correct location for reading)
+     * @throws IOException
+     */
     public void saveToFile(RandomAccessFile ram) throws IOException {
         ram.writeLong(_timeOfLastCleanUp);
 
@@ -39,6 +53,11 @@ public class MirrorChunk {
         _data.writeToFile(ram);
     }
 
+    /**
+     * Load this mirror chunk from a file
+     * @param ram the file (file pointer must already be at the correct location for reading)
+     * @throws IOException
+     */
     public void loadFromFile(RandomAccessFile ram) throws IOException {
         _timeOfLastCleanUp = ram.readLong();
 
@@ -52,11 +71,23 @@ public class MirrorChunk {
         _data.readFromFile(ram);
     }
 
+    /**
+     * Set the room ID at a given block to a specified ID
+     *
+     * @param coordinates the coordinates of the block (dynamic coordinates can work out the local chunk relative index from global block coordinates)
+     * @param roomID the room ID to set it to
+     * @return whether setting the block to the room was successful
+     */
     public boolean setBlockToRoomID(DynamicCoordinates coordinates, int roomID) {
         if(roomID < 0)
             throw new IllegalArgumentException("Room ID must be 0 (not a room) or greater");
 
         int key;
+
+        // If the room key is 0 then the caller wants to set the block to not-a-room
+        // Otherwise if we don't know of the roomID in this chunk, add it to the key->id map
+        // If that wasn't possible, return false (the map may be full)
+        // and we could attempt to clean up the data
 
         if(roomID != 0 && !_keyToIDMap.containsRoomID(roomID)) {
             key = _keyToIDMap.addRoomID(roomID);
@@ -70,18 +101,30 @@ public class MirrorChunk {
         return true;
     }
 
+    /**
+     * Get the room ID of a block at the given coordinates
+     * @param coordinates the coordinates of the block (dynamic coordinates can work out the local chunk relative index from global block coordinates)
+     * @return the room ID located at the coordinates (0 if no room)
+     */
     public int getRoomIDAtBlock(DynamicCoordinates coordinates) {
         int key = _data.getRoomKeyAtBlock(coordinates);
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
+    /**
+     * Get the room ID of a block at the given block index
+     * @param index the index of the block (block indexes are the same as for standard minecraft chunks: x + (z * 16) + (y * 256))
+     * @return the room ID located at the index (0 if no room)
+     */
     public int getRoomIDAtIndex(int index) {
         int key = _data.getRoomKeyAtIndex(index);
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
-    /*
-     * Returns chunk-relative coordinates of blocks
+    /**
+     * Get all of the blocks for any given room contained within this chunk
+     * @param roomID the room ID to look for
+     * @return a list of chunk-relative coordinates of all blocks in this chunk pertaining to a given room ID
      */
     public List<XYZ> getAllBlocksForRoomID(int roomID) {
         List<XYZ> blocks = new ArrayList<XYZ>();
@@ -117,15 +160,25 @@ public class MirrorChunk {
         return blocks;
     }
 
-    public void removeRoomID(int roomID) {
+    /**
+     * Remove the specified room from this chunk
+     * @param roomID the room ID to remove
+     */
+    public void removeRoom(int roomID) {
         int key = _keyToIDMap.getKeyForRoomID(roomID);
 
+        // If we know the room is contained within this chunk, then go through the data
+        // and remove all references to it
         if(key > 0) {
             _data.removeAllKeys(key);
             _keyToIDMap.removeRoomID(roomID);
         }
     }
 
+    /**
+     * Whether this chunk is completely empty of room blocks
+     * @return true if the chunk contains no room blocks, false if it does
+     */
     public boolean isEmpty() {
         /*
          * Both of these are useless without each other, so if either one is empty,
@@ -134,20 +187,42 @@ public class MirrorChunk {
         return _data.isEmpty() || _keyToIDMap.isEmpty();
     }
 
+    /**
+     * Whether this chunk's key->id map is full (mirror chunks can only store so many unique rooms so as to save the amount of
+     * space required for one block in the data)
+     * @return true if it is, false if it's not
+     */
     public boolean isFull() {
         return _keyToIDMap.isFull();
     }
 
+    /**
+     * Returns whether this chunk contains blocks for a certain room ID
+     * @param roomID the room ID to check for
+     * @return false if this chunk contains no key->id pair for the room ID, true if it does
+     */
     public boolean containsRoomID(int roomID) {
         return _keyToIDMap.containsRoomID(roomID);
     }
 
+    /**
+     * Sift through the data and the keys and remove and keys that are not in use both from the key->id map and the data.
+     *
+     * When rooms are removed from the chunk every block that was protected should really be removed as from the data as
+     * well as the key from the key->id map but this function may come in useful in the event that for some reason that
+     * doesn't happen and we need to add more rooms to the chunk.
+     */
     public void cleanUp() {
-        // TODO cleanup logic
+        // TODO
 
         _timeOfLastCleanUp = System.currentTimeMillis();
     }
 
+    /**
+     * Returns whether the section of this chunk (exactly like the standard minecraft chunk) is empty of hidden blocks
+     * @param section the section (0 - 15 inclusive to check)
+     * @return true if the section is empty, false if not
+     */
     public boolean isSectionEmpty(int section) {
         if(section < 0 || section > 15)
             throw new IllegalArgumentException("Section must be between 0 and 15 inclusive");
