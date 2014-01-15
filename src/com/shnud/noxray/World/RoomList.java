@@ -16,6 +16,7 @@ public class RoomList {
 
     private HashMap<Integer, Room> _rooms = new HashMap<Integer, Room>();
     private MirrorWorld _world;
+    private int highestKnownRoom = 1;
 
     public RoomList(MirrorWorld world) {
         _world = world;
@@ -45,7 +46,7 @@ public class RoomList {
                     newRoom.addChunk(new XZ(chunkX, chunkZ));
                 }
 
-                _rooms.put(newRoom.getID(), newRoom);
+                addRoom(newRoom);
             }
 
             ram.close();
@@ -102,7 +103,7 @@ public class RoomList {
 
     public void addKnownChunkToRoom(int chunkX, int chunkZ, int roomID) {
         if(!_rooms.containsKey(roomID))
-            _rooms.put(roomID, new Room(roomID));
+            addRoom(new Room(roomID));
 
         _rooms.get(roomID).addChunk(new XZ(chunkX, chunkZ));
     }
@@ -127,20 +128,13 @@ public class RoomList {
     }
 
     public int getUnusedRoomID() {
-        Set<Integer> keySet = _rooms.keySet();
-
-        int previous = 0;
-        for(Integer key : keySet) {
-            if(key - previous > 1)
-                return previous + 1;
-
-            previous = key;
-        }
-
-        return previous + 1;
+        return highestKnownRoom + 1;
     }
 
     public void addRoom(Room room) {
+        if(room.getID() > highestKnownRoom)
+            highestKnownRoom = room.getID();
+
         _rooms.put(room.getID(), room);
     }
 }
