@@ -3,7 +3,9 @@ package com.shnud.noxray.Hiders;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.shnud.noxray.Concurrency.BasicExecutor;
 import com.shnud.noxray.Events.BasePacketEvent;
+import com.shnud.noxray.Events.BlockChangePacketEvent;
 import com.shnud.noxray.Events.MapChunkPacketEvent;
+import com.shnud.noxray.Events.SingleBlockChangePacketEvent;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.PacketEventListener;
 import com.shnud.noxray.Packets.PacketListener;
@@ -245,7 +247,7 @@ public class RoomHider implements Listener, PacketEventListener {
         });
     }
 
-    // Called from async but not this thread
+    // Called from protocolLib async thread
     @Override
     public void receivePacketEvent(BasePacketEvent event) {
         // We don't care about the event if it's not regarding this world
@@ -254,9 +256,11 @@ public class RoomHider implements Listener, PacketEventListener {
 
         if(event instanceof MapChunkPacketEvent)
             handleMapChunkPacketEvent((MapChunkPacketEvent) event);
+        else if(event instanceof BlockChangePacketEvent)
+            handleBlockChangePacketEvent((BlockChangePacketEvent) event);
     }
 
-    // Called from main thread
+    // Called from protocolLib async thread
     public void handleMapChunkPacketEvent(final MapChunkPacketEvent event) {
 
         // Before we hand over to our room hiding thread, make sure we increment the
@@ -288,6 +292,59 @@ public class RoomHider implements Listener, PacketEventListener {
 
                     // Ensure that we recompress the modified data as that's what gets sent to the client
                     event.compressDataForSendingToClient();
+
+                    // Because we incremented the processing delay we now have to signal that we want the packet to be sent
+                    ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(event.getPacketEvent());
+                }
+            }
+        });
+    }
+
+    // Called from protocolLib async thread
+    public void handleBlockChangePacketEvent(final BlockChangePacketEvent event) {
+
+        // Before we hand over to our room hiding thread, make sure we increment the
+        // processing delay so that it doesn't send as soon as it returns
+        event.getPacketEvent().getAsyncMarker().incrementProcessingDelay();
+
+        _executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (event.getPacketEvent().getAsyncMarker().getProcessingLock()) {
+                    if(event instanceof SingleBlockChangePacketEvent) {
+                        int roomID = _mirrorWorld.getRoomIDAtBlock(event.getBlock(0).getX(), event.getBlock(0).getY(), event.getBlock(0).getZ());
+                        if(roomID != 0 && !_playerRooms.isRoomVisibleForPlayer(roomID, event.getReceiver())) {
+                            event.cancel();
+                            return;
+                        }
+                    } else {
+
+                        LinkedList<MapBlock> list = event.getBlocks();
+                        boolean changed = false;
+                        Iterator<MapBlock> blockIt = list.iterator();
+
+                        while(blockIt.hasNext()) {
+
+                            MapBlock current = blockIt.next();
+
+                            int roomID = _mirrorWorld.getRoomIDAtBlock(current.getX(), current.getY(), current.getZ());
+                            if(roomID == 0)
+                                continue;
+                            else if(!_playerRooms.isRoomVisibleForPlayer(roomID, event.getReceiver())) {
+                                blockIt.remove();
+                                changed = true;
+                            }
+                        }
+
+                        // Only set the new list if any blocks have been changed so
+                        // as to save readding the same blocks all over again
+                        if(changed) {
+                            if(!list.isEmpty())
+                                event.setBlocks(list);
+                            else
+                                event.cancel();
+                        }
+                    }
 
                     // Because we incremented the processing delay we now have to signal that we want the packet to be sent
                     ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(event.getPacketEvent());

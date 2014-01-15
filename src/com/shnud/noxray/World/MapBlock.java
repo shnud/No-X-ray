@@ -1,5 +1,7 @@
 package com.shnud.noxray.World;
 
+import org.bukkit.Material;
+
 /**
  * Created by Andrew on 09/01/2014.
  */
@@ -39,5 +41,9 @@ public class MapBlock {
 
     public int getBlockID() {
         return _blockID;
+    }
+
+    public String toString() {
+        return "[" + _x + ", " + _y + ", " + _z + "] blockType: " + Material.getMaterial(_blockID);
     }
 }

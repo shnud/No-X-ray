@@ -60,6 +60,7 @@ public class PacketListener {
         _pm.addPacketListener(new EntityUpdateAdapter());
 
         _pm.getAsynchronousManager().registerAsyncHandler(new ChunkDataAdapter()).start();
+        _pm.getAsynchronousManager().registerAsyncHandler(new BlockChangeAdapter()).start();
     }
 
     private static class NamedEntitySpawnAdapter extends PacketAdapter {
@@ -171,8 +172,32 @@ public class PacketListener {
             if(event.isCancelled())
                 return;
 
+            // Possibly do what we've done with block changes and create two seperate events
+            // for multichunk and single chunk packets? Works for now anyway
+
             MapChunkPacketEvent chunkEvent = new MapChunkPacketEvent(event.getPlayer(), event);
             dispatchEventToListeners(chunkEvent);
+        }
+    }
+
+    private static class BlockChangeAdapter extends PacketAdapter {
+        public BlockChangeAdapter() {
+            super(_plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.BLOCK_CHANGE, PacketType.Play.Server.MULTI_BLOCK_CHANGE);
+        }
+
+        @Override
+        public void onPacketSending(PacketEvent event) {
+            if(event.isCancelled())
+                return;
+
+            BlockChangePacketEvent blockChangeEvent = null;
+
+            if(event.getPacketType() == PacketType.Play.Server.MULTI_BLOCK_CHANGE)
+                blockChangeEvent = new MultiBlockChangePacketEvent(event.getPlayer(), event);
+            else if(event.getPacketType() == PacketType.Play.Server.BLOCK_CHANGE)
+                blockChangeEvent = new SingleBlockChangePacketEvent(event.getPlayer(), event);
+
+            dispatchEventToListeners(blockChangeEvent);
         }
     }
 }
