@@ -112,6 +112,12 @@ public class RoomList {
         return _rooms.get(roomID);
     }
 
+    /**
+     * Let the room know that it is now contained within a certain chunk
+     * @param chunkX the chunk x coordinate (in chunk coordinates)
+     * @param chunkZ the chunk z coordinate (in chunk coordinates)
+     * @param roomID the room ID of the room
+     */
     public void addKnownChunkToRoom(int chunkX, int chunkZ, int roomID) {
         if(!_rooms.containsKey(roomID))
             addRoom(new Room(roomID));
