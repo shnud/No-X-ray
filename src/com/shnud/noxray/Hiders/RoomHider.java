@@ -510,9 +510,9 @@ public class RoomHider implements Listener, PacketEventListener {
         if(event.getPlayer() == null)
             return;
 
-        // Don't try to autoprotect if the player has autoprotect off
+        // Don't try to autohide if the player has autohide off
         PlayerMetadataEntry metadata = NoXray.getInstance().getPlayerMetadata(event.getPlayer().getName());
-        if(!metadata.isAutoProtectOn())
+        if(!metadata.isAutohideOn())
             return;
 
         Location loc = event.getPlayer().getEyeLocation();
@@ -541,13 +541,13 @@ public class RoomHider implements Listener, PacketEventListener {
         execute(new Runnable() {
             @Override
             public void run() {
-                // Don't try to autoprotect unless the player is actually in the protected area
+                // Don't try to autohide unless the player is actually in the hidden area
                 if(_mirrorWorld.getRoomIDAtBlock(playerX, playerY, playerZ) == 0)
                     return;
 
                 int[] rooms = _mirrorWorld.getRoomIDAtBlockAndAdjacent(blockX, blockY, blockZ);
 
-                // If the hit block is already protected, return - no need to protect
+                // If the hit block is already hidden, return - no need to hide
                 if(rooms[0] != 0)
                     return;
 
@@ -558,12 +558,12 @@ public class RoomHider implements Listener, PacketEventListener {
                         int ID = rooms[i];
 
                         if(ID == 0 && airBlocks[i - 1]) {
-                            new ChatPacketSender(p, ChatColor.RED + "The block was connected to an unprotected air block").send();
+                            new ChatPacketSender(p, ChatColor.RED + "The block was connected to an unhidden air block").send();
                             return;
                         }
                         if(ID != 0) {
                             if(ID != foundID && foundID != 0) {
-                                new ChatPacketSender(p, ChatColor.RED + "Multiple room IDs were found; block could not be autoprotected").send();
+                                new ChatPacketSender(p, ChatColor.RED + "Multiple room IDs were found; block could not be autohidden").send();
                                 return;
                             }
                             else foundID = ID;

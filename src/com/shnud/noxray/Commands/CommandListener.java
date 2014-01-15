@@ -82,8 +82,8 @@ public class CommandListener implements CommandExecutor {
 
     private void handleAuto(Player sender) {
         PlayerMetadataEntry metadata = NoXray.getInstance().getPlayerMetadata(sender.getName());
-        metadata.setAutoProtect(!metadata.isAutoProtectOn());
-        sender.sendMessage(ChatColor.GREEN + "Autoprotect has been turned " + (metadata.isAutoProtectOn() ? "on" : "off"));
+        metadata.setAutohide(!metadata.isAutohideOn());
+        sender.sendMessage(ChatColor.GREEN + "Autoprotect has been turned " + (metadata.isAutohideOn() ? "on" : "off"));
     }
 
     private void handleStatus(final Player sender) {

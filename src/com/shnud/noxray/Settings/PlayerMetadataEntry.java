@@ -8,7 +8,7 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public class PlayerMetadataEntry {
     private final String _playerName;
-    volatile private boolean _autoProtectOn = true;
+    volatile private boolean _autohide = true;
     volatile private long _lastHideCommand = 0;
 
     public PlayerMetadataEntry(String playerName) {
@@ -19,12 +19,12 @@ public class PlayerMetadataEntry {
         return _playerName;
     }
 
-    public void setAutoProtect(boolean status) {
-        _autoProtectOn = status;
+    public void setAutohide(boolean status) {
+        _autohide = status;
     }
 
-    public boolean isAutoProtectOn() {
-        return _autoProtectOn;
+    public boolean isAutohideOn() {
+        return _autohide;
     }
 
     public void useHideCommand() {
