@@ -13,6 +13,15 @@ import java.util.HashSet;
  */
 public class ChunkCensor {
 
+    /**
+     * Takes a MapChunkData and censors any blocks that are not contained in seen rooms for the specified mirror chunk. This function
+     * works on the actual MapChunkData and does not return a value
+     *
+     * @param chunk The MapChunkData to censor
+     * @param mirror The mirror chunk to take the hidden data from
+     * @param seenRooms The list of rooms that the chunk censor should not hide
+     * @param censorBlock The block that should be used to replace hidden blocks
+     */
     public static void censorChunk(MapChunkData chunk, MirrorChunk mirror, HashSet<Integer> seenRooms, Material censorBlock) {
         if(chunk == null) throw new IllegalArgumentException("Chunk cannot be null");
         if(mirror == null) throw new IllegalArgumentException("Mirror chunk cannot be null");
