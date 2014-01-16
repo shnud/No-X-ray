@@ -14,7 +14,7 @@ import java.util.logging.Level;
  */
 public class RoomList {
 
-    private final HashMap<Integer, Room> _rooms = new HashMap<Integer, Room>();
+    private final InnerRoomListInterface _roomList = new InnerRoomList();
     private final MirrorWorld _world;
     private int highestKnownRoom = 1;
 
@@ -64,7 +64,7 @@ public class RoomList {
      * Save all of the rooms in the room list to a 'roomData' file within the plugin>world folder
      */
     public void saveRooms() {
-        if(_rooms.isEmpty())
+        if(_roomList.isEmpty())
             return;
 
         String path = _world.getFolder().getPath() + "/" + "roomData";
@@ -73,8 +73,8 @@ public class RoomList {
         try {
             RandomAccessFile ram = new RandomAccessFile(roomData, "rw");
 
-            for(Integer room : _rooms.keySet()) {
-                HashSet<XZ> chunks = _rooms.get(room).getKnownChunks();
+            for(Integer room : _roomList.getIDSet()) {
+                HashSet<XZ> chunks = _roomList.getRoom(room).getKnownChunks();
                 // If the known chunks are empty don't bother saving the room to
                 // the file as it's a waste of space
                 if(chunks.isEmpty())
@@ -109,7 +109,7 @@ public class RoomList {
      * @return the room object for the given ID
      */
     public Room getRoomFromID(int roomID) {
-        return _rooms.get(roomID);
+        return _roomList.getRoom(roomID);
     }
 
     /**
@@ -119,10 +119,10 @@ public class RoomList {
      * @param roomID the room ID of the room
      */
     public void addKnownChunkToRoom(int chunkX, int chunkZ, int roomID) {
-        if(!_rooms.containsKey(roomID))
+        if(!_roomList.containsRoom(roomID))
             addRoom(new Room(roomID));
 
-        _rooms.get(roomID).addChunk(new XZ(chunkX, chunkZ));
+        _roomList.getRoom(roomID).addChunk(new XZ(chunkX, chunkZ));
     }
 
     /**
@@ -132,10 +132,10 @@ public class RoomList {
      * @param roomID the room ID of the room
      */
     public void removeKnownChunkFromRoom(int chunkX, int chunkZ, int roomID) {
-        if(!_rooms.containsKey(roomID))
+        if(!_roomList.containsRoom(roomID))
             return;
 
-        _rooms.remove(roomID);
+        _roomList.removeRoom(roomID);
     }
 
     /**
@@ -145,10 +145,10 @@ public class RoomList {
      * @return a HashSet of all the known chunks
      */
     public HashSet<XZ> getKnownChunksForRoom(int roomID) {
-        if(!_rooms.containsKey(roomID))
+        if(!_roomList.containsRoom(roomID))
             return new HashSet<XZ>();
 
-        return _rooms.get(roomID).getKnownChunks();
+        return _roomList.getRoom(roomID).getKnownChunks();
     }
 
     /**
@@ -156,8 +156,7 @@ public class RoomList {
      * @param roomID the roomID of the room to remove
      */
     public void removeRoom(int roomID) {
-        if(_rooms.containsKey(roomID))
-            _rooms.remove(roomID);
+        _roomList.removeRoom(roomID);
     }
 
     /**
@@ -165,8 +164,7 @@ public class RoomList {
      * @param room the room to remove
      */
     public void removeRoom(Room room) {
-        if(_rooms.containsKey(room.getID()))
-            _rooms.remove(room.getID());
+        _roomList.removeRoom(room);
     }
 
     public int getUnusedRoomID() {
@@ -181,12 +179,71 @@ public class RoomList {
      * @param room the new room to add, ID must be greater than 0
      */
     public void addRoom(Room room) {
-        if(room.getID() < 1)
-            throw new IllegalArgumentException("Room ID cannot be less than 1");
+        _roomList.addRoom(room);
+    }
 
-        if(room.getID() > highestKnownRoom)
-            highestKnownRoom = room.getID();
+    /**
+     * We use an interface here so that we can hide the actual HashMap member of the inner roomlist to stop direct access
+     */
+    private interface InnerRoomListInterface {
+        public Room getRoom(int roomID);
+        public void addRoom(Room room);
+        public void removeRoom(Room room);
+        public void removeRoom(int roomID);
+        public boolean containsRoom(int roomID);
+        public Set<Integer> getIDSet();
+        public boolean isEmpty();
+    }
 
-        _rooms.put(room.getID(), room);
+    /**
+     * Inner room list that hides the ability to put rooms in because we want it to always update the highest room ID if necessary
+     */
+    private class InnerRoomList implements InnerRoomListInterface {
+
+        private final HashMap<Integer, Room> _rooms = new HashMap<Integer, Room>();
+
+        @Override
+        public Room getRoom(int roomID) {
+            return _rooms.get(roomID);
+        }
+
+        @Override
+        public void addRoom(Room room) {
+            if(room.getID() < 1)
+                throw new IllegalArgumentException("Room ID cannot be less than 1");
+
+            // Update the highest known room so that we can always
+            // provide a new unused ID by returning highest + 1
+            if(room.getID() > highestKnownRoom)
+                highestKnownRoom = room.getID();
+
+            _rooms.put(room.getID(), room);
+        }
+
+        @Override
+        public void removeRoom(Room room) {
+            if(_rooms.containsKey(room.getID()))
+                _rooms.remove(room.getID());
+        }
+
+        @Override
+        public void removeRoom(int roomID) {
+            if(_rooms.containsKey(roomID))
+                _rooms.remove(roomID);
+        }
+
+        public boolean containsRoom(int roomID) {
+            return _rooms.containsKey(roomID);
+        }
+
+        @Override
+        public Set<Integer> getIDSet() {
+            return _rooms.keySet();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return _rooms.isEmpty();
+        }
     }
 }
