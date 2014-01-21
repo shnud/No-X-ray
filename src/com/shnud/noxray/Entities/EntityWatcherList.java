@@ -12,7 +12,7 @@ import java.util.Iterator;
  */
 public class EntityWatcherList implements Iterable<EntityWatcherEntry> {
 
-    SyncIterableHashMap<Integer, EntityWatcherEntry> _entities = new SyncIterableHashMap<Integer, EntityWatcherEntry>();
+    IterableHashMap<Integer, EntityWatcherEntry> _entities = new IterableHashMap<Integer, EntityWatcherEntry>();
 
     public void addWatcherToEntity(Player newWatcher, Entity subject) {
         if(containsEntity(subject))

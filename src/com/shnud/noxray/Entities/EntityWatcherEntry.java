@@ -17,7 +17,7 @@ import java.util.List;
 public class EntityWatcherEntry {
 
     private static ProtocolManager _pm = ProtocolLibrary.getProtocolManager();
-    private SyncIterableHashMap<String, Player> _watchers = new SyncIterableHashMap<String, Player>();
+    private IterableHashMap<String, Player> _watchers = new IterableHashMap<String, Player>();
     private Entity _subject;
     private World _initialWorld;
 
