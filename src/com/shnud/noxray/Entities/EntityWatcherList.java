@@ -1,7 +1,6 @@
 package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Structures.IterableHashMap;
-import com.shnud.noxray.Structures.SyncIterableHashMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 

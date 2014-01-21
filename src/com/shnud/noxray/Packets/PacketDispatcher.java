@@ -5,13 +5,10 @@ import com.comphenix.protocol.ProtocolManager;
 import com.google.common.collect.Lists;
 import com.shnud.noxray.Packets.PacketSenders.DestroyEntityPacketSender;
 import com.shnud.noxray.Packets.PacketSenders.EntitySpawnPacketSender;
-import com.shnud.noxray.Utilities.ArraySplitter;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

@@ -2,7 +2,6 @@ package com.shnud.noxray.Events;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketEvent;
-import com.google.common.collect.Lists;
 import com.shnud.noxray.World.MapBlock;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

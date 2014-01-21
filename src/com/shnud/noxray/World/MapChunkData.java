@@ -2,7 +2,6 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Structures.ByteArraySection;
 import com.shnud.noxray.Structures.NibbleArray;
-import com.shnud.noxray.Structures.VariableBitArray;
 
 /**
 * Created by Andrew on 08/01/2014.

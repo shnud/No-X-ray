@@ -1,10 +1,10 @@
 package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Structures.IterableHashMap;
-import com.shnud.noxray.Structures.SyncIterableHashMap;
 import org.bukkit.entity.Entity;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Created by Andrew on 26/12/2013.

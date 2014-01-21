@@ -7,7 +7,6 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
-import com.google.common.collect.Lists;
 import com.shnud.noxray.Events.*;
 import com.shnud.noxray.NoXray;
 import org.bukkit.World;

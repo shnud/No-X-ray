@@ -1,12 +1,9 @@
 package com.shnud.noxray.Events;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketEvent;
 import com.shnud.noxray.World.MapBlock;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 

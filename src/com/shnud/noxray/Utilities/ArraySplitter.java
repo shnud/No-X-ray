@@ -1,7 +1,5 @@
 package com.shnud.noxray.Utilities;
 
-import java.util.ArrayList;
-
 /**
  * Created by Andrew on 26/12/2013.
  */

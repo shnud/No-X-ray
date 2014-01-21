@@ -1,16 +1,11 @@
 package com.shnud.noxray.Settings;
 
 import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Utilities.MagicValues;
 import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Andrew on 22/12/2013.

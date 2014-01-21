@@ -18,7 +18,6 @@ import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.XYZ;
 import com.shnud.noxray.Utilities.XZ;
 import com.shnud.noxray.World.*;
-import com.shnud.noxray.World.MapBlock;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;

@@ -1,9 +1,7 @@
 package com.shnud.noxray.Entities;
 
 import com.shnud.noxray.Packets.PacketDispatcher;
-import com.shnud.noxray.Settings.NoXraySettings;
 import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;

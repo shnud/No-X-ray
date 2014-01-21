@@ -1,6 +1,5 @@
 package com.shnud.noxray.Packets.PacketSenders;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 

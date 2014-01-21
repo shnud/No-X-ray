@@ -1,15 +1,5 @@
 package com.shnud.noxray.Structures;
 
-import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Utilities.MagicValues;
-import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
-
-import java.util.logging.Level;
-import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
-
 /**
  * Created by Andrew on 01/01/2014.
  */

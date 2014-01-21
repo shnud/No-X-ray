@@ -2,7 +2,6 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Structures.IterableHashMap;
 
-import java.util.HashMap;
 import java.util.Iterator;
 
 /**

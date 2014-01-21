@@ -1,7 +1,5 @@
 package com.shnud.noxray.Structures;
 
-import java.util.zip.DataFormatException;
-
 /**
  * Created by Andrew on 31/12/2013.
  */

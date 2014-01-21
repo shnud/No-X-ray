@@ -3,7 +3,6 @@ package com.shnud.noxray.World;
 import com.shnud.noxray.Structures.BooleanArray;
 import com.shnud.noxray.Structures.ByteArraySection;
 import com.shnud.noxray.Structures.NibbleArray;
-import com.shnud.noxray.Structures.VariableBitArray;
 import org.bukkit.Material;
 
 import java.util.HashSet;

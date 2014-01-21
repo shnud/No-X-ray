@@ -6,7 +6,6 @@ import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.World.MapBlock;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 

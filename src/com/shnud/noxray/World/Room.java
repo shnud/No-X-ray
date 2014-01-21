@@ -2,9 +2,7 @@ package com.shnud.noxray.World;
 
 import com.shnud.noxray.Utilities.XZ;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * Created by Andrew on 22/12/2013.
