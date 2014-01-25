@@ -571,6 +571,7 @@ public class RoomHider implements Listener, PacketEventListener {
                 }
 
                 _mirrorWorld.setRoomIDAtBlock(blockX, blockY, blockZ, foundID);
+                _rooms.addKnownChunkToRoom(blockX >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, blockZ >> MagicValues.BITSHIFTS_RIGHT_BLOCK_TO_CHUNK, foundID);
                 new ParticlePacketSender(p, ParticlePacketSender.ParticleEffect.CRIT, blockX, blockY, blockZ).send(6);
             }
 
