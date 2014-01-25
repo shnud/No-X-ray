@@ -73,13 +73,16 @@ public class ChunkCensor {
 
                 Material blockType = Material.getMaterial(blockIDs.getValueAtIndex(i) & 0xFF);
 
-                if(!blockType.isSolid() && roomID == 0)
+                // Don't update the solid block above status if we're in a room
+                if(roomID != 0)
+                    continue;
+
+                if(!blockType.isSolid())
                     nonSolidAbove.setValueAtIndex(true, indexXZ);
                 else
                     nonSolidAbove.setValueAtIndex(false, indexXZ);
                 // Set the block air status after processing this block as it will always be used
                 // for the block below
-
             }
         }
     }
