@@ -18,7 +18,7 @@ public class RoomList {
 
     private final InnerRoomListInterface _roomList = new InnerRoomList();
     private final MirrorWorld _world;
-    private int highestKnownRoom = 1;
+    private int highestKnownRoom = 0;
 
     public RoomList(MirrorWorld world) {
         _world = world;
