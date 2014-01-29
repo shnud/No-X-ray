@@ -93,7 +93,7 @@ public class RoomHider implements Listener, PacketEventListener {
         NoXray.getInstance().getServer().getPluginManager().registerEvents(this, NoXray.getInstance());
 
         // Start the player location retreiver task that will continue until plugin is disabled
-        Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetreiver(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetriever(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
     }
 
     /**
@@ -625,7 +625,7 @@ public class RoomHider implements Listener, PacketEventListener {
     /**
      * The runnable we use to collect player location data every so often from the main thread
      */
-    private class LocationRetreiver implements Runnable {
+    private class LocationRetriever implements Runnable {
 
         public void run() {
             // Must be ran on primary thread
@@ -665,7 +665,7 @@ public class RoomHider implements Listener, PacketEventListener {
                     }
 
                     // Schedule another sync task to update the player locations and do this again
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetreiver(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(NoXray.getInstance(), new LocationRetriever(), PLAYER_LOCATION_CHECK_FREQUENCY_TICKS);
                 }
             });
         }
