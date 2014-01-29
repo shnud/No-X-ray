@@ -3,7 +3,7 @@ package com.shnud.noxray.World;
 /**
  * Created by Andrew on 31/12/2013.
  */
-public class MirrorChunkIDMap {
+public class MirrorChunkValues {
 
     private static final int MAXIMUM_SLOTS = 63;
     /**

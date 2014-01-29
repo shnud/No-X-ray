@@ -11,7 +11,7 @@ import java.io.RandomAccessFile;
 /**
  * Created by Andrew on 29/12/2013.
  */
-public class MirrorChunkKeyData {
+public class MirrorChunkKeys {
 
     private static final int DATA_SECTIONS = 8;
     private static final int DATA_SECTIONS_PER_REAL_CHUNK_SECTION = 16 / DATA_SECTIONS;
@@ -21,10 +21,10 @@ public class MirrorChunkKeyData {
     private final DynamicVariableBitArray[] _sections = new DynamicVariableBitArray[DATA_SECTIONS];
     private boolean _isEmpty = true;
 
-    private MirrorChunkKeyData() {}
+    private MirrorChunkKeys() {}
 
-    public static MirrorChunkKeyData createBlank() {
-        return new MirrorChunkKeyData();
+    public static MirrorChunkKeys createBlank() {
+        return new MirrorChunkKeys();
     }
 
     private int blockIndexFromLocalCoords(int x, int y, int z) {

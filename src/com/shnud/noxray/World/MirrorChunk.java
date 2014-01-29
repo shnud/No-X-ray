@@ -17,10 +17,10 @@ public class MirrorChunk {
     private static final boolean SHOULD_ATTEMPT_CLEANUP_BEFORE_ASSUMING_KEYS_ARE_FULL = true;
 
     // The data where we store keys for each block in the chunk. These are associated with a roomID in the key->ID map
-    private final MirrorChunkKeyData _data;
+    private final MirrorChunkKeys _data;
 
     // The key->ID map where we store the keys for all the contained room IDs
-    private final MirrorChunkIDMap _keyToIDMap;
+    private final MirrorChunkValues _keyToIDMap;
 
     // The chunk x and z coordinates for the Minecraft chunk that this is associated with
     private final int _x, _z;
@@ -31,8 +31,8 @@ public class MirrorChunk {
     public MirrorChunk(int x, int z) {
         _x = x;
         _z = z;
-        _data = MirrorChunkKeyData.createBlank();
-        _keyToIDMap = new MirrorChunkIDMap();
+        _data = MirrorChunkKeys.createBlank();
+        _keyToIDMap = new MirrorChunkValues();
     }
 
     /**
