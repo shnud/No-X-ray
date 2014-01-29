@@ -1,10 +1,6 @@
 package com.shnud.noxray.Structures;
 
 /**
- * Created by Andrew on 08/01/2014.
- */
-
-/**
  * Wraps around a byte array and allows access to only a certain portion of it,
  * as if the portion specified was a standalone byte array.
  */
@@ -23,7 +19,7 @@ public class ByteArraySection extends ByteArray {
         super(array);
 
         if(offset < 0 || length < 1 || offset > array.length - 1 || offset + length > array.length)
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Offset and/or length cannot be beyond original array dimensions");
 
         _offset = offset;
         _length = length;
