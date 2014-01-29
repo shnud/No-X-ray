@@ -1,37 +1,57 @@
 package com.shnud.noxray.Structures;
 
 import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Utilities.MagicValues;
-import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
 
+import javax.annotation.concurrent.ThreadSafe;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
-import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
+import java.util.zip.*;
 
-
+/**
+ * A byte array that dynamically compresses itself when not in use in order to save space
+ */
+@ThreadSafe
 public final class DynamicByteArray extends ByteArray {
 
-    /*
-     * At the moment the size of the buffer is just the maximum amount of blocks in a chunk, as this is the only thing we using this class for.
-     * If however we use this class for another, totally different purpose it will be necessary to rethink how to dynamicaaly change the size of
-     * the buffer depending on the byte array that this wraps around.
-     */
-    private static final byte[] _buffer = new byte[MagicValues.BLOCKS_IN_CHUNK];
-    private static final int MAX_SECONDS_UNTIL_RECOMPRESSION = 20;
-    private static final int MINIMUM_MILLISECONDS_BETWEEN_SCHEDULING_TASKS = (MAX_SECONDS_UNTIL_RECOMPRESSION / 2) * 1000;
-    private final int uncompressedLength;
+    private static final ThreadLocal<ByteArrayOutputStream> _buffer = new ThreadLocal();
+    private static final ThreadLocal<Timer> _timer = new ThreadLocal();
+    private static final int SECONDS_NOT_ACCESSED_UNTIL_RECOMPRESSION = 20;
+    private TimerTask _compressionTask;
+    private long _lastAccess = 0;
+    private final int _uncompressedLength;
     private boolean _isCompressed;
+    // The lock used to ensure that access is not attempted during inactive compression on the timer thread
+    private final Object _lock = new Object();
 
-    /*
-     * We could just use our BasicExecutor scheduler here but we don't have
-     * cancellation support so we might as well just use the bukkit task to
-     * add to our executor if necessary
+    public static DynamicByteArray newWithCompressedArray(final byte[] array) {
+        return new DynamicByteArray(array, true);
+    }
+
+    public static DynamicByteArray newWithUncompressedArray(final byte[] array) {
+        return new DynamicByteArray(array, false);
+    }
+
+    /**
+     * Creates a new dynamically compressed byte array from an already existing byte array
+     * @param array  the byte array to wrap
+     * @param inputIsCompressed whether the byte array is already deflated
      */
-    private BukkitTask _compressionTask;
-    private long _timeTimerLastReset;
+    public DynamicByteArray(final byte[] array, final boolean inputIsCompressed) {
+        super(array);
+
+        if (!inputIsCompressed) {
+            _uncompressedLength = array.length;
+            resetCompressionTimer();
+        }
+        else
+            _uncompressedLength = uncompressAndReturnResult(array).length;
+
+        _isCompressed = inputIsCompressed;
+    }
 
     /**
      * Creates a new dynamically compressed byte array from an already existing byte array
@@ -39,30 +59,6 @@ public final class DynamicByteArray extends ByteArray {
      */
     public DynamicByteArray(final byte[] array) {
         this(array, false);
-    }
-
-    /**
-     * Creates a new dynamically compressed byte array from an already existing byte array
-     * @param array  the byte array to wrap
-     * @param compressed whether the byte array is already deflated
-     */
-    public DynamicByteArray(final byte[] array, final boolean compressed) {
-        super(array);
-        _isCompressed = compressed;
-
-        if(!_isCompressed) {
-            uncompressedLength = array.length;
-            compress();
-        }
-        else {
-            int uncompressedLength = 0;
-            try {
-                uncompressedLength = uncompressAndReturnResult(array).length;
-            } catch (DataFormatException e) {
-                e.printStackTrace();
-            }
-            this.uncompressedLength = uncompressedLength;
-        }
     }
 
     /**
@@ -77,95 +73,125 @@ public final class DynamicByteArray extends ByteArray {
      * @return a copy of the uncompressed byte array, or the compressed array if inflation wasn't possible
      */
     public byte[] getPrimitiveByteArray() {
-        if(_isCompressed) {
-            try {
+        synchronized (_lock) {
+            if(_isCompressed)
                 return uncompressAndReturnResult(_byteArray);
-            } catch (DataFormatException e) {
-                NoXray.getInstance().getLogger().log(Level.SEVERE, "Unable to decompress byte array, returning compressed byte array instead");
-                e.printStackTrace();
-            }
-        }
 
-        return Arrays.copyOf(_byteArray, _byteArray.length);
+            return Arrays.copyOf(_byteArray, _byteArray.length);
+        }
     }
 
     /**
-     * Get the compressed version of the byte array used to back this chunk data array
-     * @return a copy of the compressed byte array
+     * Get the compressed version of the byte array
      */
     public byte[] getCompressedPrimitiveByteArray() {
-        if(!_isCompressed)
-            return compressAndReturnResult(_byteArray);
-        else
-            return Arrays.copyOf(_byteArray, _byteArray.length);
+        synchronized (_lock) {
+            if(!_isCompressed)
+                return compressAndReturnResult(_byteArray);
+            else
+                return Arrays.copyOf(_byteArray, _byteArray.length);
+        }
     }
 
     public byte getValueAtIndex(int index) {
-        if(_isCompressed)
-            uncompress();
+        synchronized (_lock) {
+            if(_isCompressed)
+                tryToUncompress();
 
-        return super.getValueAtIndex(index);
+            didAccess();
+            return super.getValueAtIndex(index);
+        }
     }
 
     public void setValueAtIndex(int index, byte value) {
-        if(_isCompressed)
-            uncompress();
+        synchronized (_lock) {
+            if(_isCompressed)
+                tryToUncompress();
 
-        super.setValueAtIndex(index, value);
+            didAccess();
+            super.setValueAtIndex(index, value);
+        }
+    }
+
+    public int size() {
+        return _uncompressedLength;
+    }
+
+    public void clear() {
+        synchronized (_lock) {
+            if(_isCompressed)
+                tryToUncompress();
+
+            didAccess();
+            super.clear();
+        }
+    }
+
+    public boolean isCompressed() {
+        return _isCompressed;
     }
 
     private void resetCompressionTimer() {
-        /*
-         * We allow a quiet period so that Bukkit doesn't get bombarded with constant
-         * request to cancel and reschedule tasks, as block requests will be made very
-         * often.
-         */
-
-        if(System.currentTimeMillis() - _timeTimerLastReset < MINIMUM_MILLISECONDS_BETWEEN_SCHEDULING_TASKS)
-            return;
-
-        if(_compressionTask != null)
-            _compressionTask.cancel();
-
-        _compressionTask = Bukkit.getScheduler().runTaskLater(
-                NoXray.getInstance(),
-                new Runnable() {
-                    @Override
-                    public void run() {
+        _compressionTask = new TimerTask() {
+            @Override
+            public void run() {
+                synchronized (_lock) {
+                    if(!_isCompressed && inactiveLongEnoughToCompress())
                         compress();
-                    }
-                },
-                MagicValues.MINECRAFT_TICKS_PER_SECOND * MAX_SECONDS_UNTIL_RECOMPRESSION
-        );
+                }
+            }
+        };
 
-        _timeTimerLastReset = System.currentTimeMillis();
+        getTimer().scheduleAtFixedRate(
+                _compressionTask,
+                SECONDS_NOT_ACCESSED_UNTIL_RECOMPRESSION,
+                SECONDS_NOT_ACCESSED_UNTIL_RECOMPRESSION
+        );
+    }
+
+    private boolean inactiveLongEnoughToCompress() {
+        return System.currentTimeMillis() - _lastAccess > SECONDS_NOT_ACCESSED_UNTIL_RECOMPRESSION;
     }
 
     private void compress() {
-        if(_isCompressed)
-            return;
+        synchronized (_lock) {
+            if(_isCompressed)
+                return;
 
-        _byteArray = compressAndReturnResult(_byteArray);
-        _isCompressed = true;
+            _byteArray = compressAndReturnResult(_byteArray);
+            _isCompressed = true;
+            _compressionTask.cancel();
+        }
     }
 
-    private void uncompress() {
-        if(!_isCompressed)
-            return;
-
+    private void tryToUncompress() {
         try {
+            uncompress();
 
-            /*
-             * If we already know the length of the original
-             * byte array we can use a quicker method where
-             * the uncompressed byte array does not need to be
-             * written to a intermediary buffer.
-             */
+        } catch (DataFormatException e) {
+            NoXray.getInstance().getLogger().log(
 
-            if(uncompressedLength > 0) {
+                    Level.SEVERE,
+                    "Chunk data array was unable to be decompressed, " +
+                            "room hiding data may have been lost"
+
+            );
+        }
+    }
+
+    private void uncompress() throws DataFormatException {
+        synchronized (_lock) {
+            if(!_isCompressed)
+                return;
+
+            // If we already know the length of the original
+            // byte array we can use a quicker method where
+            // the uncompressed byte array does not need to be
+            // written to a intermediary buffer.
+            if(_uncompressedLength > 0) {
                 Inflater _inf = new Inflater();
                 _inf.setInput(_byteArray);
-                byte[] uncompressedArray = new byte[uncompressedLength];
+                byte[] uncompressedArray = new byte[_uncompressedLength];
                 _inf.inflate(uncompressedArray);
                 _byteArray = uncompressedArray;
                 _inf.end();
@@ -175,42 +201,66 @@ public final class DynamicByteArray extends ByteArray {
 
             _isCompressed = false;
             resetCompressionTimer();
-
-        } catch (DataFormatException e) {
-            NoXray.getInstance().getLogger().log(Level.SEVERE, "Chunk data array was unable to be decompressed, room hiding data may have been lost");
         }
     }
 
-    private static byte[] compressAndReturnResult(byte[] input) {
-        Deflater _def = new Deflater();
-        _def.setInput(input);
-        _def.finish();
-        int amountBytesCompressed = _def.deflate(_buffer);
-        byte[] output = new byte[amountBytesCompressed];
-        System.arraycopy(_buffer, 0, output, 0, amountBytesCompressed);
-        _def.end();
-        return output;
+    private byte[] compressAndReturnResult(byte[] input) {
+        ByteArrayOutputStream buffer = getBuffer();
+        buffer.reset();
+        DeflaterOutputStream stream = new DeflaterOutputStream(buffer);
+
+        try {
+            stream.write(input);
+            stream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return buffer.toByteArray();
     }
 
-    private static byte[] uncompressAndReturnResult(byte[] input) throws DataFormatException {
-        Inflater _inf = new Inflater();
-        _inf.setInput(input, 0, input.length);
-        int sizeOfUncompressed = _inf.inflate(_buffer);
-        byte[] output = new byte[sizeOfUncompressed];
-        System.arraycopy(_buffer, 0, output, 0, sizeOfUncompressed);
-        _inf.end();
+    private byte[] uncompressAndReturnResult(byte[] input) {
+        ByteArrayOutputStream buffer = getBuffer();
+        buffer.reset();
+        InflaterOutputStream stream = new InflaterOutputStream(buffer);
 
-        return output;
+        try {
+            stream.write(input);
+            stream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return buffer.toByteArray();
     }
 
-    public int size() {
-        return uncompressedLength;
+    private ByteArrayOutputStream getBuffer() {
+        if(_buffer.get() == null)
+            _buffer.set(new ByteArrayOutputStream(4096));
+
+        return _buffer.get();
     }
 
-    public void clear() {
-        if(_isCompressed)
-            uncompress();
+    private static Timer getTimer() {
+        if(_timer.get() == null)
+            _timer.set(new Timer());
 
-        super.clear();
+        return _timer.get();
+    }
+
+    private void didAccess() {
+        _lastAccess = System.currentTimeMillis();
+    }
+
+    protected int getIntervalBetweenCompression() {
+        return SECONDS_NOT_ACCESSED_UNTIL_RECOMPRESSION;
+    }
+
+    protected void forceCompress() {
+        compress();
+    }
+
+    protected void forceUncompress() {
+        tryToUncompress();
     }
 }
