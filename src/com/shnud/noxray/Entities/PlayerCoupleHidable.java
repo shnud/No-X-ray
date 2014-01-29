@@ -6,67 +6,75 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 /**
  * Created by Andrew on 26/12/2013.
  */
+
+@NotThreadSafe
 public class PlayerCoupleHidable extends PlayerCouple {
 
     private static final int MAX_PLAYER_VISIBLE_DISTANCE = 50;
     private double _lastDistance;
-    private boolean _distanceInitialised = false;
     private boolean _areHidden = true;
-    private boolean _initalDecision = true;
 
     public PlayerCoupleHidable(Player player1, Player player2) {
         super(player1, player2);
     }
 
     /*
-     * initHidden is a flag to tell the constructor whether the players
-     * in the couple are already hidden from each other. If set to true,
+     * inititalHiddenStatus is a flag to tell the constructor whether the
+     * players in the couple are already hidden from each other. If set to true,
      * the class will not attempt to hide players if they don't have LOS
      * straight away, as it thinks they are already hidden.
+     *
+     * The only reason for this is in case the plugin is turned on while
+     * the server has already been running without the plugin for an amount
+     * of time already. In which case, the player's would already be able to
+     * see each other and it would be necessary to pass in 'false' so that
+     * we have chance to hide them.
+     *
+     * Otherwise, a 'destroy' packet when the plugin is reloaded could hint
+     * to a player that another is nearby. If the plugin was already running
+     * before the reload, we can assume that the couple is already hidden from
+     * each other (obviously if no LOS). In this case we don't want to send
+     * a destroy packet for the reason stated before.
      */
-    public PlayerCoupleHidable(Player player1, Player player2, boolean initHidden) {
+    public PlayerCoupleHidable(Player player1, Player player2, boolean initialHiddenStatus) {
         super(player1, player2);
-        _areHidden = initHidden;
+        _areHidden = initialHiddenStatus;
     }
 
-    public double getLastDistance() {
-        if(!_distanceInitialised)
-            throw new IllegalStateException("Distance has not yet been checked");
-
-        return _lastDistance;
+    public boolean areHidden() {
+        return _areHidden;
     }
 
-    public double getCurrentDistance() {
-        if(!areInSameWorld())
-            throw new IllegalStateException("Impossible to get distance as players are in seperate worlds");
+    public void updateVisibility() {
+        boolean LOS = shouldShowEachOther();
 
-        _distanceInitialised = true;
-        _lastDistance = getPlayer1().getLocation().distance(getPlayer2().getLocation());
-        return _lastDistance;
+        if(LOS && _areHidden)
+            show();
+        else if(!LOS && !_areHidden)
+            hide();
     }
 
-    public boolean haveClearLOS() {
-        if(!areInSameWorld())
-            return false;
-
-        if(getPlayer1().isDead() || getPlayer2().isDead())
-            throw new IllegalArgumentException("Cannot check LOS when one entity is dead");
-
-        if(!getPlayer1().isOnline())
-            throw new IllegalArgumentException("Cannot check LOS when one player is offline");
-        if(!getPlayer2().isOnline())
-            throw new IllegalArgumentException("Cannot check LOS when one player is offline");
-
-        _lastDistance = getCurrentDistance();
+    private boolean shouldShowEachOther() {
+        _lastDistance = getDistanceBetween();
 
         if(_lastDistance < 1)
             return true;
         if(_lastDistance > MAX_PLAYER_VISIBLE_DISTANCE)
             return false;
 
+        return haveClearLOS();
+    }
+
+    private double getDistanceBetween() {
+        return getPlayer1().getLocation().distance(getPlayer2().getLocation());
+    }
+
+    private boolean haveClearLOS() {
         World world = getPlayer1().getWorld();
         Vector start = getPlayer1().getEyeLocation().toVector();
         Vector direction = getPlayer2().getEyeLocation().toVector().subtract(start).normalize();
@@ -81,55 +89,38 @@ public class PlayerCoupleHidable extends PlayerCouple {
         return true;
     }
 
-    public boolean areInSameWorld() {
-        return getPlayer1().getWorld().equals(getPlayer2().getWorld());
-    }
-
-    public boolean areHidden() {
-        return _areHidden;
-    }
-
-    public void hide() {
+    private void hide() {
         _areHidden = true;
-        _initalDecision = false;
         if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
             PacketDispatcher.destroyEntityForPlayer(getPlayer2(), getPlayer1());
             PacketDispatcher.destroyEntityForPlayer(getPlayer1(), getPlayer2());
         }
     }
 
-    public void show() {
+    private void show() {
         _areHidden = false;
-        _initalDecision = false;
         if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
             PacketDispatcher.spawnEntityForPlayer(getPlayer2(), getPlayer1());
             PacketDispatcher.spawnEntityForPlayer(getPlayer1(), getPlayer2());
         }
     }
 
-    /*
-     * Used to determine whether the Players are really watching each
-     * other as far as the Minecraft server is concered. If they aren't
-     * then there's no point keeping this PlayerCouple in the
-     * PlayerHider's couple list.
-     */
-    public boolean areReallyWatching() {
-        if(!areInSameWorld())
-            return false;
+    public String toString() {
+        return "Player 1: " + getPlayer1() + " Player 2: " + getPlayer2() + " Hidden: " + _areHidden;
+    }
 
+    public boolean isValid() {
         if(!getPlayer1().isOnline())
             return false;
         if(!getPlayer2().isOnline())
+            return false;
+        if(!areInSameWorld())
             return false;
 
         return true;
     }
 
-    public String toString() {
-        return "Player 1: " + getPlayer1() + " Player 2: " + getPlayer2() + " Hidden: " + areHidden();
-    }
-
-    public boolean isNewCouple() {
-        return _initalDecision;
+    private boolean areInSameWorld() {
+        return getPlayer1().getWorld().equals(getPlayer2().getWorld());
     }
 }
