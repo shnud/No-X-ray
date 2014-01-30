@@ -13,9 +13,9 @@ import java.util.LinkedList;
  * Created by Andrew on 22/12/2013.
  */
 public class RoomSearcher {
-    private int _originX, _originY, _originZ;
-    private static HashSet<Material> _wallBlocks = new HashSet<Material>();
-    private World _world;
+    private final int _originX, _originY, _originZ;
+    private final HashSet<Material> _wallBlocks = new HashSet<Material>();
+    private final World _world;
     private static final int MAX_BLOCK_SEARCH = 100000;
 
     public RoomSearcher(int x, int y, int z, World world) {
@@ -24,7 +24,7 @@ public class RoomSearcher {
         _originZ = z;
         _world = world;
 
-        if(_wallBlocks.isEmpty()) {
+        if(world.getEnvironment() == World.Environment.NORMAL) {
             _wallBlocks.add(Material.GRAVEL);
             _wallBlocks.add(Material.STONE);
             _wallBlocks.add(Material.DIRT);
@@ -35,16 +35,15 @@ public class RoomSearcher {
             _wallBlocks.add(Material.REDSTONE_ORE);
             _wallBlocks.add(Material.EMERALD_ORE);
         }
+        else if(world.getEnvironment() == World.Environment.NETHER) {
+            _wallBlocks.add(Material.NETHERRACK);
+        }
+        else if(world.getEnvironment() == World.Environment.THE_END) {
+            _wallBlocks.add(Material.ENDER_STONE);
+        }
     }
 
-    public void setWallBlocks(HashSet<Material> materials) {
-        if(materials == null || materials.size() == 0)
-            throw new IllegalArgumentException("Search will go on forever with no wall blocks");
-
-        _wallBlocks = materials;
-    }
-
-    public ArrayList<XYZ> getRoomBlocks() throws ChunkNotLoadedException, MaxBlocksReachedException {
+    public ArrayList<XYZ> searchAndReturnRoomBlocks() throws ChunkNotLoadedException, MaxBlocksReachedException {
         ArrayList<XYZ> valid = new ArrayList<XYZ>();
         HashSet<XYZ> opened = new HashSet<XYZ>(); // List of all those that have been checked to prevent repeats
         LinkedList<XYZ> open = new LinkedList<XYZ>();

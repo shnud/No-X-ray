@@ -1,7 +1,7 @@
 package com.shnud.noxray.World;
 
 import com.shnud.noxray.NoXray;
-import com.shnud.noxray.Structures.BooleanArray;
+import com.shnud.noxray.Structures.ByteWrappers.BooleanArray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
 import com.shnud.noxray.Utilities.MagicValues;
 import com.shnud.noxray.Utilities.MathHelper;

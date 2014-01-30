@@ -153,7 +153,7 @@ public class RoomHider implements Listener, PacketEventListener {
             public void run() {
                 RoomSearcher searcher = new RoomSearcher(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), _world);
                 try {
-                    List<XYZ> blocks = searcher.getRoomBlocks();
+                    List<XYZ> blocks = searcher.searchAndReturnRoomBlocks();
                     if(blocks.isEmpty()) {
                         player.sendMessage(ChatColor.RED + "No blocks were found");
                         return;
@@ -311,7 +311,7 @@ public class RoomHider implements Listener, PacketEventListener {
             public void run() {
                 synchronized (event.getPacketEvent().getAsyncMarker().getProcessingLock()) {
                     for (int chunkI = 0; chunkI < event.getAmountOfChunks(); chunkI++) {
-                        MapChunkData chunk = event.getChunk(chunkI);
+                        MapChunkDataWrapper chunk = event.getChunk(chunkI);
                         DynamicCoordinates coords = DynamicCoordinates.initWithChunkCoordinates(chunk.getX(), 0, chunk.getZ());
 
                         // If the mirror chunk isn't loaded then it means it was empty so don't bother filtering this chunk. If

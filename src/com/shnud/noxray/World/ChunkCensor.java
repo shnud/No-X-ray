@@ -1,8 +1,8 @@
 package com.shnud.noxray.World;
 
-import com.shnud.noxray.Structures.BooleanArray;
+import com.shnud.noxray.Structures.ByteWrappers.BooleanArray;
 import com.shnud.noxray.Structures.ByteArraySection;
-import com.shnud.noxray.Structures.NibbleArray;
+import com.shnud.noxray.Structures.ByteWrappers.NibbleArray;
 import org.bukkit.Material;
 
 import java.util.HashSet;
@@ -13,15 +13,15 @@ import java.util.HashSet;
 public class ChunkCensor {
 
     /**
-     * Takes a MapChunkData and censors any blocks that are not contained in seen rooms for the specified mirror chunk. This function
-     * works on the actual MapChunkData and does not return a value
+     * Takes a MapChunkDataWrapper and censors any blocks that are not contained in seen rooms for the specified mirror chunk. This function
+     * works on the actual MapChunkDataWrapper and does not return a value
      *
-     * @param chunk The MapChunkData to censor
+     * @param chunk The MapChunkDataWrapper to censor
      * @param mirror The mirror chunk to take the hidden data from
      * @param seenRooms The list of rooms that the chunk censor should not hide
      * @param censorBlock The block that should be used to replace hidden blocks
      */
-    public static void censorChunk(MapChunkData chunk, MirrorChunk mirror, HashSet<Integer> seenRooms, Material censorBlock) {
+    public static void censorChunk(MapChunkDataWrapper chunk, MirrorChunk mirror, HashSet<Integer> seenRooms, Material censorBlock) {
         if(chunk == null) throw new IllegalArgumentException("Chunk cannot be null");
         if(mirror == null) throw new IllegalArgumentException("Mirror chunk cannot be null");
 
@@ -51,9 +51,9 @@ public class ChunkCensor {
             // Because we're accessing the mirror chunk from one big array rather than
             // the sections that are stored in the map chunk we have to store the offset
             // in the mirror chunk's array to start at
-            int mirrorChunkOffset = sectionI * MapChunkData.BLOCKS_PER_SECTION;
+            int mirrorChunkOffset = sectionI * MapChunkDataWrapper.BLOCKS_PER_SECTION;
 
-            for(int i = MapChunkData.BLOCKS_PER_SECTION - 1; i >= 0; i--) {
+            for(int i = MapChunkDataWrapper.BLOCKS_PER_SECTION - 1; i >= 0; i--) {
                 int indexXZ = i % 256;
                 int roomID = mirror.getRoomIDAtIndex(i + mirrorChunkOffset);
 
