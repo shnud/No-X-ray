@@ -50,7 +50,7 @@ public class DynamicBitsizeUnsignedArray {
      * @param size the size of the array
      */
     public DynamicBitsizeUnsignedArray(int size) {
-        this(size, DEFAULT_INITIAL_BITS_PER_VALUE, DEFAULT_MAX_BITS_PER_VALUE, false);
+        this(size, DEFAULT_INITIAL_BITS_PER_VALUE, DEFAULT_MAX_BITS_PER_VALUE, true);
     }
 
     /**
@@ -72,7 +72,7 @@ public class DynamicBitsizeUnsignedArray {
      * @param existingArray the preexisting array
      */
     public DynamicBitsizeUnsignedArray(VariableBitsizeUnsignedArray existingArray) {
-        this(existingArray, DEFAULT_MAX_BITS_PER_VALUE, false);
+        this(existingArray, DEFAULT_MAX_BITS_PER_VALUE, true);
     }
 
     public int size() {
