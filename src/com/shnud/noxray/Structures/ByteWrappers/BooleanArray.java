@@ -1,4 +1,4 @@
-package com.shnud.noxray.Structures;
+package com.shnud.noxray.Structures.ByteWrappers;
 
 /**
  * Created by Andrew on 22/12/2013.

@@ -1,19 +1,18 @@
-package com.shnud.noxray.Structures;
+package com.shnud.noxray.Structures.ByteWrappers;
+
+import com.shnud.noxray.Structures.ByteArray;
 
 /**
  * Created by Andrew on 31/12/2013.
  */
-public class SixBitByteArrayWrapper implements ByteArrayWrapper {
+public class SixBitArray extends ByteArrayWrapper {
 
-    private ByteArray _byteArray;
-
-    public SixBitByteArrayWrapper(int length) {
-        int byteArrayLength = (length * 3 / 4) + ((length * 3) % 4 == 0 ? 0 : 1);
-        _byteArray = new ByteArray(byteArrayLength);
+    public SixBitArray(ByteArray array) {
+        super(array);
     }
 
-    public SixBitByteArrayWrapper(ByteArray array) {
-        _byteArray = array;
+    public SixBitArray(int length) {
+        super(length);
     }
 
     @Override
@@ -29,45 +28,45 @@ public class SixBitByteArrayWrapper implements ByteArrayWrapper {
 
         switch(remainder) {
             case 0: {
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex);
                 b &= 3;
                 b |= value << 2;
-                _byteArray.setValueAtIndex(byteArrayIndex, b);
+                getByteArray().setValueAtIndex(byteArrayIndex, b);
                 break;
             }
             case 1: {
 
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex);
                 b &= 192;
                 b |= value;
-                _byteArray.setValueAtIndex(byteArrayIndex, b);
+                getByteArray().setValueAtIndex(byteArrayIndex, b);
 
                 break;
             }
             case 2: {
 
-                byte a = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte a = getByteArray().getValueAtIndex(byteArrayIndex);
                 a &= 240;
                 a |= value >> 2;
-                _byteArray.setValueAtIndex(byteArrayIndex, a);
+                getByteArray().setValueAtIndex(byteArrayIndex, a);
 
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex + 1);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex + 1);
                 b &= 63;
                 b |= value << 6;
-                _byteArray.setValueAtIndex(byteArrayIndex + 1, b);
+                getByteArray().setValueAtIndex(byteArrayIndex + 1, b);
 
                 break;
             }
             case 3: {
-                byte a = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte a = getByteArray().getValueAtIndex(byteArrayIndex);
                 a &= 252;
                 a |= value >> 4;
-                _byteArray.setValueAtIndex(byteArrayIndex, a);
+                getByteArray().setValueAtIndex(byteArrayIndex, a);
 
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex + 1);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex + 1);
                 b &= 15;
                 b |= value << 4;
-                _byteArray.setValueAtIndex(byteArrayIndex + 1, b);
+                getByteArray().setValueAtIndex(byteArrayIndex + 1, b);
 
                 break;
 
@@ -85,30 +84,30 @@ public class SixBitByteArrayWrapper implements ByteArrayWrapper {
 
         switch(remainder) {
             case 0: {
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex);
                 return (b >> 2) & 0x3F;
             }
             case 1: {
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex);
                 return b &= 0x3F;
             }
             case 2: {
-                byte a = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte a = getByteArray().getValueAtIndex(byteArrayIndex);
                 a <<= 2;
                 a &= 0x3C;
 
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex + 1);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex + 1);
                 b >>= 6;
                 b &= 3;
 
                 return (a | b) & (0xFF);
             }
             case 3: {
-                byte a = _byteArray.getValueAtIndex(byteArrayIndex);
+                byte a = getByteArray().getValueAtIndex(byteArrayIndex);
                 a <<= 4;
                 a &= 0x30;
 
-                byte b = _byteArray.getValueAtIndex(byteArrayIndex + 1);
+                byte b = getByteArray().getValueAtIndex(byteArrayIndex + 1);
                 b >>= 4;
                 b &= 0x0F;
 
@@ -122,22 +121,7 @@ public class SixBitByteArrayWrapper implements ByteArrayWrapper {
 
     @Override
     public int size() {
-        return _byteArray.size() * 4 / 3;
-    }
-
-    @Override
-    public void clear() {
-
-    }
-
-    @Override
-    public ByteArray getByteArray() {
-        return _byteArray;
-    }
-
-    @Override
-    public void setByteArray(ByteArray array) {
-        _byteArray = array;
+        return getByteArray().size() * 4 / 3;
     }
 
     @Override
@@ -146,7 +130,7 @@ public class SixBitByteArrayWrapper implements ByteArrayWrapper {
     }
 
     @Override
-    public byte bitsPerValue() {
+    public int bitsPerValue() {
         return 6;
     }
 }

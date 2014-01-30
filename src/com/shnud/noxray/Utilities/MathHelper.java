@@ -34,4 +34,8 @@ public class MathHelper {
         int result = val % mod;
         return result < 0 ? result + mod : result;
     }
+
+    public static int divisionCeiling(int val, int divisor) {
+        return (val / divisor) + (val % divisor == 0 ? 0 : 1);
+    }
 }

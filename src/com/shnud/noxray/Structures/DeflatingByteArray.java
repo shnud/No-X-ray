@@ -15,7 +15,7 @@ import java.util.zip.*;
  * A byte array that dynamically compresses itself when not in use in order to save space
  */
 @ThreadSafe
-public final class DynamicByteArray extends ByteArray {
+public final class DeflatingByteArray extends ByteArray {
 
     private static final ThreadLocal<ByteArrayOutputStream> _buffer = new ThreadLocal();
     private static final ThreadLocal<Timer> _timer = new ThreadLocal();
@@ -27,12 +27,12 @@ public final class DynamicByteArray extends ByteArray {
     // The lock used to ensure that access is not attempted during inactive compression on the timer thread
     private final Object _lock = new Object();
 
-    public static DynamicByteArray newWithCompressedArray(final byte[] array) {
-        return new DynamicByteArray(array, true);
+    public static DeflatingByteArray newWithCompressedArray(final byte[] array) {
+        return new DeflatingByteArray(array, true);
     }
 
-    public static DynamicByteArray newWithUncompressedArray(final byte[] array) {
-        return new DynamicByteArray(array, false);
+    public static DeflatingByteArray newWithUncompressedArray(final byte[] array) {
+        return new DeflatingByteArray(array, false);
     }
 
     /**
@@ -40,7 +40,7 @@ public final class DynamicByteArray extends ByteArray {
      * @param array  the byte array to wrap
      * @param inputIsCompressed whether the byte array is already deflated
      */
-    public DynamicByteArray(final byte[] array, final boolean inputIsCompressed) {
+    public DeflatingByteArray(final byte[] array, final boolean inputIsCompressed) {
         super(array);
 
         if (!inputIsCompressed) {
@@ -57,14 +57,14 @@ public final class DynamicByteArray extends ByteArray {
      * Creates a new dynamically compressed byte array from an already existing byte array
      * @param array the byte array to wrap (assumes uncompressed)
      */
-    public DynamicByteArray(final byte[] array) {
+    public DeflatingByteArray(final byte[] array) {
         this(array, false);
     }
 
     /**
      * Creates a new dynamically compressed byte array of the given size
      */
-    public DynamicByteArray(int size) {
+    public DeflatingByteArray(int size) {
         this(new byte[size]);
     }
 

@@ -11,21 +11,21 @@ import java.util.Collection;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class DynamicByteArrayTest {
+public class DeflatingByteArrayTest {
 
-    private DynamicByteArray _array;
+    private DeflatingByteArray _array;
     private static final int SIZE = 4096;
 
-    public DynamicByteArrayTest(DynamicByteArray array) {
+    public DeflatingByteArrayTest(DeflatingByteArray array) {
         _array = array;
     }
 
     @Parameterized.Parameters
     public static Collection parameters() {
         return Arrays.asList(new Object[][]{
-                {DynamicByteArray.newWithUncompressedArray(new byte[SIZE])},
-                {new DynamicByteArray(SIZE)},
-                {new DynamicByteArray(new byte[SIZE])}
+                {DeflatingByteArray.newWithUncompressedArray(new byte[SIZE])},
+                {new DeflatingByteArray(SIZE)},
+                {new DeflatingByteArray(new byte[SIZE])}
         });
     }
 
@@ -39,7 +39,7 @@ public class DynamicByteArrayTest {
     public void setAndGetWithCompressedInput() {
         _array.setValueAtIndex(200, (byte) 5);
 
-        DynamicByteArray compressedInput = DynamicByteArray.newWithCompressedArray(_array
+        DeflatingByteArray compressedInput = DeflatingByteArray.newWithCompressedArray(_array
                 .getCompressedPrimitiveByteArray());
 
         assertEquals((byte) 5, compressedInput.getValueAtIndex(200));
@@ -47,7 +47,7 @@ public class DynamicByteArrayTest {
 
     @Test
     public void sizeWithCompressedInput() {
-        DynamicByteArray compressedInput = DynamicByteArray.newWithCompressedArray(_array
+        DeflatingByteArray compressedInput = DeflatingByteArray.newWithCompressedArray(_array
                 .getCompressedPrimitiveByteArray());
 
         assertEquals(SIZE, compressedInput.size());
