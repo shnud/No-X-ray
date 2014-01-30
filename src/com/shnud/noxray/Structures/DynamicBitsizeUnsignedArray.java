@@ -117,6 +117,16 @@ public class DynamicBitsizeUnsignedArray {
         return _bitArray.maxValue();
     }
 
+    public boolean isEmpty() {
+        for(int i : valuesPerBitSize) if(i > 0) return false;
+
+        return true;
+    }
+
+    public ByteArray getByteArray() {
+        return _bitArray.getByteArray();
+    }
+
     private void shrinkOrGrowTo(int bits) {
         if(bits != _bitArray.bitsPerValue()) {
             _bitArray = _bitArray.convertTo(bits);

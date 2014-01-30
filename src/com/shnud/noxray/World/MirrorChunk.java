@@ -31,7 +31,7 @@ public class MirrorChunk {
     public MirrorChunk(int x, int z) {
         _x = x;
         _z = z;
-        _data = MirrorChunkKeys.createBlank();
+        _data = new MirrorChunkKeys();
         _keyToIDMap = new MirrorChunkValues();
     }
 
@@ -97,7 +97,7 @@ public class MirrorChunk {
         else
             key = _keyToIDMap.getKeyForRoomID(roomID);
 
-        _data.setBlockKey(coordinates, key);
+        _data.setKeyAtBlock(coordinates, key);
         return true;
     }
 
@@ -107,7 +107,7 @@ public class MirrorChunk {
      * @return the room ID located at the coordinates (0 if no room)
      */
     public int getRoomIDAtBlock(DynamicCoordinates coordinates) {
-        int key = _data.getRoomKeyAtBlock(coordinates);
+        int key = _data.getKeyAtBlock(coordinates);
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
@@ -117,7 +117,7 @@ public class MirrorChunk {
      * @return the room ID located at the index (0 if no room)
      */
     public int getRoomIDAtIndex(int index) {
-        int key = _data.getRoomKeyAtIndex(index);
+        int key = _data.getKeyAtIndex(index);
         return _keyToIDMap.getRoomIDForKey(key);
     }
 
@@ -170,7 +170,7 @@ public class MirrorChunk {
         // If we know the room is contained within this chunk, then go through the data
         // and remove all references to it
         if(key > 0) {
-            _data.removeAllKeys(key);
+            _data.removeAllOfKey(key);
             _keyToIDMap.removeRoomID(roomID);
         }
     }

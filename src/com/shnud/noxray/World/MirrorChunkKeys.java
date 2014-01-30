@@ -1,59 +1,36 @@
 package com.shnud.noxray.World;
 
-import com.shnud.noxray.Structures.DynamicByteArray;
-import com.shnud.noxray.Structures.DynamicVariableBitArray;
 import com.shnud.noxray.Utilities.DynamicCoordinates;
-import com.shnud.noxray.Utilities.MagicValues;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Iterator;
 
 /**
  * Created by Andrew on 29/12/2013.
  */
 public class MirrorChunkKeys {
 
-    private static final int DATA_SECTIONS = 8;
-    private static final int DATA_SECTIONS_PER_REAL_CHUNK_SECTION = 16 / DATA_SECTIONS;
-    private static final int BLOCKS_PER_SECTION = MagicValues.BLOCKS_IN_CHUNK / DATA_SECTIONS;
-    private static final int DEFAULT_BIT_PER_VALUE_ENCODING = 2;
-    private static final int MAX_BIT_PER_VALUE_ENCODING = 6;
-    private final DynamicVariableBitArray[] _sections = new DynamicVariableBitArray[DATA_SECTIONS];
-    private boolean _isEmpty = true;
+    private MirrorChunkSplitData _splitData = new MirrorChunkSplitData();
 
-    private MirrorChunkKeys() {}
-
-    public static MirrorChunkKeys createBlank() {
-        return new MirrorChunkKeys();
-    }
-
-    private int blockIndexFromLocalCoords(int x, int y, int z) {
-        return x + (z * 16) + (y * 256);
-    }
-
-    public int getRoomKeyAtBlock(DynamicCoordinates coords) {
+    public int getKeyAtBlock(DynamicCoordinates coords) {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
-        return getLocalBlockKey(coords.chunkRelativeBlockX(), coords.chunkRelativeBlockY(), coords.chunkRelativeBlockZ());
+        return getKeyAtLocalBlock(coords.chunkRelativeBlockX(), coords.chunkRelativeBlockY(),
+                coords.chunkRelativeBlockZ());
     }
 
-    public int getLocalBlockKey(int x, int y, int z) {
-        int index = blockIndexFromLocalCoords(x, y, z);
-
-        return getRoomKeyAtIndex(index);
+    public int getKeyAtLocalBlock(int x, int y, int z) {
+        int index = blockIndexFromLocalBlock(x, y, z);
+        return getKeyAtIndex(index);
     }
 
-    public int getRoomKeyAtIndex(int index) {
-        int sectionIndex = index / BLOCKS_PER_SECTION;
-
-        if(_sections[sectionIndex] == null)
-            return 0;
-
-        return _sections[sectionIndex].getValueAtIndex(index % BLOCKS_PER_SECTION);
+    public int getKeyAtIndex(int index) {
+        return _splitData.getValueAtIndex(index);
     }
 
-    public void setBlockKey(DynamicCoordinates coords, int roomID) {
+    public void setKeyAtBlock(DynamicCoordinates coords, int key) {
         if(coords.getPrecisionLevel() != DynamicCoordinates.PrecisionLevel.BLOCK)
             throw new IllegalArgumentException("Coordinates are useless if not at block precision");
 
@@ -61,102 +38,43 @@ public class MirrorChunkKeys {
         int localY = coords.chunkRelativeBlockY();
         int localZ = coords.chunkRelativeBlockZ();
 
-        setLocalBlockKey(localX, localY, localZ, roomID);
+        setKeyAtLocalBlock(localX, localY, localZ, key);
     }
 
-    public void setLocalBlockKey(int x, int y, int z, int roomID) {
-        int index = blockIndexFromLocalCoords(x, y, z);
-
-        setValueAtIndex(index, roomID);
+    public void setKeyAtLocalBlock(int x, int y, int z, int key) {
+        int index = blockIndexFromLocalBlock(x, y, z);
+        setKeyAtIndex(index, key);
     }
 
-    private void setValueAtIndex(int index, int value) {
-        int sectionIndex = index / BLOCKS_PER_SECTION;
-
-        if(_sections[sectionIndex] == null)
-            _sections[sectionIndex] = new DynamicVariableBitArray(DEFAULT_BIT_PER_VALUE_ENCODING, BLOCKS_PER_SECTION);
-
-
-        DynamicVariableBitArray section = _sections[sectionIndex];
-        while(value > section.maxValue()) {
-            if(section.maxValue() >= MAX_BIT_PER_VALUE_ENCODING)
-                throw new IllegalArgumentException("Value too large for encoding");
-
-            section.convertTo(section.getBitsPerVal() + 1);
-        }
-
-        _sections[sectionIndex].setValueAtIndex(index % BLOCKS_PER_SECTION, value);
-        _isEmpty = false;
+    private void setKeyAtIndex(int index, int key) {
+        _splitData.setValueAtIndex(index, key);
     }
 
-    public void removeAllKeys(int key) {
-        for(DynamicVariableBitArray section : _sections) {
-            if(section == null)
-                continue;
+    public void removeAllOfKey(int key) {
+        Iterator<Integer> it = _splitData.iterator();
 
-            for(int i = 0; i < section.size(); i++) {
-                if(section.getValueAtIndex(i) == key)
-                    section.setValueAtIndex(i, 0);
-            }
+        while(it.hasNext()) {
+            if(it.next() == key) it.remove();
         }
     }
 
     public void writeToFile(RandomAccessFile ram) throws IOException {
-        for(DynamicVariableBitArray section : _sections) {
-
-            // If this section of the chunk is NOT contained within the data
-            if(section == null) {
-                ram.writeBoolean(false);
-                continue;
-            }
-            // This section of the chunk is contained within the data
-            ram.writeBoolean(true);
-
-            // The bits per value encoding of the bit/byte wrapper
-            ram.writeByte(section.getBitsPerVal());
-
-            // The length of the compressed data, and then the actual compressed byte array of data
-            byte[] compressed = section.getByteArray().getCompressedPrimitiveByteArray();
-            ram.writeInt(compressed.length);
-            ram.write(compressed);
-        }
+        _splitData.writeToFile(ram);
     }
 
     public void readFromFile(RandomAccessFile ram) throws IOException {
-        for(int i = 0; i < DATA_SECTIONS; i++) {
-            if(ram.readBoolean()) {
-                // If we're reading a section of data then we can assume that the data isn't empty
-                _isEmpty = false;
-
-                // The bits per value encoding of the bit/byte wrapper
-                byte bitValueLength = ram.readByte();
-
-                // The length of the following compressed data
-                int compressedLength = ram.readInt();
-
-                // The actual compressed data
-                byte[] compressed = new byte[compressedLength];
-                ram.readFully(compressed, 0, compressedLength);
-                DynamicByteArray array = new DynamicByteArray(compressed, true);
-
-                _sections[i] = new DynamicVariableBitArray(bitValueLength, array);
-            }
-        }
+        _splitData.readFromFile(ram);
     }
 
     public boolean isEmpty() {
-        if(_isEmpty)
-            return true;
-
-        for(DynamicVariableBitArray section : _sections) {
-            if(section != null)
-                return false;
-        }
-
-        return true;
+        return _splitData.isAllEmpty();
     }
 
     public boolean isSectionEmpty(int section) {
-        return _sections[section / DATA_SECTIONS_PER_REAL_CHUNK_SECTION] == null;
+        return _splitData.isMinecraftSectionEmpty(section);
+    }
+
+    private int blockIndexFromLocalBlock(int x, int y, int z) {
+        return x + (z * 16) + (y * 256);
     }
 }

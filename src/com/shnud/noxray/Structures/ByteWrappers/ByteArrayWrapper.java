@@ -17,7 +17,7 @@ public abstract class ByteArrayWrapper {
     public ByteArrayWrapper(int length) {
         _array = new ByteArray(MathHelper.divisionCeiling(length * bitsPerValue(), 8));
     }
-    protected final ByteArray getByteArray() {
+    public final ByteArray getByteArray() {
         return _array;
     }
     public abstract int getValueAtIndex(int index);

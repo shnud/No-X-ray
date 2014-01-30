@@ -2,7 +2,7 @@ package com.shnud.noxray.Events;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketEvent;
-import com.shnud.noxray.World.MapChunkData;
+import com.shnud.noxray.World.MapChunkDataWrapper;
 import org.bukkit.entity.Player;
 
 import java.util.zip.Deflater;
@@ -31,17 +31,17 @@ public class MapChunkPacketEvent extends BasePacketEvent {
         }
     }
 
-    public MapChunkData getChunk(int i) {
+    public MapChunkDataWrapper getChunk(int i) {
         if(i > getAmountOfChunks() - 1) throw new ArrayIndexOutOfBoundsException(i);
 
         if (getPacket().getType() == PacketType.Play.Server.MAP_CHUNK) {
             byte[] data =  getPacket().getByteArrays().read(1);
             int x = getPacket().getIntegers().read(0);
             int z = getPacket().getIntegers().read(1);
-            short primary = (short) getPacket().getIntegers().read(2).shortValue();
-            short additional = (short) getPacket().getIntegers().read(3).shortValue();
+            short primary = getPacket().getIntegers().read(2).shortValue();
+            short additional = getPacket().getIntegers().read(3).shortValue();
 
-            MapChunkData chunk = new MapChunkData(x, z, data, primary, additional);
+            MapChunkDataWrapper chunk = new MapChunkDataWrapper(x, z, data, primary, additional);
             return chunk;
         }
         else {
@@ -51,7 +51,7 @@ public class MapChunkPacketEvent extends BasePacketEvent {
             short primary = (short) getPacket().getIntegerArrays().read(2)[i];
             short additional = (short) getPacket().getIntegerArrays().read(3)[i];
 
-            MapChunkData chunk = new MapChunkData(x, z, data, primary, additional);
+            MapChunkDataWrapper chunk = new MapChunkDataWrapper(x, z, data, primary, additional);
             return chunk;
         }
     }

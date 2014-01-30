@@ -5,8 +5,9 @@ import com.shnud.noxray.Hiders.EntityHider;
 import com.shnud.noxray.Hiders.PlayerHider;
 import com.shnud.noxray.Hiders.RoomHider;
 import com.shnud.noxray.Settings.NoXraySettings;
-import com.shnud.noxray.Settings.PlayerMetadataBank;
+import com.shnud.noxray.Settings.PlayerMetadataStore;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
+import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,21 +21,28 @@ import java.util.logging.Level;
 public class NoXray extends JavaPlugin {
 
     private static NoXray _instance;
+    private static final ArrayList<PlayerHider> _playerHiders = new ArrayList<PlayerHider>();
+    private static final ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
+    private static final ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
+    private static CommandListener _commandListener;
+    private static PlayerMetadataStore _metadataStore;
 
     public NoXray() {
         _instance = this;
-
     }
 
     public static NoXray getInstance() {
+
         return _instance;
     }
 
-    private final ArrayList<PlayerHider> _playerHiders = new ArrayList<PlayerHider>();
-    private final ArrayList<EntityHider> _entityHiders = new ArrayList<EntityHider>();
-    private final ArrayList<RoomHider> _roomHiders = new ArrayList<RoomHider>();
-    private final CommandListener _commandListener = new CommandListener();
-    private PlayerMetadataBank _metadataBank;
+    public static void log(Level level, String message) {
+        getInstance().getServer().getLogger().log(level, message);
+    }
+
+    public static void broadcast(String message) {
+        getInstance().getServer().broadcastMessage(ChatColor.YELLOW + "[No X-ray] " + message);
+    }
 
     @Override
     public void onEnable() {
@@ -43,11 +51,12 @@ public class NoXray extends JavaPlugin {
 
         NoXraySettings.initSettings();
 
-        _metadataBank = new PlayerMetadataBank();
         loadPlayerHiders();
         loadEntityHiders();
         loadRoomHiders();
 
+        _commandListener = new CommandListener();
+        _metadataStore = new PlayerMetadataStore();
         getCommand("hide").setExecutor(_commandListener);
         getCommand("unhide").setExecutor(_commandListener);
         getCommand("auto").setExecutor(_commandListener);
@@ -57,7 +66,7 @@ public class NoXray extends JavaPlugin {
     @Override
     public void onDisable() {
         for(RoomHider rh : _roomHiders) rh.disable();
-        _metadataBank.save();
+        _metadataStore.save();
         getServer().getScheduler().cancelTasks(this);
     }
 
@@ -91,20 +100,18 @@ public class NoXray extends JavaPlugin {
         }
     }
 
+    public static PlayerMetadataEntry getPlayerMetadata(String name) {
+        return _metadataStore.getMetadataForPlayer(name);
+    }
+
+    public static PlayerMetadataEntry getPlayerMetadata(Player player) {
+        return getPlayerMetadata(player.getName());
+    }
+
     public RoomHider getRoomHider(World world) {
-        for(RoomHider hider : _roomHiders) {
-            if(hider.getWorld().equals(world))
-                return hider;
-        }
+        for(RoomHider hider : _roomHiders)
+            if(hider.getWorld().equals(world)) return hider;
 
         return null;
-    }
-
-    public PlayerMetadataEntry getPlayerMetadata(String name) {
-        return _metadataBank.getMetadataForPlayer(name);
-    }
-
-    public PlayerMetadataEntry getPlayerMetadata(Player player) {
-        return getPlayerMetadata(player.getName());
     }
 }

@@ -204,7 +204,7 @@ public final class DeflatingByteArray extends ByteArray {
         }
     }
 
-    private byte[] compressAndReturnResult(byte[] input) {
+    public static byte[] compressAndReturnResult(byte[] input) {
         ByteArrayOutputStream buffer = getBuffer();
         buffer.reset();
         DeflaterOutputStream stream = new DeflaterOutputStream(buffer);
@@ -219,7 +219,7 @@ public final class DeflatingByteArray extends ByteArray {
         return buffer.toByteArray();
     }
 
-    private byte[] uncompressAndReturnResult(byte[] input) {
+    public static byte[] uncompressAndReturnResult(byte[] input) {
         ByteArrayOutputStream buffer = getBuffer();
         buffer.reset();
         InflaterOutputStream stream = new InflaterOutputStream(buffer);
@@ -234,7 +234,7 @@ public final class DeflatingByteArray extends ByteArray {
         return buffer.toByteArray();
     }
 
-    private ByteArrayOutputStream getBuffer() {
+    private static ByteArrayOutputStream getBuffer() {
         if(_buffer.get() == null)
             _buffer.set(new ByteArrayOutputStream(4096));
 

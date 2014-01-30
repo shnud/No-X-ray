@@ -38,4 +38,8 @@ public class ByteArray {
     public int maxValue() {
         return 255;
     }
+
+    public ByteArray clone() {
+        return new ByteArray(_byteArray.clone());
+    }
 }
