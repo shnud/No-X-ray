@@ -14,11 +14,11 @@ import javax.annotation.concurrent.ThreadSafe;
  * Created by Andrew on 03/01/2014.
  */
 @ThreadSafe
-public class PlayerMetadataBank implements Listener {
+public class PlayerMetadataStore implements Listener {
 
     private IterableHashMap<String, PlayerMetadataEntry> _players = new IterableHashMap<String, PlayerMetadataEntry>();
 
-    public PlayerMetadataBank() {
+    public PlayerMetadataStore() {
         NoXray.getInstance().getServer().getPluginManager().registerEvents(this, NoXray.getInstance());
     }
 
