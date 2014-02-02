@@ -12,24 +12,38 @@ import com.shnud.noxray.NoXray;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginDisableEvent;
 
 import java.util.ArrayList;
 
 /**
  * Created by Andrew on 24/12/2013.
  */
-public class PacketListener {
+public class PacketListener implements Listener {
+    private final static NoXray _plugin = NoXray.getInstance();
+    private final static ArrayList<PacketEventListener> _listeners = new ArrayList<PacketEventListener>();
+    private final static boolean _init = init();
+    private static PacketListener _instance;
     private static ProtocolManager _pm;
-    private static NoXray _plugin = NoXray.getInstance();
-    private static ArrayList<PacketEventListener> _listeners = new ArrayList<PacketEventListener>();
-    private static boolean _init = init();
 
     public static boolean init() {
+        _instance = new PacketListener();
         _listeners.clear();
-        _plugin = NoXray.getInstance();
         _pm = ProtocolLibrary.getProtocolManager();
-        if(!_init) registerPacketListeners();
+        registerPacketListeners();
+        NoXray.getInstance().getServer().getPluginManager().registerEvents(_instance, _plugin);
         return true;
+    }
+
+    @EventHandler (priority = EventPriority.MONITOR)
+    public void onDisable(PluginDisableEvent event) {
+        if(event.getPlugin() == _plugin) {
+            _pm.removePacketListeners(_plugin);
+            _pm.getAsynchronousManager().cleanupAll();
+        }
     }
 
     private static void dispatchEventToListeners(BasePacketEvent event) {
