@@ -83,7 +83,7 @@ public class RoomHider implements Listener, PacketEventListener {
         }
 
         _rooms = new RoomList(_mirrorWorld);
-        _executor = new BasicExecutor();
+        _executor = new BasicExecutor("Room hiding thread for world: " + world.getName());
         _executor.start();
 
         // Listen for packets so we can filter block changes and map chunks
@@ -124,6 +124,7 @@ public class RoomHider implements Listener, PacketEventListener {
             }
         });
 
+        _executor.cancel();
     }
 
     /**
