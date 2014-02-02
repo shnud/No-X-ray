@@ -227,6 +227,6 @@ public class MirrorChunk {
         if(section < 0 || section > 15)
             throw new IllegalArgumentException("Section must be between 0 and 15 inclusive");
 
-        return _data.isSectionEmpty(section);
+        return _data.isMinecraftSectionEmpty(section);
     }
 }

@@ -70,7 +70,7 @@ public class MirrorChunkKeys {
         return _splitData.isAllEmpty();
     }
 
-    public boolean isSectionEmpty(int section) {
+    public boolean isMinecraftSectionEmpty(int section) {
         return _splitData.isMinecraftSectionEmpty(section);
     }
 

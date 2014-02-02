@@ -43,7 +43,7 @@ public class MirrorChunkSplitData implements Iterable<Integer> {
     }
 
     public boolean isMinecraftSectionEmpty(int section) {
-        return isSectionEmpty(section / 16 / NUMBER_OF_SECTIONS);
+        return isSectionEmpty(section / (16 / NUMBER_OF_SECTIONS));
     }
 
     public boolean isSectionEmpty(int section) {
