@@ -13,7 +13,18 @@ public class BasicExecutor extends Thread {
 
     private final Object _monitor = new Object();
     private final ConcurrentLinkedQueue<Runnable> _tasks = new ConcurrentLinkedQueue<Runnable>();
+    private final String _name;
     private boolean _running = false;
+    private Thread _thread = this;
+
+    public BasicExecutor(String name) {
+        _name = name;
+    }
+
+    public BasicExecutor() {
+        this("No X-ray Executor Thread");
+    }
+
     public static BasicExecutor currentThread() {
         return (BasicExecutor) Thread.currentThread();
     }
@@ -29,7 +40,7 @@ public class BasicExecutor extends Thread {
     }
 
     public void run() {
-        Thread.currentThread().setName("No X-ray Executor Thread");
+        Thread.currentThread().setName(_name);
 
         try {
             while(!Thread.interrupted()) {
@@ -43,9 +54,15 @@ public class BasicExecutor extends Thread {
 
                 _tasks.remove().run();
             }
-        } catch (InterruptedException e) {
-            NoXray.getInstance().getLogger().log(Level.WARNING, "Executor was interrupted");
-        }
+
+
+        } catch (InterruptedException e) {}
+
+        NoXray.log(Level.INFO, "Stopping room hiding thread...");
+    }
+
+    public void cancel() {
+        _thread.interrupt();
     }
 
     /**
