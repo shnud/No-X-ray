@@ -3,40 +3,25 @@ package com.shnud.noxray.Concurrency;
 import com.shnud.noxray.NoXray;
 import org.bukkit.Bukkit;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Andrew on 07/01/2014.
  */
 public class BasicExecutor extends Thread {
 
-    private final Object _monitor = new Object();
-    private final ConcurrentLinkedQueue<Runnable> _tasks = new ConcurrentLinkedQueue<Runnable>();
+    // A lock used to ensure we can only interrupt the thread while it is not processing a task
+    private final Object _cleanStopLock = new Object();
+    private final LinkedBlockingQueue<Runnable> _tasks = new LinkedBlockingQueue<Runnable>();
     private final String _name;
-    private boolean _running = false;
     private Thread _thread = this;
 
     public BasicExecutor(String name) {
         _name = name;
     }
 
-    public BasicExecutor() {
-        this("No X-ray Executor Thread");
-    }
-
-    public static BasicExecutor currentThread() {
-        return (BasicExecutor) Thread.currentThread();
-    }
-
     public void execute(Runnable task) {
         _tasks.add(task);
-
-        synchronized (_monitor) {
-            if(!_running) {
-                _monitor.notify();
-            }
-        }
     }
 
     public void run() {
@@ -44,25 +29,21 @@ public class BasicExecutor extends Thread {
 
         try {
             while(!Thread.interrupted()) {
-                while(_tasks.isEmpty()) {
-                    synchronized (_monitor) {
-                        _running = false;
-                        _monitor.wait();
-                        _running = true;
-                    }
+                Runnable task = _tasks.take();
+
+                synchronized (_cleanStopLock) {
+                    task.run();
                 }
-
-                _tasks.remove().run();
             }
-
-
-        } catch (InterruptedException e) {}
-
-        NoXray.log(Level.INFO, "Stopping room hiding thread...");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void cancel() {
-        _thread.interrupt();
+        synchronized (_cleanStopLock) {
+            _thread.interrupt();
+        }
     }
 
     /**
