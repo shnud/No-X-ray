@@ -31,6 +31,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Andrew on 26/12/2013.
@@ -357,7 +358,9 @@ public class RoomHider implements Listener, PacketEventListener {
                     if (event instanceof SingleBlockChangePacketEvent) {
                         int roomID = _mirrorWorld.getRoomIDAtBlock(event.getBlock(0).getX(), event.getBlock(0).getY(), event.getBlock(0).getZ());
                         if (roomID != 0 && !_playerRooms.isRoomVisibleForPlayer(roomID, event.getReceiver())) {
+
                             event.cancel();
+                            ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(event.getPacketEvent());
                             return;
                         }
                     } else {
@@ -384,8 +387,10 @@ public class RoomHider implements Listener, PacketEventListener {
                         if (changed) {
                             if (!list.isEmpty())
                                 event.setBlocks(list);
-                            else
+                            else {
                                 event.cancel();
+                                ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(event.getPacketEvent());
+                            }
                         }
                     }
 
