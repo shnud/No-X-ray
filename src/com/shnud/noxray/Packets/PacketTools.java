@@ -51,10 +51,6 @@ public class PacketTools {
     public static void resendAllPlayerSpawnPacketsForWorld(World world) {
         List<Player> players = world.getPlayers();
 
-        //for(Entity entity : players) {
-        //   new EntitySpawnPacketSender(players, Lists.newArrayList(entity)).send();
-        //}
-
         for(Entity entity : players) {
             List<Player> trackers = _pm.getEntityTrackers(entity);
             if(!trackers.isEmpty())

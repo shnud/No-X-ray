@@ -31,7 +31,6 @@ public class EntityHider implements IPacketEventWrapperListener {
     private static final int MINIMUM_Y_DISTANCE_FOR_VISIBLE_ENTITIES = 8;
     private static final int ENTITY_TICK_CHECK_FREQUENCY = MagicValues.MINECRAFT_TICKS_PER_SECOND * 4;
     private static final int ENTITY_VISIBILITY_CHECKS_PER_PURGE = 20;
-
     private final World _world;
     private final EntityWatcherList _entityList = new EntityWatcherList();
     private int checkCount = 0;
@@ -45,7 +44,7 @@ public class EntityHider implements IPacketEventWrapperListener {
 
         // Make sure that if the server has reloaded we try to respawn
         // all of the entities again because we may have been hiding entities
-        // before that have now disappeard off the list and players could
+        // before that have now disappeared off the list and players could
         // be hit by invisible enemies
         PacketTools.resendAllEntitySpawnPacketsForWorld(world);
 
@@ -53,7 +52,12 @@ public class EntityHider implements IPacketEventWrapperListener {
         // worry about stopping this
         Bukkit.getScheduler().runTaskTimer(
                 NoXray.getInstance(),
-                new WatcherCheckThread(),
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        checkEntities();
+                    }
+                },
                 ENTITY_TICK_CHECK_FREQUENCY,
                 ENTITY_TICK_CHECK_FREQUENCY
         );
@@ -65,7 +69,7 @@ public class EntityHider implements IPacketEventWrapperListener {
         if(!event.getReceiver().getWorld().equals(_world))
             return;
 
-        else if (event instanceof EntitySpawnPacketEvent)
+        if (event instanceof EntitySpawnPacketEvent)
             handleEntitySpawnPacketEvent((EntitySpawnPacketEvent) event);
         else if (event instanceof EntityDestroyPacketEvent)
             handleEntityDestroyPacketEvent((EntityDestroyPacketEvent) event);
@@ -73,7 +77,7 @@ public class EntityHider implements IPacketEventWrapperListener {
             handleEntityUpdatePacketEvent((EntityUpdatePacketEvent) event);
     }
 
-    public void checkEntities() {
+    private void checkEntities() {
         checkCount++;
         ArrayList<Player> playersToSendCurrentEntity = new ArrayList<Player>();
 
@@ -109,7 +113,7 @@ public class EntityHider implements IPacketEventWrapperListener {
         checkCount = 0;
     }
 
-    public boolean shouldShowEntityToWatcher(Entity subject, Player watcher) {
+    private boolean shouldShowEntityToWatcher(Entity subject, Player watcher) {
         if(subject.getLocation().getBlockY() > MAXIMUM_Y_FOR_HIDING_NON_PLAYER_ENTITIES)
             return true;
 
@@ -151,13 +155,5 @@ public class EntityHider implements IPacketEventWrapperListener {
 
         if(_entityList.doesEntityHaveWatcher(event.getEntity(), event.getReceiver()))
             event.cancel();
-    }
-
-    private class WatcherCheckThread implements Runnable {
-
-        @Override
-        public void run() {
-            checkEntities();
-        }
     }
 }
