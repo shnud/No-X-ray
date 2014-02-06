@@ -2,6 +2,7 @@ package com.shnud.noxray.Structures;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Set;
  */
 public class IterableHashMap<K, V> implements Iterable<V> {
 
-    private HashMap<K, V> _map = new HashMap<K, V>();
+    private LinkedHashMap<K, V> _map = new LinkedHashMap<K, V>();
 
     public void put(K key, V value) {
         _map.put(key, value);
