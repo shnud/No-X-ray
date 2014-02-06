@@ -1,4 +1,4 @@
-package com.shnud.noxray.Entities;
+package com.shnud.noxray.EntityHiding;
 
 import com.shnud.noxray.Structures.IterableHashMap;
 import org.bukkit.entity.Entity;

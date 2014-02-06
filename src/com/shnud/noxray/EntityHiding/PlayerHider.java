@@ -1,7 +1,5 @@
 package com.shnud.noxray.EntityHiding;
 
-import com.shnud.noxray.Entities.PlayerCoupleHidable;
-import com.shnud.noxray.Entities.PlayerCoupleList;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.IPacketEventWrapperListener;
 import com.shnud.noxray.Packets.PacketEventListener;

@@ -1,4 +1,4 @@
-package com.shnud.noxray.Entities;
+package com.shnud.noxray.EntityHiding;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;

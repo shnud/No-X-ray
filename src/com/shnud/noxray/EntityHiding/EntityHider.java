@@ -1,8 +1,6 @@
 package com.shnud.noxray.EntityHiding;
 
 import com.google.common.collect.Lists;
-import com.shnud.noxray.Entities.EntityWatcherEntry;
-import com.shnud.noxray.Entities.EntityWatcherList;
 import com.shnud.noxray.NoXray;
 import com.shnud.noxray.Packets.IPacketEventWrapperListener;
 import com.shnud.noxray.Packets.PacketEventListener;
