@@ -19,7 +19,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by Andrew on 27/12/2013.
@@ -144,6 +146,9 @@ public class EntityHider implements IPacketEventWrapperListener {
     }
 
     private void handleEntityDestroyPacketEvent(EntityDestroyPacketEvent event) {
+        if(event.getEntity() != null && event.getEntity().getType() == EntityType.PLAYER)
+            return;
+
         _entityList.removeWatcherFromEntity(event.getReceiver(), event.getEntity());
     }
 
