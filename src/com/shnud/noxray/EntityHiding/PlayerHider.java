@@ -51,7 +51,7 @@ public class PlayerHider implements IPacketEventWrapperListener {
     }
 
     private void onEntityDestroyPacketEvent(EntityDestroyPacketEvent event) {
-        if(event.getEntity().getType() != EntityType.PLAYER)
+        if(event.getEntity() == null || event.getEntity().getType() != EntityType.PLAYER)
             return;
 
         long id = PlayerCoupleHidable.uniqueIDFromEntityPair(event.getReceiver(), event.getEntity());
