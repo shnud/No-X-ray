@@ -149,7 +149,7 @@ public class EntityHider implements IPacketEventWrapperListener {
         if(event.getEntity() != null && event.getEntity().getType() == EntityType.PLAYER)
             return;
 
-        _entityList.removeWatcherFromEntity(event.getReceiver(), event.getEntity());
+        _entityList.removeWatcherFromEntity(event.getReceiver(), event.getEntityID());
     }
 
     private void handleEntityUpdatePacketEvent(EntityUpdatePacketEvent event) {

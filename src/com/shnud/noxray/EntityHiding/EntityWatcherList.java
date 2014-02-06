@@ -42,6 +42,16 @@ public class EntityWatcherList implements Iterable<EntityWatcherEntry> {
         }
     }
 
+    public void removeWatcherFromEntity(Player watcher, int entityID) {
+        if(_entities.containsKey(entityID)) {
+            EntityWatcherEntry entry = _entities.get(entityID);
+            entry.removeWatcher(watcher);
+
+            if(entry.numberOfWatchers() == 0)
+                _entities.remove(entityID);
+        }
+    }
+
     public boolean doesEntityHaveWatcher(Entity entity, Player watcher) {
         if(!containsEntity(entity))
             return false;
