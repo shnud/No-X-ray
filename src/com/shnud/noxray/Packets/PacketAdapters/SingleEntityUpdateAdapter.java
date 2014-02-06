@@ -98,7 +98,7 @@ public class SingleEntityUpdateAdapter extends NoXrayPacketAdapter {
             ).build();
 
     public SingleEntityUpdateAdapter(Iterable<IPacketEventWrapperListener> listeners) {
-        super(listeners, (PacketType[]) _packetTypes.keySet().toArray());
+        super(listeners, _packetTypes.keySet().toArray(new PacketType[_packetTypes.keySet().size()]));
     }
 
     @Override

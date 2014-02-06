@@ -5,10 +5,12 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.shnud.noxray.Packets.IPacketEventWrapperListener;
 import com.shnud.noxray.Packets.PacketEvents.EntitySpawnPacketEvent;
 import org.bukkit.entity.Entity;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class EntitySpawnAdapter extends NoXrayPacketAdapter {
@@ -66,7 +68,7 @@ public class EntitySpawnAdapter extends NoXrayPacketAdapter {
             ).build();
 
     public EntitySpawnAdapter(Iterable<IPacketEventWrapperListener> listeners) {
-        super(listeners, (PacketType[]) _packetTypes.keySet().toArray());
+        super(listeners, _packetTypes.keySet().toArray(new PacketType[_packetTypes.keySet().size()]));
     }
 
     @Override
