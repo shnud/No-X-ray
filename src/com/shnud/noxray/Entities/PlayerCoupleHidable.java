@@ -1,6 +1,6 @@
 package com.shnud.noxray.Entities;
 
-import com.shnud.noxray.Packets.PacketDispatcher;
+import com.shnud.noxray.Packets.PacketTools;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockIterator;
@@ -92,16 +92,16 @@ public class PlayerCoupleHidable extends PlayerCouple {
     private void hide() {
         _areHidden = true;
         if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
-            PacketDispatcher.destroyEntityForPlayer(getPlayer2(), getPlayer1());
-            PacketDispatcher.destroyEntityForPlayer(getPlayer1(), getPlayer2());
+            PacketTools.destroyEntityForPlayer(getPlayer2(), getPlayer1());
+            PacketTools.destroyEntityForPlayer(getPlayer1(), getPlayer2());
         }
     }
 
     private void show() {
         _areHidden = false;
         if(getPlayer1().isOnline() && getPlayer2().isOnline()) {
-            PacketDispatcher.spawnEntityForPlayer(getPlayer2(), getPlayer1());
-            PacketDispatcher.spawnEntityForPlayer(getPlayer1(), getPlayer2());
+            PacketTools.spawnEntityForPlayer(getPlayer2(), getPlayer1());
+            PacketTools.spawnEntityForPlayer(getPlayer1(), getPlayer2());
         }
     }
 

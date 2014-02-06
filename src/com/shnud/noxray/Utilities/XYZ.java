@@ -4,9 +4,9 @@ package com.shnud.noxray.Utilities;
  * Created by Andrew on 22/12/2013.
  */
 public class XYZ {
-    public int x, y, z;
+    public final int x, y, z;
 
-    public XYZ(int x, int y, int z) {
+    public XYZ(final int x, final int y, final int z) {
         this.x = x;
         this.y = y;
         this.z = z;

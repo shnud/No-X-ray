@@ -60,4 +60,8 @@ public class DynamicCoordinates {
     public PrecisionLevel getPrecisionLevel() {
         return _level;
     }
+
+    public boolean isPreciseEnoughFor(PrecisionLevel level) {
+        return level.ordinal() >= _level.ordinal();
+    }
 }

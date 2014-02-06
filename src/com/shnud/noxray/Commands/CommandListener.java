@@ -1,7 +1,7 @@
 package com.shnud.noxray.Commands;
 
-import com.shnud.noxray.Hiders.RoomHider;
 import com.shnud.noxray.NoXray;
+import com.shnud.noxray.RoomHiding.RoomHider;
 import com.shnud.noxray.Settings.NoXraySettings;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
 import org.bukkit.ChatColor;

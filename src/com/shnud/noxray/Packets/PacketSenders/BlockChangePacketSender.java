@@ -4,7 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.ChunkCoordIntPair;
 import com.google.common.collect.Lists;
-import com.shnud.noxray.World.MapBlock;
+import com.shnud.noxray.Packets.PacketHelpers.MapBlock;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;

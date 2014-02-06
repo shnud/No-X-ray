@@ -1,12 +1,12 @@
 package com.shnud.noxray;
 
 import com.shnud.noxray.Commands.CommandListener;
-import com.shnud.noxray.Hiders.EntityHider;
-import com.shnud.noxray.Hiders.PlayerHider;
-import com.shnud.noxray.Hiders.RoomHider;
+import com.shnud.noxray.EntityHiding.EntityHider;
+import com.shnud.noxray.EntityHiding.PlayerHider;
+import com.shnud.noxray.RoomHiding.RoomHider;
 import com.shnud.noxray.Settings.NoXraySettings;
-import com.shnud.noxray.Settings.PlayerMetadataStore;
 import com.shnud.noxray.Settings.PlayerMetadataEntry;
+import com.shnud.noxray.Settings.PlayerMetadataStore;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
