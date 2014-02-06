@@ -60,7 +60,7 @@ public class SingleBlockChangePacketHelper extends AbstractBlockChangePacketHelp
     @Override
     public LinkedList<MapBlock> getBlockChanges() {
         return new LinkedList<MapBlock>() {{
-            set(0, getBlockChange(0));
+            add(getBlockChange(0));
         }};
     }
 
