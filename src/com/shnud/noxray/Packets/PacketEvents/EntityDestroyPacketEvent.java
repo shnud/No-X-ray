@@ -9,4 +9,6 @@ public abstract class EntityDestroyPacketEvent extends NoXrayPacketEvent {
     }
 
     public abstract Entity getEntity();
+
+    public abstract int getEntityID();
 }

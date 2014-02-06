@@ -21,6 +21,10 @@ public class EntityDestroyAdapter extends NoXrayPacketAdapter {
         final WrapperPlayServerEntityDestroy packet = new WrapperPlayServerEntityDestroy(event.getPacket());
 
         for(final int subjectID : packet.getEntities()) {
+            System.out.println(subjectID);
+            System.out.println(ProtocolLibrary.getProtocolManager().getEntityFromID(event.getPlayer().getWorld(),
+                    subjectID));
+
             dispatchEventToListeners(
                     new EntityDestroyPacketEvent(event) {
                         @Override
@@ -28,7 +32,7 @@ public class EntityDestroyAdapter extends NoXrayPacketAdapter {
                             List<Integer> entities = packet.getEntities();
                             entities.remove(subjectID);
 
-                            if(!entities.isEmpty())
+                            if (!entities.isEmpty())
                                 packet.setEntities(entities);
                             else
                                 super.cancel();
@@ -38,6 +42,11 @@ public class EntityDestroyAdapter extends NoXrayPacketAdapter {
                         public Entity getEntity() {
                             return ProtocolLibrary.getProtocolManager().getEntityFromID(event.getPlayer().getWorld(),
                                     subjectID);
+                        }
+
+                        @Override
+                        public int getEntityID() {
+                            return subjectID;
                         }
                     }
             );
