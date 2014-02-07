@@ -557,11 +557,15 @@ public class RoomHider implements Listener, IPacketEventWrapperListener {
 
                         if(ID == 0 && airBlocks[i - 1]) {
                             new ChatPacketSender(p, ChatColor.RED + "The block was connected to an unhidden air block").send();
+                            new ChatPacketSender(p, ChatColor.GRAY + "(Toggle autohide with /auto)")
+                                    .send();
                             return;
                         }
                         if(ID != 0) {
                             if(ID != foundID && foundID != 0) {
                                 new ChatPacketSender(p, ChatColor.RED + "Multiple room IDs were found; block could not be autohidden").send();
+                                new ChatPacketSender(p, ChatColor.GRAY + "(Toggle autohide with /auto)")
+                                        .send();
                                 return;
                             }
                             else foundID = ID;
