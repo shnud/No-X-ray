@@ -4,6 +4,9 @@ import com.comphenix.packetwrapper.AbstractPacket;
 import com.comphenix.packetwrapper.WrapperPlayServerMapChunkBulk;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
+import com.shnud.noxray.NoXray;
+
+import java.util.zip.Deflater;
 
 public class MapChunkBulkPacketHelper extends AbstractMapChunkPacketHelper {
 
@@ -29,11 +32,32 @@ public class MapChunkBulkPacketHelper extends AbstractMapChunkPacketHelper {
     public void packDataForSending() {
         byte[] allChunks = getWrappedPacket().getUncompressedData();
 
+        boolean orebfuscatorOn = NoXray.getInstance().getServer().getPluginManager().isPluginEnabled("Orebfuscator");
+
+        if(orebfuscatorOn) {
+            int size = 0;
+
+            for(int i = 0; i < getAmountOfChunks(); i++) {
+                size += getWrappedPacket().getChunksInflatedBuffers()[i].length;
+            }
+
+            allChunks = new byte[size];
+        }
+
         int runningOffset = 0;
         for(int i = 0; i < getAmountOfChunks(); i++) {
             byte[] thisChunk = getWrappedPacket().getChunksInflatedBuffers()[i];
             System.arraycopy(thisChunk, 0, allChunks, runningOffset, thisChunk.length);
             runningOffset += thisChunk.length;
+        }
+
+        if(orebfuscatorOn) {
+            Deflater def = new Deflater();
+            def.setInput(allChunks);
+            def.finish();
+            int size = def.deflate(getWrappedPacket().getHandle().getByteArrays().read(0));
+            getWrappedPacket().setDataLength(size);
+            def.end();
         }
     }
 
