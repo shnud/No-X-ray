@@ -30,9 +30,11 @@ public class PlayerMetadataStore implements Listener {
         // todo
     }
 
-    synchronized public PlayerMetadataEntry getMetadataForPlayer(String name) {
-        if(!_players.containsKey(name))
-            _players.put(name, new PlayerMetadataEntry(name));
+    public PlayerMetadataEntry getMetadataForPlayer(String name) {
+        synchronized (this) {
+            if(!_players.containsKey(name))
+                _players.put(name, new PlayerMetadataEntry(name));
+        }
 
         return _players.get(name);
     }
