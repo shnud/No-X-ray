@@ -91,7 +91,7 @@ public class PlayerHider implements IPacketEventWrapperListener {
 
     private void onEntityUpdatePacketEvent(EntityUpdatePacketEvent event) {
         // We're only interested in player updates
-        if(event.getEntity().getType() != EntityType.PLAYER)
+        if(event.getEntity() == null || event.getEntity().getType() != EntityType.PLAYER)
             return;
 
         // If we're currently hiding the couple, then don't send
