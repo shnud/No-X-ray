@@ -36,12 +36,15 @@ public class RoomSearcher {
             _wallBlocks.add(Material.DIAMOND_ORE);
             _wallBlocks.add(Material.REDSTONE_ORE);
             _wallBlocks.add(Material.EMERALD_ORE);
+            _wallBlocks.add(Material.BEDROCK);
         }
         else if(world.getEnvironment() == World.Environment.NETHER) {
             _wallBlocks.add(Material.NETHERRACK);
+            _wallBlocks.add(Material.BEDROCK);
         }
         else if(world.getEnvironment() == World.Environment.THE_END) {
             _wallBlocks.add(Material.ENDER_STONE);
+            _wallBlocks.add(Material.BEDROCK);
         }
     }
 
