@@ -1,6 +1,6 @@
 name: No X-ray
 main: com.shnud.noxray.NoXray
-version: 0.1.3
+version: 0.1.4
 depend: [ProtocolLib]
 author: shnud
 
