@@ -314,6 +314,7 @@ public class RoomHider implements Listener, IPacketEventWrapperListener {
             public void run() {
                 synchronized (event.getProcessingLock()) {
                     AbstractMapChunkPacketHelper helper = event.getMapChunkPacketHelper();
+                    boolean dataChanged = false;
 
                     for (int chunkI = 0; chunkI < helper.getAmountOfChunks(); chunkI++) {
                         MapChunkDataWrapper chunk = helper.getMutableChunk(chunkI);
@@ -327,11 +328,14 @@ public class RoomHider implements Listener, IPacketEventWrapperListener {
 
                         MirrorChunk mirror = _mirrorWorld.getMirrorChunk(coords);
                         HashSet<Integer> seenRooms = _playerRooms.getVisibleRoomsForPlayer(event.getReceiver());
-                        ChunkCensor.censorChunk(chunk, mirror, seenRooms, _censorBlock);
+                        if(ChunkCensor.censorChunk(chunk, mirror, seenRooms, _censorBlock) > 0)
+                            dataChanged = true;
                     }
 
                     // Ensure that we recompress the modified data as that's what gets sent to the client
-                    helper.packDataForSending();
+                    if(dataChanged)
+                        helper.packDataForSending();
+                    
                     event.decrementAsyncProcessingCountAndSendIfZero();
                 }
             }

@@ -21,18 +21,22 @@ public class ChunkCensor {
      * @param mirror The mirror chunk to take the hidden data from
      * @param seenRooms The list of rooms that the chunk censor should not hide
      * @param censorBlock The block that should be used to replace hidden blocks
+     *
+     * @return The number of blocks censored in the chunk
      */
-    public static void censorChunk(MapChunkDataWrapper chunk, MirrorChunk mirror, HashSet<Integer> seenRooms, Material censorBlock) {
+    public static int censorChunk(MapChunkDataWrapper chunk, MirrorChunk mirror, HashSet<Integer> seenRooms,
+                                Material censorBlock) {
         if(chunk == null) throw new IllegalArgumentException("Chunk cannot be null");
         if(mirror == null) throw new IllegalArgumentException("Mirror chunk cannot be null");
 
         if(chunk.isEmpty() || mirror.isEmpty())
-            return;
+            return 0;
 
         // This will be used to store all of the blocks that are non solid for each layer as we traverse
         // down the chunk. Any protected block which has an unprotected non solid block above it must
         // not be censored because it is possible to create pitfalls this way
         BooleanArray nonSolidAbove = new BooleanArray(256);
+        int blockChangeCount = 0;
 
         // Add the mechanism to hide columns which are not covered by solid blocks
         for(int sectionI = 15; sectionI >= 0; sectionI--) {
@@ -69,6 +73,8 @@ public class ChunkCensor {
                         blockLight.setValueAtIndex(i, 0);
                         if(additional != null)
                             additional.setValueAtIndex(i, 0);
+
+                        blockChangeCount++;
                     }
                 }
 
@@ -86,5 +92,7 @@ public class ChunkCensor {
                 // for the block below
             }
         }
+
+        return blockChangeCount;
     }
 }
