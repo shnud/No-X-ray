@@ -36,7 +36,7 @@ public class BasicExecutor extends Thread {
                 }
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+
         }
     }
 
