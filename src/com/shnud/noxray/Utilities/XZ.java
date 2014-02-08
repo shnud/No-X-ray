@@ -27,6 +27,6 @@ public class XZ {
             return false;
 
         XZ comp = (XZ) o;
-        return comp.hashCode() == this.hashCode();
+        return comp.x == this.x && comp.z == this.z;
     }
 }

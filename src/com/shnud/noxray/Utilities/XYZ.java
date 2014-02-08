@@ -28,6 +28,6 @@ public class XYZ {
             return false;
 
         XYZ comp = (XYZ) o;
-        return comp.hashCode() == this.hashCode();
+        return comp.x == this.x && comp.y == this.y && comp.z == this.z;
     }
 }
